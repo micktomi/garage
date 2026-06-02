@@ -72,7 +72,9 @@ class PartResource extends Resource
                     ->sortable(),
                 Tables\Columns\TextColumn::make('quantity')
                     ->label('Ποσότητα')
-                    ->sortable(),
+                    ->sortable()
+                    ->badge()
+                    ->color(fn (int $state): string => $state <= 5 ? 'danger' : 'success'),
                 Tables\Columns\TextColumn::make('purchase_price')
                     ->label('Τιμή αγοράς')
                     ->money('EUR')

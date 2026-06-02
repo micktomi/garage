@@ -150,6 +150,12 @@ class WorkOrderResource extends Resource
                 //
             ])
             ->actions([
+                Tables\Actions\Action::make('print')
+                    ->label('Εκτύπωση')
+                    ->icon('heroicon-o-printer')
+                    ->url(fn (WorkOrder $record): string => route('work-orders.print', $record))
+                    ->openUrlInNewTab(),
+                Tables\Actions\ViewAction::make(),
                 Tables\Actions\EditAction::make(),
             ])
             ->bulkActions([
@@ -171,6 +177,7 @@ class WorkOrderResource extends Resource
         return [
             'index' => Pages\ListWorkOrders::route('/'),
             'create' => Pages\CreateWorkOrder::route('/create'),
+            'view' => Pages\ViewWorkOrder::route('/{record}'),
             'edit' => Pages\EditWorkOrder::route('/{record}/edit'),
         ];
     }

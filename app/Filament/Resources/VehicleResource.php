@@ -116,7 +116,7 @@ class VehicleResource extends Resource
     public static function getRelations(): array
     {
         return [
-            //
+            RelationManagers\WorkOrdersRelationManager::class,
         ];
     }
 

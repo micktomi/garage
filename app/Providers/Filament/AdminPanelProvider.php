@@ -27,6 +27,7 @@ class AdminPanelProvider extends PanelProvider
             ->id('admin')
             ->path('admin')
             ->login()
+            ->brandName('Garage Service Manager')
             ->colors([
                 'primary' => Color::Amber,
             ])

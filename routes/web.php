@@ -1,11 +1,10 @@
 <?php
 
+use App\Models\WorkOrder;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/', function () {
-    return view('welcome');
-});
+Route::redirect('/', '/admin');
 
-Route::get('/work-orders/{workOrder}/print', function (App\Models\WorkOrder $workOrder) {
+Route::get('/work-orders/{workOrder}/print', function (WorkOrder $workOrder) {
     return view('work-orders.print', compact('workOrder'));
 })->name('work-orders.print');

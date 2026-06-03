@@ -21,14 +21,19 @@ class GarageStatsOverview extends BaseWidget
             Stat::make('Οχήματα', Vehicle::count())
                 ->description('Καταχωρημένα οχήματα'),
 
-            Stat::make('Σημερινά ραντεβού', Appointment::whereDate('scheduled_at', today())->count())
+            Stat::make('Σημερινά ραντεβού', Appointment::whereDate('appointment_date', today())->count())
                 ->description('Ραντεβού σήμερα'),
 
-            Stat::make('Ανοιχτές εργασίες', WorkOrder::where('status', 'open')->count())
-                ->description('Εντολές σε εκκρεμότητα'),
+            Stat::make('Ανοιχτές εργασίες', WorkOrder::whereIn('status', [
+                    'new',
+                    'open',
+                    'scheduled',
+                    'in_progress',
+                ])->count())
+                ->description('Νέες ή σε εξέλιξη εντολές'),
 
-            Stat::make('Χαμηλό stock', Part::whereColumn('stock', '<=', 'min_stock')->count())
-                ->description('Ανταλλακτικά που θέλουν έλεγχο'),
+            Stat::make('Χαμηλό stock', Part::where('quantity', '<=', 3)->count())
+                ->description('Ανταλλακτικά με ποσότητα έως 3'),
         ];
     }
 }

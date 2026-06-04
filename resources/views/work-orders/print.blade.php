@@ -60,7 +60,7 @@
                     @case('new') Νέα @break
                     @case('in_progress') Σε εξέλιξη @break
                     @case('completed') Ολοκληρώθηκε @break
-                    @case('delivered') Παραδόθηκε @break
+                    @case('cancelled') Ακυρώθηκε @break
                     @default {{ $workOrder->status }}
                 @endswitch
             </p>

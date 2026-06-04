@@ -2,11 +2,14 @@
 
 namespace App\Filament\Resources;
 
+use App\Filament\Resources\CustomerResource;
 use App\Filament\Resources\VehicleResource\Pages;
 use App\Filament\Resources\VehicleResource\RelationManagers;
 use App\Models\Vehicle;
 use Filament\Forms;
 use Filament\Forms\Form;
+use Filament\Infolists;
+use Filament\Infolists\Infolist;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
@@ -57,6 +60,52 @@ class VehicleResource extends Resource
                 Forms\Components\Textarea::make('notes')
                     ->label('Σημειώσεις')
                     ->columnSpanFull(),
+            ]);
+    }
+
+    public static function infolist(Infolist $infolist): Infolist
+    {
+        return $infolist
+            ->schema([
+                Infolists\Components\Section::make('Πληροφορίες Οχήματος')
+                    ->schema([
+                        Infolists\Components\Grid::make(3)
+                            ->schema([
+                                Infolists\Components\TextEntry::make('plate_number')
+                                    ->label('Πινακίδα')
+                                    ->weight('bold')
+                                    ->size('lg')
+                                    ->copyable(),
+                                Infolists\Components\TextEntry::make('customer.full_name')
+                                    ->label('Ιδιοκτήτης')
+                                    ->url(fn (Vehicle $record): string => CustomerResource::getUrl('view', ['record' => $record->customer_id])),
+                                Infolists\Components\TextEntry::make('mileage')
+                                    ->label('Χιλιόμετρα')
+                                    ->numeric()
+                                    ->suffix(' km'),
+                            ]),
+                        Infolists\Components\Grid::make(3)
+                            ->schema([
+                                Infolists\Components\TextEntry::make('make')
+                                    ->label('Μάρκα'),
+                                Infolists\Components\TextEntry::make('model')
+                                    ->label('Μοντέλο'),
+                                Infolists\Components\TextEntry::make('year')
+                                    ->label('Έτος'),
+                            ]),
+                        Infolists\Components\Grid::make(3)
+                            ->schema([
+                                Infolists\Components\TextEntry::make('vin')
+                                    ->label('Αριθμός πλαισίου (VIN)')
+                                    ->fontFamily('mono')
+                                    ->copyable(),
+                            ]),
+                        Infolists\Components\TextEntry::make('notes')
+                            ->label('Σημειώσεις')
+                            ->columnSpanFull()
+                            ->placeholder('Δεν υπάρχουν σημειώσεις'),
+                    ])
+                    ->collapsible(),
             ]);
     }
 

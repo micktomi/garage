@@ -25,11 +25,9 @@ class GarageStatsOverview extends BaseWidget
                 ->description('Ραντεβού σήμερα'),
 
             Stat::make('Ανοιχτές εργασίες', WorkOrder::whereIn('status', [
-                    'new',
-                    'open',
-                    'scheduled',
-                    'in_progress',
-                ])->count())
+                'new',
+                'in_progress',
+            ])->count())
                 ->description('Νέες ή σε εξέλιξη εντολές'),
 
             Stat::make('Χαμηλό stock', Part::where('quantity', '<=', 3)->count())

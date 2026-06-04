@@ -36,7 +36,7 @@ class WorkOrdersRelationManager extends RelationManager
                         'new' => 'Νέα',
                         'in_progress' => 'Σε εξέλιξη',
                         'completed' => 'Ολοκληρώθηκε',
-                        'delivered' => 'Παραδόθηκε',
+                        'cancelled' => 'Ακυρώθηκε',
                     ])
                     ->default('new')
                     ->required(),
@@ -64,14 +64,14 @@ class WorkOrdersRelationManager extends RelationManager
                         'new' => 'Νέα',
                         'in_progress' => 'Σε εξέλιξη',
                         'completed' => 'Ολοκληρώθηκε',
-                        'delivered' => 'Παραδόθηκε',
+                        'cancelled' => 'Ακυρώθηκε',
                         default => $state,
                     })
                     ->color(fn (string $state): string => match ($state) {
                         'new' => 'info',
                         'in_progress' => 'warning',
                         'completed' => 'success',
-                        'delivered' => 'gray',
+                        'cancelled' => 'danger',
                         default => 'gray',
                     }),
                 Tables\Columns\TextColumn::make('created_at')

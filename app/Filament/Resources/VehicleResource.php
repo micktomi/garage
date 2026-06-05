@@ -6,8 +6,13 @@ use App\Filament\Resources\CustomerResource;
 use App\Filament\Resources\VehicleResource\Pages;
 use App\Filament\Resources\VehicleResource\RelationManagers;
 use App\Models\Vehicle;
+use App\Models\VehicleModel;
 use Filament\Forms;
 use Filament\Forms\Form;
+use Filament\Forms\Components\Select;
+use Filament\Forms\Components\TextInput;
+use Filament\Forms\Get;
+use Filament\Forms\Set;
 use Filament\Infolists;
 use Filament\Infolists\Infolist;
 use Filament\Resources\Resource;
@@ -42,12 +47,25 @@ class VehicleResource extends Resource
                     ->label('Πινακίδα')
                     ->required()
                     ->maxLength(255),
-                Forms\Components\TextInput::make('make')
+                Select::make('make')
                     ->label('Μάρκα')
-                    ->maxLength(255),
-                Forms\Components\TextInput::make('model')
+                    ->options(fn () => VehicleModel::query()
+                        ->distinct()
+                        ->orderBy('make')
+                        ->pluck('make', 'make'))
+                    ->searchable()
+                    ->live()
+                    ->afterStateUpdated(fn (Set $set) => $set('model', null))
+                    ->required(),
+                TextInput::make('model')
                     ->label('Μοντέλο')
-                    ->maxLength(255),
+                    ->datalist(fn (Get $get) => VehicleModel::query()
+                        ->where('make', $get('make'))
+                        ->orderBy('model')
+                        ->pluck('model')
+                        ->all())
+                    ->disabled(fn (Get $get) => blank($get('make')))
+                    ->required(),
                 Forms\Components\TextInput::make('year')
                     ->label('Έτος')
                     ->numeric(),
@@ -99,6 +117,21 @@ class VehicleResource extends Resource
                                     ->label('Αριθμός πλαισίου (VIN)')
                                     ->fontFamily('mono')
                                     ->copyable(),
+                            ]),
+                        Infolists\Components\Grid::make(3)
+                            ->schema([
+                                Infolists\Components\TextEntry::make('last_service_date')
+                                    ->label('Τελευταίο service')
+                                    ->state(fn (Vehicle $record): ?string => $record->latestTrackedWorkOrder()?->created_at?->format('d/m/Y'))
+                                    ->placeholder('-'),
+                                Infolists\Components\TextEntry::make('next_service_date')
+                                    ->label('Επόμενο service')
+                                    ->state(fn (Vehicle $record): ?string => $record->latestTrackedWorkOrder()?->next_service_date?->format('d/m/Y'))
+                                    ->placeholder('-'),
+                                Infolists\Components\TextEntry::make('next_service_mileage')
+                                    ->label('Επόμενο service στα')
+                                    ->state(fn (Vehicle $record): ?string => $record->latestTrackedWorkOrder()?->next_service_mileage ? number_format($record->latestTrackedWorkOrder()->next_service_mileage) . ' km' : null)
+                                    ->placeholder('-'),
                             ]),
                         Infolists\Components\TextEntry::make('notes')
                             ->label('Σημειώσεις')

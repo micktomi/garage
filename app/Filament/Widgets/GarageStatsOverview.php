@@ -15,23 +15,29 @@ class GarageStatsOverview extends BaseWidget
     protected function getStats(): array
     {
         return [
-            Stat::make('Πελάτες', Customer::count())
-                ->description('Σύνολο πελατών'),
+            Stat::make('Σύνολο πελατών', Customer::count())
+                ->icon('heroicon-o-users'),
 
-            Stat::make('Οχήματα', Vehicle::count())
-                ->description('Καταχωρημένα οχήματα'),
+            Stat::make('Σύνολο οχημάτων', Vehicle::count())
+                ->icon('heroicon-o-truck'),
+
+            Stat::make('Ανοιχτές εντολές εργασίας', WorkOrder::whereIn('status', ['new', 'in_progress'])->count())
+                ->description('Σε εξέλιξη')
+                ->color('warning')
+                ->icon('heroicon-o-clipboard-document-list'),
 
             Stat::make('Σημερινά ραντεβού', Appointment::whereDate('appointment_date', today())->count())
-                ->description('Ραντεβού σήμερα'),
+                ->description('Για σήμερα')
+                ->icon('heroicon-o-calendar-days'),
 
-            Stat::make('Ανοιχτές εργασίες', WorkOrder::whereIn('status', [
-                'new',
-                'in_progress',
-            ])->count())
-                ->description('Νέες ή σε εξέλιξη εντολές'),
+            Stat::make('Ολοκληρωμένες εντολές', WorkOrder::where('status', 'completed')->count())
+                ->description('Συνολικά')
+                ->color('success')
+                ->icon('heroicon-o-check-circle'),
 
-            Stat::make('Χαμηλό stock', Part::where('quantity', '<=', 3)->count())
-                ->description('Ανταλλακτικά με ποσότητα έως 3'),
+            Stat::make('Ανταλλακτικά σε απόθεμα', (int) Part::sum('quantity'))
+                ->description('Τεμάχια')
+                ->icon('heroicon-o-cog-6-tooth'),
         ];
     }
 }

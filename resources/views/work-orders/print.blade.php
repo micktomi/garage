@@ -55,7 +55,7 @@
 
         <div class="section">
             <div class="section-title">Κατάσταση & Περιγραφή</div>
-            <p><span class="label">Κατάσταση:</span> 
+            <p><span class="label">Κατάσταση:</span>
                 @switch ($workOrder->status)
                     @case('new') Νέα @break
                     @case('in_progress') Σε εξέλιξη @break
@@ -66,7 +66,7 @@
             </p>
             <p><strong>Περιγραφή Προβλήματος:</strong></p>
             <p>{{ $workOrder->problem_description }}</p>
-            
+
             @if($workOrder->diagnosis)
             <p><strong>Διάγνωση:</strong></p>
             <p>{{ $workOrder->diagnosis }}</p>
@@ -78,11 +78,52 @@
             @endif
         </div>
 
+        @if($workOrder->workOrderParts->count() > 0)
+        <div class="section">
+            <div class="section-title">Ανταλλακτικά</div>
+            <table style="width: 100%; border-collapse: collapse; margin-top: 10px;">
+                <thead>
+                    <tr style="background: #f9f9f9; text-align: left;">
+                        <th style="padding: 5px; border: 1px solid #eee;">Περιγραφή</th>
+                        <th style="padding: 5px; border: 1px solid #eee; text-align: center;">Ποσότητα</th>
+                        <th style="padding: 5px; border: 1px solid #eee; text-align: right;">Τιμή Μον.</th>
+                        <th style="padding: 5px; border: 1px solid #eee; text-align: right;">Σύνολο</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach($workOrder->workOrderParts as $part)
+                    <tr>
+                        <td style="padding: 5px; border: 1px solid #eee;">{{ $part->part->name }}</td>
+                        <td style="padding: 5px; border: 1px solid #eee; text-align: center;">{{ $part->quantity }}</td>
+                        <td style="padding: 5px; border: 1px solid #eee; text-align: right;">{{ number_format($part->unit_price, 2) }} €</td>
+                        <td style="padding: 5px; border: 1px solid #eee; text-align: right;">{{ number_format($part->line_total, 2) }} €</td>
+                    </tr>
+                    @endforeach
+                </tbody>
+            </table>
+        </div>
+        @endif
+
+        @if($workOrder->current_mileage || $workOrder->next_service_date || $workOrder->next_service_mileage)
+        <div class="section">
+            <div class="section-title">Στοιχεία Service</div>
+            @if($workOrder->current_mileage)
+            <p><span class="label">Τρέχοντα χιλιόμετρα:</span> {{ number_format($workOrder->current_mileage) }} km</p>
+            @endif
+            @if($workOrder->next_service_date)
+            <p><span class="label">Επόμενο service:</span> {{ $workOrder->next_service_date->format('d/m/Y') }}</p>
+            @endif
+            @if($workOrder->next_service_mileage)
+            <p><span class="label">Επόμενο service στα:</span> {{ number_format($workOrder->next_service_mileage) }} km</p>
+            @endif
+        </div>
+        @endif
+
         <div class="section">
             <div class="section-title">Οικονομικά Στοιχεία</div>
             <p><span class="label">Κόστος Εργασίας:</span> {{ number_format($workOrder->labor_cost, 2) }} €</p>
             <p><span class="label">Κόστος Ανταλλακτικών:</span> {{ number_format($workOrder->parts_cost, 2) }} €</p>
-            
+
             <div class="total-box">
                 <span class="label">ΣΥΝΟΛΙΚΟ ΚΟΣΤΟΣ:</span>
                 <span class="total-amount">{{ number_format($workOrder->total_cost, 2) }} €</span>

@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 
 class Vehicle extends Model
@@ -30,5 +31,18 @@ class Vehicle extends Model
     public function workOrders()
     {
         return $this->hasMany(WorkOrder::class);
+    }
+
+    public function latestTrackedWorkOrder(): ?WorkOrder
+    {
+        return $this->workOrders()
+            ->where(function (Builder $query) {
+                $query
+                    ->whereNotNull('current_mileage')
+                    ->orWhereNotNull('next_service_date')
+                    ->orWhereNotNull('next_service_mileage');
+            })
+            ->latest()
+            ->first();
     }
 }

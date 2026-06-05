@@ -17,22 +17,20 @@ class VehicleStatsWidget extends BaseWidget
             return [];
         }
 
+        $latestTrackedWorkOrder = $this->record->latestTrackedWorkOrder();
+
         return [
             Stat::make('Σύνολο Εργασιών', $this->record->workOrders()->count())
                 ->icon('heroicon-m-clipboard-document-list'),
 
-            Stat::make('Συνολικό Κόστος', number_format($this->record->workOrders()->sum('total_cost'), 2) . ' €')
-                ->icon('heroicon-m-currency-euro'),
-
-            Stat::make('Τελευταία Επίσκεψη', $this->record->workOrders()->latest()->first()?->created_at?->format('d/m/Y') ?? '-')
+            Stat::make('Τελευταίο service', $latestTrackedWorkOrder?->created_at?->format('d/m/Y') ?? '-')
                 ->icon('heroicon-m-calendar-days'),
 
-            Stat::make('Ανοιχτές Εργασίες', $this->record->workOrders()->whereIn('status', [
-                'new',
-                'in_progress',
-            ])->count())
-                ->icon('heroicon-m-wrench-screwdriver')
-                ->color('warning'),
+            Stat::make('Επόμενο service', $latestTrackedWorkOrder?->next_service_date?->format('d/m/Y') ?? '-')
+                ->icon('heroicon-m-calendar'),
+
+            Stat::make('Επόμενο service στα', $latestTrackedWorkOrder?->next_service_mileage ? number_format($latestTrackedWorkOrder->next_service_mileage) . ' km' : '-')
+                ->icon('heroicon-m-wrench-screwdriver'),
         ];
     }
 }

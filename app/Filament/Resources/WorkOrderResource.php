@@ -4,9 +4,12 @@ namespace App\Filament\Resources;
 
 use App\Filament\Resources\WorkOrderResource\Pages;
 use App\Filament\Resources\WorkOrderResource\RelationManagers;
+use App\Models\Part;
 use App\Models\WorkOrder;
 use Filament\Forms;
 use Filament\Forms\Form;
+use Filament\Infolists;
+use Filament\Infolists\Infolist;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
@@ -41,14 +44,14 @@ class WorkOrderResource extends Resource
                             ->afterStateUpdated(fn (Forms\Set $set) => $set('vehicle_id', null)),
                         Forms\Components\Select::make('vehicle_id')
                             ->label('Όχημα')
-                            ->relationship('vehicle', 'plate_number', fn (Builder $query, Forms\Get $get) => 
+                            ->relationship('vehicle', 'plate_number', fn (Builder $query, Forms\Get $get) =>
                                 $query->when($get('customer_id'), fn ($q) => $q->where('customer_id', $get('customer_id')))
                             )
                             ->searchable()
                             ->preload()
                             ->required(),
                     ])->columns(2),
-                
+
                 Forms\Components\Section::make('Λεπτομέρειες Εργασίας')
                     ->schema([
                         Forms\Components\Textarea::make('problem_description')
@@ -63,6 +66,88 @@ class WorkOrderResource extends Resource
                             ->columnSpanFull(),
                     ]),
 
+                Forms\Components\Section::make('Ανταλλακτικά')
+                    ->schema([
+                        Forms\Components\Repeater::make('workOrderParts')
+                            ->label('Λίστα Ανταλλακτικών')
+                            ->relationship()
+                            ->schema([
+                                Forms\Components\Select::make('part_id')
+                                    ->label('Ανταλλακτικό')
+                                    ->options(Part::query()->pluck('name', 'id'))
+                                    ->required()
+                                    ->searchable()
+                                    ->reactive()
+                                    ->afterStateUpdated(function ($state, Forms\Set $set) {
+                                        $part = Part::find($state);
+                                        if ($part) {
+                                            $set('unit_price', $part->sale_price);
+                                            $set('quantity', 1);
+                                            $set('line_total', $part->sale_price);
+                                        }
+                                    }),
+                                Forms\Components\TextInput::make('quantity')
+                                    ->label('Ποσότητα')
+                                    ->numeric()
+                                    ->default(1)
+                                    ->required()
+                                    ->reactive()
+                                    ->afterStateUpdated(function ($state, Forms\Get $get, Forms\Set $set) {
+                                        $unitPrice = (float) $get('unit_price');
+                                        $set('line_total', (float) $state * $unitPrice);
+                                    })
+                                    ->rule(function (Forms\Get $get) {
+                                        return function (string $attribute, $value, $fail) use ($get) {
+                                            $partId = $get('part_id');
+                                            if (!$partId) return;
+                                            $part = Part::find($partId);
+                                            if (!$part) return;
+                                            
+                                            if ($value > $part->quantity) {
+                                                $fail("Ανεπαρκές απόθεμα. Διαθέσιμο: {$part->quantity}");
+                                            }
+                                        };
+                                    }),
+                                Forms\Components\TextInput::make('unit_price')
+                                    ->label('Τιμή μονάδας')
+                                    ->numeric()
+                                    ->prefix('€')
+                                    ->required()
+                                    ->reactive()
+                                    ->afterStateUpdated(function ($state, Forms\Get $get, Forms\Set $set) {
+                                        $quantity = (float) $get('quantity');
+                                        $set('line_total', (float) $state * $quantity);
+                                    }),
+                                Forms\Components\TextInput::make('line_total')
+                                    ->label('Σύνολο γραμμής')
+                                    ->numeric()
+                                    ->prefix('€')
+                                    ->readOnly(),
+                            ])
+                            ->columns(4)
+                            ->reactive()
+                            ->afterStateUpdated(function (Forms\Get $get, Forms\Set $set) {
+                                $parts = $get('workOrderParts');
+                                $total = collect($parts)->sum('line_total');
+                                $set('parts_cost', $total);
+                                $set('total_cost', $total + (float) $get('labor_cost'));
+                            }),
+                    ]),
+
+                Forms\Components\Section::make('Στοιχεία Service')
+                    ->schema([
+                        Forms\Components\TextInput::make('current_mileage')
+                            ->label('Τρέχοντα χιλιόμετρα')
+                            ->numeric()
+                            ->suffix('km'),
+                        Forms\Components\DatePicker::make('next_service_date')
+                            ->label('Ημερομηνία επόμενου service'),
+                        Forms\Components\TextInput::make('next_service_mileage')
+                            ->label('Χιλιόμετρα επόμενου service')
+                            ->numeric()
+                            ->suffix('km'),
+                    ])->columns(3),
+
                 Forms\Components\Section::make('Κόστος & Κατάσταση')
                     ->schema([
                         Forms\Components\TextInput::make('labor_cost')
@@ -72,17 +157,14 @@ class WorkOrderResource extends Resource
                             ->default(0)
                             ->reactive()
                             ->afterStateUpdated(function (Forms\Get $get, Forms\Set $set) {
-                                $set('total_cost', (float)$get('labor_cost') + (float)$get('parts_cost'));
+                                $set('total_cost', (float) $get('labor_cost') + (float) $get('parts_cost'));
                             }),
                         Forms\Components\TextInput::make('parts_cost')
                             ->label('Κόστος ανταλλακτικών')
                             ->numeric()
                             ->prefix('€')
                             ->default(0)
-                            ->reactive()
-                            ->afterStateUpdated(function (Forms\Get $get, Forms\Set $set) {
-                                $set('total_cost', (float)$get('labor_cost') + (float)$get('parts_cost'));
-                            }),
+                            ->readOnly(),
                         Forms\Components\TextInput::make('total_cost')
                             ->label('Συνολικό κόστος')
                             ->numeric()
@@ -100,6 +182,81 @@ class WorkOrderResource extends Resource
                             ->default('new')
                             ->required(),
                     ])->columns(2),
+            ]);
+    }
+
+    public static function infolist(Infolist $infolist): Infolist
+    {
+        return $infolist
+            ->schema([
+                Infolists\Components\Section::make('Εντολή Εργασίας')
+                    ->schema([
+                        Infolists\Components\Grid::make(3)
+                            ->schema([
+                                Infolists\Components\TextEntry::make('customer.full_name')
+                                    ->label('Πελάτης'),
+                                Infolists\Components\TextEntry::make('vehicle.plate_number')
+                                    ->label('Πινακίδα')
+                                    ->weight('bold'),
+                                Infolists\Components\TextEntry::make('status')
+                                    ->label('Κατάσταση')
+                                    ->badge()
+                                    ->formatStateUsing(fn (string $state): string => match ($state) {
+                                        'new' => 'Νέα',
+                                        'in_progress' => 'Σε εξέλιξη',
+                                        'completed' => 'Ολοκληρώθηκε',
+                                        'cancelled' => 'Ακυρώθηκε',
+                                        default => $state,
+                                    })
+                                    ->color(fn (string $state): string => match ($state) {
+                                        'new' => 'info',
+                                        'in_progress' => 'warning',
+                                        'completed' => 'success',
+                                        'cancelled' => 'danger',
+                                        default => 'gray',
+                                    }),
+                            ]),
+                        Infolists\Components\TextEntry::make('problem_description')
+                            ->label('Περιγραφή προβλήματος')
+                            ->columnSpanFull(),
+                        Infolists\Components\TextEntry::make('diagnosis')
+                            ->label('Διάγνωση')
+                            ->placeholder('Δεν έχει καταχωρηθεί')
+                            ->columnSpanFull(),
+                        Infolists\Components\TextEntry::make('work_performed')
+                            ->label('Εργασίες που εκτελέστηκαν')
+                            ->placeholder('Δεν έχει καταχωρηθεί')
+                            ->columnSpanFull(),
+                    ])
+                    ->columns(1),
+                Infolists\Components\Section::make('Στοιχεία Service')
+                    ->schema([
+                        Infolists\Components\TextEntry::make('current_mileage')
+                            ->label('Τρέχοντα χιλιόμετρα')
+                            ->suffix(' km'),
+                        Infolists\Components\TextEntry::make('next_service_date')
+                            ->label('Ημερομηνία επόμενου service')
+                            ->date('d/m/Y'),
+                        Infolists\Components\TextEntry::make('next_service_mileage')
+                            ->label('Χιλιόμετρα επόμενου service')
+                            ->suffix(' km'),
+                    ])
+                    ->visible(fn (WorkOrder $record): bool => filled($record->current_mileage) || filled($record->next_service_date) || filled($record->next_service_mileage))
+                    ->columns(3),
+                Infolists\Components\Section::make('Κόστος')
+                    ->schema([
+                        Infolists\Components\TextEntry::make('labor_cost')
+                            ->label('Κόστος εργασίας')
+                            ->money('EUR'),
+                        Infolists\Components\TextEntry::make('parts_cost')
+                            ->label('Κόστος ανταλλακτικών')
+                            ->money('EUR'),
+                        Infolists\Components\TextEntry::make('total_cost')
+                            ->label('Συνολικό κόστος')
+                            ->money('EUR')
+                            ->weight('bold'),
+                    ])
+                    ->columns(3),
             ]);
     }
 

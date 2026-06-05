@@ -11,6 +11,11 @@ class ViewVehicle extends ViewRecord
 {
     protected static string $resource = VehicleResource::class;
 
+    public function getTitle(): string
+    {
+        return 'Καρτέλα Οχήματος';
+    }
+
     protected function getHeaderWidgets(): array
     {
         return [

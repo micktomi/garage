@@ -14,4 +14,9 @@ class Part extends Model
         'purchase_price',
         'sale_price',
     ];
+
+    public function workOrderParts()
+    {
+        return $this->hasMany(WorkOrderPart::class);
+    }
 }

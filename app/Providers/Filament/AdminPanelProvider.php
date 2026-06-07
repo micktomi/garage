@@ -3,6 +3,7 @@
 namespace App\Providers\Filament;
 
 use App\Filament\Widgets\GarageStatsOverview;
+use App\Filament\Widgets\KteoRemindersWidget;
 use App\Filament\Widgets\QuickVehicleSearchWidget;
 use App\Filament\Widgets\WorkOrdersByStatusChart;
 use Filament\Http\Middleware\Authenticate;
@@ -43,6 +44,7 @@ class AdminPanelProvider extends PanelProvider
             ->widgets([
                 QuickVehicleSearchWidget::class,
                 GarageStatsOverview::class,
+                KteoRemindersWidget::class,
                 WorkOrdersByStatusChart::class,
                 Widgets\AccountWidget::class,
             ])

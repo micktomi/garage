@@ -9,6 +9,7 @@ use App\Models\Vehicle;
 use App\Models\VehicleModel;
 use Filament\Forms;
 use Filament\Forms\Form;
+use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Get;
@@ -69,6 +70,10 @@ class VehicleResource extends Resource
                 Forms\Components\TextInput::make('year')
                     ->label('Έτος')
                     ->numeric(),
+                DatePicker::make('kteo_expires_at')
+                    ->label('Λήξη ΚΤΕΟ')
+                    ->native(false)
+                    ->displayFormat('d/m/Y'),
                 Forms\Components\TextInput::make('mileage')
                     ->label('Χιλιόμετρα')
                     ->numeric(),

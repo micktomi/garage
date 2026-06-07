@@ -13,9 +13,14 @@ class Vehicle extends Model
         'make',
         'model',
         'year',
+        'kteo_expires_at',
         'mileage',
         'vin',
         'notes',
+    ];
+
+    protected $casts = [
+        'kteo_expires_at' => 'date',
     ];
 
     public function customer()

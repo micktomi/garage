@@ -51,8 +51,9 @@ class KteoRemindersWidget extends BaseWidget
                     ->label('Λήξη ΚΤΕΟ')
                     ->date('d/m/Y'),
 
-                Tables\Columns\BadgeColumn::make('kteo_status')
+                Tables\Columns\TextColumn::make('kteo_status')
                     ->label('Κατάσταση')
+                    ->badge()
                     ->state(function (Vehicle $record) use ($today): string {
                         $expires = $record->kteo_expires_at;
                         if ($expires->lt($today)) {

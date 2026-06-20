@@ -37,4 +37,20 @@ class WorkOrdersByStatusChart extends ChartWidget
     {
         return 'doughnut';
     }
+
+    protected function getOptions(): array
+    {
+        return [
+            'scales' => [
+                'x' => ['display' => false],
+                'y' => ['display' => false],
+            ],
+            'plugins' => [
+                'legend' => [
+                    'display' => true,
+                    'position' => 'bottom',
+                ],
+            ],
+        ];
+    }
 }

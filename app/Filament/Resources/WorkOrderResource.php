@@ -71,6 +71,20 @@ class WorkOrderResource extends Resource
                         Forms\Components\Repeater::make('workOrderParts')
                             ->label('Λίστα Ανταλλακτικών')
                             ->relationship()
+                            ->live()
+                            ->afterStateUpdated(function (Forms\Get $get, Forms\Set $set) {
+                                $repeaterItems = $get('workOrderParts') ?? [];
+                                $totalPartsCost = 0;
+
+                                foreach ($repeaterItems as $item) {
+                                    $totalPartsCost += (float) ($item['quantity'] ?? 0) * (float) ($item['unit_price'] ?? 0);
+                                }
+
+                                $set('parts_cost', $totalPartsCost);
+                                
+                                $laborCost = (float) ($get('labor_cost') ?? 0);
+                                $set('total_cost', $totalPartsCost + $laborCost);
+                            })
                             ->schema([
                                 Forms\Components\Select::make('part_id')
                                     ->label('Ανταλλακτικό')
@@ -122,16 +136,10 @@ class WorkOrderResource extends Resource
                                     ->label('Σύνολο γραμμής')
                                     ->numeric()
                                     ->prefix('€')
-                                    ->readOnly(),
+                                    ->readOnly()
+                                    ->dehydrated(),
                             ])
-                            ->columns(4)
-                            ->reactive()
-                            ->afterStateUpdated(function (Forms\Get $get, Forms\Set $set) {
-                                $parts = $get('workOrderParts');
-                                $total = collect($parts)->sum('line_total');
-                                $set('parts_cost', $total);
-                                $set('total_cost', $total + (float) $get('labor_cost'));
-                            }),
+                            ->columns(4),
                     ]),
 
                 Forms\Components\Section::make('Στοιχεία Service')

@@ -45,8 +45,25 @@ class WorkOrder extends Model
 
     public function calculatePartsCost()
     {
-        $this->parts_cost = $this->workOrderParts()->sum('line_total');
+        $this->parts_cost = $this->workOrderParts()->selectRaw('SUM(quantity * unit_price) as total')->value('total') ?? 0;
         $this->total_cost = $this->parts_cost + $this->labor_cost;
         $this->saveQuietly();
+    }
+
+    protected static function booted(): void
+    {
+        static::updated(function (WorkOrder $workOrder) {
+            if (
+                $workOrder->wasChanged('status') &&
+                $workOrder->status === 'cancelled' &&
+                $workOrder->getOriginal('status') !== 'cancelled'
+            ) {
+                foreach ($workOrder->workOrderParts as $workOrderPart) {
+                    if ($workOrderPart->part) {
+                        $workOrderPart->part->increment('quantity', $workOrderPart->quantity);
+                    }
+                }
+            }
+        });
     }
 }

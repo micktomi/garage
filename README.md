@@ -148,4 +148,4 @@ Do not commit:
 
 Current status: demo-ready Laravel / Filament workshop management application.
 
-The project is suitable for local demonstration and evaluation by a small workshop.
+The project is suitable for local demonstration and evaluation by a small workshop.# garage

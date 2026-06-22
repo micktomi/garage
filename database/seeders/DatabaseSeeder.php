@@ -18,5 +18,11 @@ class DatabaseSeeder extends Seeder
             VehicleModelSeeder::class,
             PartSeeder::class,
         ]);
+
+        if (app()->environment('local')) {
+            $this->call([
+                GarageDemoSeeder::class,
+            ]);
+        }
     }
 }

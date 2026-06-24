@@ -2,69 +2,51 @@
 
 namespace App\Filament\Widgets;
 
+use App\Filament\Resources\VehicleResource;
 use App\Models\Vehicle;
-use Filament\Forms\Components\TextInput;
-use Filament\Forms\Concerns\InteractsWithForms;
-use Filament\Forms\Contracts\HasForms;
-use Filament\Tables\Actions\Action;
-use Filament\Tables\Columns\TextColumn;
-use Filament\Tables\Concerns\InteractsWithTable;
-use Filament\Tables\Contracts\HasTable;
-use Filament\Tables\Table;
-use Filament\Widgets\TableWidget as BaseWidget;
-use Illuminate\Database\Eloquent\Builder;
+use Filament\Widgets\Widget;
+use Illuminate\Database\Eloquent\Collection;
 
-class QuickVehicleSearchWidget extends BaseWidget implements HasForms, HasTable
+class QuickVehicleSearchWidget extends Widget
 {
-    use InteractsWithForms;
-    use InteractsWithTable;
+    protected static string $view = 'filament.widgets.quick-vehicle-search-widget';
 
     protected static ?string $heading = 'Γρήγορη αναζήτηση οχήματος / πελάτη';
 
+    protected static ?int $sort = 5;
+
     protected int | string | array $columnSpan = 'full';
 
-    public function table(Table $table): Table
+    public ?string $search = null;
+
+    public function getResults(): Collection
     {
-        return $table
-            ->query(
-                Vehicle::query()
-                    ->with('customer')
-            )
-            ->modifyQueryUsing(function (Builder $query) {
-                $search = $this->tableSearch;
-                if (strlen($search) < 2) {
-                    return $query->whereRaw('1 = 0');
-                }
-                return $query;
+        $search = trim($this->search ?? '');
+
+        if (mb_strlen($search) < 2) {
+            return new Collection();
+        }
+
+        return Vehicle::query()
+            ->with('customer')
+            ->where(function ($query) use ($search) {
+                $query
+                    ->where('plate_number', 'like', "%{$search}%")
+                    ->orWhere('make', 'like', "%{$search}%")
+                    ->orWhere('model', 'like', "%{$search}%")
+                    ->orWhereHas('customer', function ($query) use ($search) {
+                        $query
+                            ->where('full_name', 'like', "%{$search}%")
+                            ->orWhere('phone', 'like', "%{$search}%");
+                    });
             })
-            ->columns([
-                TextColumn::make('plate_number')
-                    ->label('Πινακίδα')
-                    ->searchable()
-                    ->weight('bold'),
-                TextColumn::make('make')
-                    ->label('Μάρκα')
-                    ->searchable(),
-                TextColumn::make('model')
-                    ->label('Μοντέλο')
-                    ->searchable(),
-                TextColumn::make('customer.full_name')
-                    ->label('Πελάτης')
-                    ->searchable(),
-                TextColumn::make('customer.phone')
-                    ->label('Τηλέφωνο')
-                    ->searchable(),
-            ])
-            ->actions([
-                Action::make('view')
-                    ->label('Προβολή')
-                    ->icon('heroicon-m-eye')
-                    ->url(fn (Vehicle $record): string => \App\Filament\Resources\VehicleResource::getUrl('view', ['record' => $record])),
-            ])
-            ->emptyStateHeading(fn () => strlen($this->tableSearch) < 2 
-                ? 'Πληκτρολογήστε τουλάχιστον 2 χαρακτήρες για αναζήτηση' 
-                : 'Δεν βρέθηκαν αποτελέσματα')
-            ->searchPlaceholder('Πινακίδα, Μάρκα, Μοντέλο, Πελάτης ή Τηλέφωνο...')
-            ->searchDebounce('500ms');
+            ->latest()
+            ->limit(8)
+            ->get();
+    }
+
+    public function vehicleUrl(Vehicle $vehicle): string
+    {
+        return VehicleResource::getUrl('view', ['record' => $vehicle]);
     }
 }

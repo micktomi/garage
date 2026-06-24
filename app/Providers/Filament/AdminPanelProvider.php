@@ -4,6 +4,7 @@ namespace App\Providers\Filament;
 
 use App\Filament\Widgets\GarageStatsOverview;
 use App\Filament\Widgets\KteoRemindersWidget;
+use App\Filament\Widgets\QuickActionsWidget;
 use App\Filament\Widgets\QuickVehicleSearchWidget;
 use App\Filament\Widgets\WorkOrdersByStatusChart;
 use Filament\Http\Middleware\Authenticate;
@@ -42,10 +43,11 @@ class AdminPanelProvider extends PanelProvider
             ])
             ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\Filament\Widgets')
             ->widgets([
-                QuickVehicleSearchWidget::class,
                 GarageStatsOverview::class,
                 KteoRemindersWidget::class,
                 WorkOrdersByStatusChart::class,
+                QuickActionsWidget::class,
+                QuickVehicleSearchWidget::class,
                 Widgets\AccountWidget::class,
             ])
             ->middleware([

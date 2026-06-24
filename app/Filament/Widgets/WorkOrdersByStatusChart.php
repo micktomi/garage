@@ -2,55 +2,48 @@
 
 namespace App\Filament\Widgets;
 
+use App\Filament\Resources\WorkOrderResource;
 use App\Models\WorkOrder;
-use Filament\Widgets\ChartWidget;
+use Filament\Widgets\StatsOverviewWidget as BaseWidget;
+use Filament\Widgets\StatsOverviewWidget\Stat;
 
-class WorkOrdersByStatusChart extends ChartWidget
+class WorkOrdersByStatusChart extends BaseWidget
 {
-    protected static ?string $heading = 'Κατάσταση Εργασιών';
+    protected static ?int $sort = 3;
 
-    protected function getData(): array
+    protected int | string | array $columnSpan = 'full';
+
+    public function updateChartData(): void
     {
-        $statuses = [
-            'new' => 'Νέες',
-            'in_progress' => 'Σε εξέλιξη',
-            'completed' => 'Ολοκληρωμένες',
-            'cancelled' => 'Ακυρωμένες',
-        ];
-
-        return [
-            'datasets' => [
-                [
-                    'label' => 'Εντολές εργασίας',
-                    'data' => collect($statuses)
-                        ->keys()
-                        ->map(fn (string $status): int => WorkOrder::where('status', $status)->count())
-                        ->all(),
-                    'backgroundColor' => ['#60a5fa', '#f59e0b', '#22c55e', '#ef4444'],
-                ],
-            ],
-            'labels' => array_values($statuses),
-        ];
+        // Kept so an already-open dashboard tab with the old chart polling does not error.
     }
 
-    protected function getType(): string
-    {
-        return 'doughnut';
-    }
-
-    protected function getOptions(): array
+    protected function getStats(): array
     {
         return [
-            'scales' => [
-                'x' => ['display' => false],
-                'y' => ['display' => false],
-            ],
-            'plugins' => [
-                'legend' => [
-                    'display' => true,
-                    'position' => 'bottom',
-                ],
-            ],
+            Stat::make('Νέες', WorkOrder::where('status', 'new')->count())
+                ->description('Προς ανάθεση')
+                ->color('info')
+                ->icon('heroicon-o-inbox')
+                ->url(WorkOrderResource::getUrl('index')),
+
+            Stat::make('Σε εξέλιξη', WorkOrder::where('status', 'in_progress')->count())
+                ->description('Στο συνεργείο')
+                ->color('warning')
+                ->icon('heroicon-o-wrench-screwdriver')
+                ->url(WorkOrderResource::getUrl('index')),
+
+            Stat::make('Ολοκληρωμένες', WorkOrder::where('status', 'completed')->count())
+                ->description('Έτοιμες / κλειστές')
+                ->color('success')
+                ->icon('heroicon-o-check-circle')
+                ->url(WorkOrderResource::getUrl('index')),
+
+            Stat::make('Ακυρωμένες', WorkOrder::where('status', 'cancelled')->count())
+                ->description('Δεν προχωρούν')
+                ->color('danger')
+                ->icon('heroicon-o-x-circle')
+                ->url(WorkOrderResource::getUrl('index')),
         ];
     }
 }

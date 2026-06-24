@@ -53,6 +53,14 @@
     padding: 1.35rem;
 }
 
+.fi-wi-stats-overview-stat-value {
+    color: var(--garage-anthracite);
+}
+
+.dark .fi-wi-stats-overview-stat-value {
+    color: var(--garage-anthracite);
+}
+
 .fi-wi-stats-overview-stat:hover {
     border-color: #f1c27d;
     box-shadow: 0 14px 30px rgb(31 41 51 / 0.1);

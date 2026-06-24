@@ -35,29 +35,58 @@ class WorkOrderCostTest extends TestCase
         ]);
     }
 
-    public function test_parts_cost_and_total_computed_correctly(): void
+    public function test_single_quantity_part_computes_costs_and_line_total(): void
     {
         $workOrder = $this->makeWorkOrder();
 
         $part = Part::create([
             'code' => 'P001',
-            'name' => 'Test Part',
+            'name' => 'Single Quantity Part',
             'quantity' => 10,
-            'sale_price' => 12,
+            'sale_price' => 20,
         ]);
 
-        WorkOrderPart::create([
+        $workOrderPart = WorkOrderPart::create([
             'work_order_id' => $workOrder->id,
             'part_id' => $part->id,
-            'quantity' => 4,
-            'unit_price' => 12,
-            'line_total' => 48,
+            'quantity' => 1,
+            'unit_price' => 20,
+            'line_total' => 0,
         ]);
 
         $workOrder->refresh();
+        $workOrderPart->refresh();
 
-        $this->assertEquals(48, $workOrder->parts_cost, 'parts_cost πρέπει 4×12=48');
-        $this->assertEquals(108, $workOrder->total_cost, 'total_cost πρέπει 60+48=108');
+        $this->assertEquals(20, $workOrderPart->line_total, 'line_total πρέπει 1×20=20');
+        $this->assertEquals(20, $workOrder->parts_cost, 'parts_cost πρέπει 1×20=20');
+        $this->assertEquals(80, $workOrder->total_cost, 'total_cost πρέπει 60+20=80');
+    }
+
+    public function test_two_quantity_part_computes_costs_and_line_total(): void
+    {
+        $workOrder = $this->makeWorkOrder();
+
+        $part = Part::create([
+            'code' => 'P003',
+            'name' => 'Two Quantity Part',
+            'quantity' => 10,
+            'sale_price' => 20,
+        ]);
+
+        $workOrderPart = WorkOrderPart::create([
+            'work_order_id' => $workOrder->id,
+            'part_id' => $part->id,
+            'quantity' => 2,
+            'unit_price' => 20,
+            'line_total' => 0,
+        ]);
+
+        $workOrder->refresh();
+        $workOrderPart->refresh();
+
+        $this->assertEquals(40, $workOrderPart->line_total, 'line_total πρέπει 2×20=40');
+        $this->assertEquals(40, $workOrder->parts_cost, 'parts_cost πρέπει 2×20=40');
+        $this->assertEquals(100, $workOrder->total_cost, 'total_cost πρέπει 60+40=100');
     }
 
     public function test_parts_cost_ignores_stale_line_total(): void
@@ -65,7 +94,7 @@ class WorkOrderCostTest extends TestCase
         $workOrder = $this->makeWorkOrder();
 
         $part = Part::create([
-            'code' => 'P002',
+            'code' => 'P003',
             'name' => 'Stale Part',
             'quantity' => 10,
             'sale_price' => 12,

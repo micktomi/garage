@@ -15,6 +15,15 @@ class WorkOrderPart extends Model
         'line_total',
     ];
 
+    protected function casts(): array
+    {
+        return [
+            'quantity' => 'integer',
+            'unit_price' => 'decimal:2',
+            'line_total' => 'decimal:2',
+        ];
+    }
+
     public function workOrder(): BelongsTo
     {
         return $this->belongsTo(WorkOrder::class);
@@ -27,6 +36,14 @@ class WorkOrderPart extends Model
 
     protected static function booted()
     {
+        static::saving(function (WorkOrderPart $workOrderPart) {
+            $quantity = max(1, (int) ($workOrderPart->quantity ?: 1));
+            $unitPrice = (float) ($workOrderPart->unit_price ?: 0);
+
+            $workOrderPart->quantity = $quantity;
+            $workOrderPart->line_total = $quantity * $unitPrice;
+        });
+
         static::created(function ($workOrderPart) {
             $workOrderPart->part->decrement('quantity', $workOrderPart->quantity);
             $workOrderPart->workOrder->calculatePartsCost();

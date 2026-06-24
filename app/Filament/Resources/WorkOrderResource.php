@@ -28,6 +28,37 @@ class WorkOrderResource extends Resource
 
     protected static ?string $pluralModelLabel = 'Εντολές Εργασίας';
 
+    private static function calculatePartsCostFromItems(array $items): float
+    {
+        $total = 0;
+
+        foreach ($items as $item) {
+            $quantity = max(1, (int) ($item['quantity'] ?? 1));
+            $unitPrice = (float) ($item['unit_price'] ?? 0);
+
+            $total += $quantity * $unitPrice;
+        }
+
+        return $total;
+    }
+
+    private static function syncWorkOrderCosts(Forms\Get $get, Forms\Set $set, string $prefix = ''): void
+    {
+        $totalPartsCost = self::calculatePartsCostFromItems($get($prefix . 'workOrderParts') ?? []);
+
+        $set($prefix . 'parts_cost', $totalPartsCost);
+        $set($prefix . 'total_cost', $totalPartsCost + (float) ($get($prefix . 'labor_cost') ?? 0));
+    }
+
+    private static function syncLineTotal(Forms\Get $get, Forms\Set $set): void
+    {
+        $quantity = max(1, (int) ($get('quantity') ?: 1));
+        $unitPrice = (float) ($get('unit_price') ?: 0);
+
+        $set('quantity', $quantity);
+        $set('line_total', $quantity * $unitPrice);
+    }
+
     public static function form(Form $form): Form
     {
         return $form
@@ -72,19 +103,7 @@ class WorkOrderResource extends Resource
                             ->label('Λίστα Ανταλλακτικών')
                             ->relationship()
                             ->live()
-                            ->afterStateUpdated(function (Forms\Get $get, Forms\Set $set) {
-                                $repeaterItems = $get('workOrderParts') ?? [];
-                                $totalPartsCost = 0;
-
-                                foreach ($repeaterItems as $item) {
-                                    $totalPartsCost += (float) ($item['quantity'] ?? 0) * (float) ($item['unit_price'] ?? 0);
-                                }
-
-                                $set('parts_cost', $totalPartsCost);
-                                
-                                $laborCost = (float) ($get('labor_cost') ?? 0);
-                                $set('total_cost', $totalPartsCost + $laborCost);
-                            })
+                            ->afterStateUpdated(fn (Forms\Get $get, Forms\Set $set) => self::syncWorkOrderCosts($get, $set))
                             ->schema([
                                 Forms\Components\Select::make('part_id')
                                     ->label('Ανταλλακτικό')
@@ -92,23 +111,31 @@ class WorkOrderResource extends Resource
                                     ->required()
                                     ->searchable()
                                     ->reactive()
-                                    ->afterStateUpdated(function ($state, Forms\Set $set) {
+                                    ->afterStateUpdated(function ($state, Forms\Get $get, Forms\Set $set) {
                                         $part = Part::find($state);
-                                        if ($part) {
-                                            $set('unit_price', $part->sale_price);
-                                            $set('quantity', 1);
-                                            $set('line_total', $part->sale_price);
+
+                                        if (!$part) {
+                                            return;
                                         }
+
+                                        $quantity = max(1, (int) ($get('quantity') ?: 1));
+
+                                        $set('unit_price', $part->sale_price);
+                                        $set('quantity', $quantity);
+                                        $set('line_total', $quantity * (float) $part->sale_price);
+
+                                        self::syncWorkOrderCosts($get, $set, '../../');
                                     }),
                                 Forms\Components\TextInput::make('quantity')
                                     ->label('Ποσότητα')
                                     ->numeric()
                                     ->default(1)
                                     ->required()
+                                    ->minValue(1)
                                     ->reactive()
                                     ->afterStateUpdated(function ($state, Forms\Get $get, Forms\Set $set) {
-                                        $unitPrice = (float) $get('unit_price');
-                                        $set('line_total', (float) $state * $unitPrice);
+                                        self::syncLineTotal($get, $set);
+                                        self::syncWorkOrderCosts($get, $set, '../../');
                                     })
                                     ->rule(function (Forms\Get $get) {
                                         return function (string $attribute, $value, $fail) use ($get) {
@@ -129,8 +156,8 @@ class WorkOrderResource extends Resource
                                     ->required()
                                     ->reactive()
                                     ->afterStateUpdated(function ($state, Forms\Get $get, Forms\Set $set) {
-                                        $quantity = (float) $get('quantity');
-                                        $set('line_total', (float) $state * $quantity);
+                                        self::syncLineTotal($get, $set);
+                                        self::syncWorkOrderCosts($get, $set, '../../');
                                     }),
                                 Forms\Components\TextInput::make('line_total')
                                     ->label('Σύνολο γραμμής')

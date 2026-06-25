@@ -77,6 +77,20 @@ class KteoRemindersWidget extends BaseWidget
                         return 'gray';
                     }),
             ])
+            ->actions([
+                Tables\Actions\Action::make('sms_kteo')
+                    ->label('SMS')
+                    ->icon('heroicon-o-chat-bubble-left-ellipsis')
+                    ->color('success')
+                    ->modalHeading('Αποστολή SMS υπενθύμισης ΚΤΕΟ')
+                    ->modalContent(fn (Vehicle $record) => view('filament.sms-modal', [
+                        'phone'   => $record->customer?->phone,
+                        'message' => "Καλησπέρα σας. Σας υπενθυμίζουμε ότι πλησιάζει / έχει λήξει το ΚΤΕΟ για το όχημά σας με πινακίδα {$record->plate_number}. Παρακαλώ επικοινωνήστε με το συνεργείο.",
+                    ]))
+                    ->modalSubmitAction(false)
+                    ->modalCancelActionLabel('Κλείσιμο')
+                    ->visible(fn (Vehicle $record): bool => filled($record->customer?->phone)),
+            ])
             ->paginated(false);
     }
 }

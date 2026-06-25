@@ -29,6 +29,15 @@ class WorkOrderPart extends Model
         return $this->belongsTo(Part::class);
     }
 
+    public function displayName(): string
+    {
+        if ($this->source === 'from_stock') {
+            return $this->part?->name ?? $this->description ?? '-';
+        }
+
+        return $this->description ?? '-';
+    }
+
     protected static function booted()
     {
         static::created(function ($workOrderPart) {

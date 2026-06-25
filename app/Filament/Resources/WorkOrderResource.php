@@ -86,20 +86,40 @@ class WorkOrderResource extends Resource
                                 $set('total_cost', $totalPartsCost + $laborCost);
                             })
                             ->schema([
-                                Forms\Components\Select::make('part_id')
-                                    ->label('Ανταλλακτικό')
-                                    ->options(Part::query()->pluck('name', 'id'))
+                                Forms\Components\Select::make('source')
+                                    ->label('Προέλευση')
+                                    ->options([
+                                        'from_stock'        => 'Από απόθεμα',
+                                        'customer_supplied' => 'Έφερε ο πελάτης',
+                                        'purchased_for_job' => 'Αγοράστηκε για τη δουλειά',
+                                    ])
+                                    ->default('from_stock')
                                     ->required()
+                                    ->reactive()
+                                    ->afterStateUpdated(function (Forms\Set $set) {
+                                        $set('part_id', null);
+                                    }),
+                                Forms\Components\Select::make('part_id')
+                                    ->label('Ανταλλακτικό αποθέματος')
+                                    ->options(Part::query()->pluck('name', 'id'))
                                     ->searchable()
                                     ->reactive()
+                                    ->visible(fn (Forms\Get $get) => $get('source') === 'from_stock')
+                                    ->required(fn (Forms\Get $get) => $get('source') === 'from_stock')
                                     ->afterStateUpdated(function ($state, Forms\Set $set) {
                                         $part = Part::find($state);
                                         if ($part) {
                                             $set('unit_price', $part->sale_price);
+                                            $set('unit_cost', $part->purchase_price);
                                             $set('quantity', 1);
                                             $set('line_total', $part->sale_price);
+                                            $set('description', $part->name);
                                         }
                                     }),
+                                Forms\Components\TextInput::make('description')
+                                    ->label('Περιγραφή')
+                                    ->required(fn (Forms\Get $get) => $get('source') !== 'from_stock')
+                                    ->maxLength(255),
                                 Forms\Components\TextInput::make('quantity')
                                     ->label('Ποσότητα')
                                     ->numeric()
@@ -112,18 +132,23 @@ class WorkOrderResource extends Resource
                                     })
                                     ->rule(function (Forms\Get $get) {
                                         return function (string $attribute, $value, $fail) use ($get) {
+                                            if ($get('source') !== 'from_stock') return;
                                             $partId = $get('part_id');
                                             if (!$partId) return;
                                             $part = Part::find($partId);
                                             if (!$part) return;
-                                            
                                             if ($value > $part->quantity) {
                                                 $fail("Ανεπαρκές απόθεμα. Διαθέσιμο: {$part->quantity}");
                                             }
                                         };
                                     }),
+                                Forms\Components\TextInput::make('unit_cost')
+                                    ->label('Κόστος αγοράς')
+                                    ->numeric()
+                                    ->prefix('€')
+                                    ->nullable(),
                                 Forms\Components\TextInput::make('unit_price')
-                                    ->label('Τιμή μονάδας')
+                                    ->label('Τιμή πώλησης')
                                     ->numeric()
                                     ->prefix('€')
                                     ->required()
@@ -138,8 +163,11 @@ class WorkOrderResource extends Resource
                                     ->prefix('€')
                                     ->readOnly()
                                     ->dehydrated(),
+                                Forms\Components\TextInput::make('note')
+                                    ->label('Σημείωση')
+                                    ->maxLength(255),
                             ])
-                            ->columns(4),
+                            ->columns(3),
                     ]),
 
                 Forms\Components\Section::make('Στοιχεία Service')
@@ -315,6 +343,18 @@ class WorkOrderResource extends Resource
                 //
             ])
             ->actions([
+                Tables\Actions\Action::make('sms_ready')
+                    ->label('SMS Έτοιμο')
+                    ->icon('heroicon-o-chat-bubble-left-ellipsis')
+                    ->color('success')
+                    ->modalHeading('SMS — Έτοιμο για παραλαβή')
+                    ->modalContent(fn (WorkOrder $record) => view('filament.sms-modal', [
+                        'phone'   => $record->customer?->phone,
+                        'message' => "Καλησπέρα σας. Το όχημά σας με πινακίδα {$record->vehicle?->plate_number} είναι έτοιμο για παραλαβή από το συνεργείο.",
+                    ]))
+                    ->modalSubmitAction(false)
+                    ->modalCancelActionLabel('Κλείσιμο')
+                    ->visible(fn (WorkOrder $record): bool => filled($record->customer?->phone)),
                 Tables\Actions\Action::make('print')
                     ->label('Εκτύπωση')
                     ->icon('heroicon-o-printer')

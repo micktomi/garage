@@ -93,10 +93,27 @@
                 <tbody>
                     @foreach($workOrder->workOrderParts as $part)
                     <tr>
-                        <td style="padding: 5px; border: 1px solid #eee;">{{ $part->part->name }}</td>
+                        <td style="padding: 5px; border: 1px solid #eee;">
+                            {{ $part->displayName() }}
+                            @if($part->source === 'customer_supplied')
+                                <span style="font-size: 0.82em; color: #888; font-style: italic;"> — παρεχόμενο από πελάτη</span>
+                            @endif
+                        </td>
                         <td style="padding: 5px; border: 1px solid #eee; text-align: center;">{{ $part->quantity }}</td>
-                        <td style="padding: 5px; border: 1px solid #eee; text-align: right;">{{ number_format($part->unit_price, 2) }} €</td>
-                        <td style="padding: 5px; border: 1px solid #eee; text-align: right;">{{ number_format($part->line_total, 2) }} €</td>
+                        <td style="padding: 5px; border: 1px solid #eee; text-align: right;">
+                            @if($part->source === 'customer_supplied' && $part->unit_price == 0)
+                                —
+                            @else
+                                {{ number_format($part->unit_price, 2) }} €
+                            @endif
+                        </td>
+                        <td style="padding: 5px; border: 1px solid #eee; text-align: right;">
+                            @if($part->source === 'customer_supplied' && $part->line_total == 0)
+                                —
+                            @else
+                                {{ number_format($part->line_total, 2) }} €
+                            @endif
+                        </td>
                     </tr>
                     @endforeach
                 </tbody>

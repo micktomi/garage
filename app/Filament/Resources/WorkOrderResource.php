@@ -96,8 +96,13 @@ class WorkOrderResource extends Resource
                                     ->default('from_stock')
                                     ->required()
                                     ->reactive()
-                                    ->afterStateUpdated(function (Forms\Set $set) {
+                                    ->afterStateUpdated(function (Forms\Set $set, $state) {
                                         $set('part_id', null);
+                                        if ($state === 'customer_supplied') {
+                                            $set('unit_price', 0);
+                                            $set('unit_cost', 0);
+                                            $set('line_total', 0);
+                                        }
                                     }),
                                 Forms\Components\Select::make('part_id')
                                     ->label('Ανταλλακτικό αποθέματος')
@@ -151,7 +156,8 @@ class WorkOrderResource extends Resource
                                     ->label('Τιμή πώλησης')
                                     ->numeric()
                                     ->prefix('€')
-                                    ->required()
+                                    ->default(0)
+                                    ->required(fn (Forms\Get $get) => $get('source') !== 'customer_supplied')
                                     ->reactive()
                                     ->afterStateUpdated(function ($state, Forms\Get $get, Forms\Set $set) {
                                         $quantity = (float) $get('quantity');

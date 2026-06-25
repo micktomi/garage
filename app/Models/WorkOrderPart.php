@@ -10,9 +10,13 @@ class WorkOrderPart extends Model
     protected $fillable = [
         'work_order_id',
         'part_id',
+        'source',
+        'description',
         'quantity',
+        'unit_cost',
         'unit_price',
         'line_total',
+        'note',
     ];
 
     public function workOrder(): BelongsTo
@@ -28,29 +32,35 @@ class WorkOrderPart extends Model
     protected static function booted()
     {
         static::created(function ($workOrderPart) {
-            $workOrderPart->part->decrement('quantity', $workOrderPart->quantity);
+            if ($workOrderPart->source === 'from_stock' && $workOrderPart->part_id) {
+                $workOrderPart->part->decrement('quantity', $workOrderPart->quantity);
+            }
             $workOrderPart->workOrder->calculatePartsCost();
         });
 
         static::updated(function ($workOrderPart) {
-            if ($workOrderPart->isDirty('part_id')) {
-                $oldPartId = $workOrderPart->getOriginal('part_id');
-                $oldQuantity = $workOrderPart->getOriginal('quantity');
-                $oldPart = Part::find($oldPartId);
-                if ($oldPart) {
-                    $oldPart->increment('quantity', $oldQuantity);
+            if ($workOrderPart->source === 'from_stock' && $workOrderPart->part_id) {
+                if ($workOrderPart->isDirty('part_id')) {
+                    $oldPartId = $workOrderPart->getOriginal('part_id');
+                    $oldQuantity = $workOrderPart->getOriginal('quantity');
+                    $oldPart = Part::find($oldPartId);
+                    if ($oldPart) {
+                        $oldPart->increment('quantity', $oldQuantity);
+                    }
+                    $workOrderPart->part->decrement('quantity', $workOrderPart->quantity);
+                } else {
+                    $oldQuantity = $workOrderPart->getOriginal('quantity');
+                    $diff = $workOrderPart->quantity - $oldQuantity;
+                    $workOrderPart->part->decrement('quantity', $diff);
                 }
-                $workOrderPart->part->decrement('quantity', $workOrderPart->quantity);
-            } else {
-                $oldQuantity = $workOrderPart->getOriginal('quantity');
-                $diff = $workOrderPart->quantity - $oldQuantity;
-                $workOrderPart->part->decrement('quantity', $diff);
             }
             $workOrderPart->workOrder->calculatePartsCost();
         });
 
         static::deleted(function ($workOrderPart) {
-            $workOrderPart->part->increment('quantity', $workOrderPart->quantity);
+            if ($workOrderPart->source === 'from_stock' && $workOrderPart->part_id) {
+                $workOrderPart->part->increment('quantity', $workOrderPart->quantity);
+            }
             $workOrderPart->workOrder->calculatePartsCost();
         });
     }

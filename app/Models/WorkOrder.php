@@ -59,7 +59,7 @@ class WorkOrder extends Model
                 $workOrder->getOriginal('status') !== 'cancelled'
             ) {
                 foreach ($workOrder->workOrderParts as $workOrderPart) {
-                    if ($workOrderPart->part) {
+                    if ($workOrderPart->source === 'from_stock' && $workOrderPart->part) {
                         $workOrderPart->part->increment('quantity', $workOrderPart->quantity);
                     }
                 }

@@ -49,6 +49,7 @@ class WorkOrderCostTest extends TestCase
         WorkOrderPart::create([
             'work_order_id' => $workOrder->id,
             'part_id' => $part->id,
+            'source' => 'from_stock',
             'quantity' => 4,
             'unit_price' => 12,
             'line_total' => 48,
@@ -76,6 +77,7 @@ class WorkOrderCostTest extends TestCase
             WorkOrderPart::create([
                 'work_order_id' => $workOrder->id,
                 'part_id' => $part->id,
+                'source' => 'from_stock',
                 'quantity' => 4,
                 'unit_price' => 12,
                 'line_total' => 36, // stale — was 3×12, now qty is 4

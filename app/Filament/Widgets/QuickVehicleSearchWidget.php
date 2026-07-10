@@ -19,9 +19,18 @@ class QuickVehicleSearchWidget extends BaseWidget implements HasForms, HasTable
     use InteractsWithForms;
     use InteractsWithTable;
 
+    protected static bool $isDiscovered = false;
+
+    public static function canView(): bool
+    {
+        return false;
+    }
+
     protected static ?string $heading = 'Γρήγορη αναζήτηση οχήματος / πελάτη';
 
     protected int | string | array $columnSpan = 'full';
+
+    protected static string $view = 'filament.widgets.quick-vehicle-search';
 
     public function table(Table $table): Table
     {

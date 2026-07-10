@@ -1,0 +1,157 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Models\Appointment;
+use App\Models\Customer;
+use App\Models\Part;
+use App\Models\Vehicle;
+use App\Models\WorkOrder;
+use App\Models\WorkOrderPart;
+use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
+
+class WorkshopController extends Controller
+{
+    public function dashboard()
+    {
+        $openWorkOrders = WorkOrder::whereIn('status', ['new', 'in_progress'])->count();
+        $todayAppointments = Appointment::whereDate('appointment_date', today())->count();
+        $kteoExpiring = Vehicle::whereNotNull('kteo_expires_at')
+            ->where('kteo_expires_at', '<=', Carbon::today()->addDays(30))
+            ->count();
+
+        return view('workshop.dashboard', compact(
+            'openWorkOrders',
+            'todayAppointments',
+            'kteoExpiring',
+        ));
+    }
+
+    public function workOrdersIndex()
+    {
+        $workOrders = WorkOrder::with(['customer', 'vehicle'])
+            ->whereNotIn('status', ['completed', 'cancelled'])
+            ->latest()
+            ->get();
+
+        return view('workshop.work-orders.index', compact('workOrders'));
+    }
+
+    public function workOrdersCreate()
+    {
+        $customers = Customer::orderBy('full_name')->get(['id', 'full_name']);
+
+        $vehicles = Vehicle::with('customer')
+            ->orderBy('plate_number')
+            ->get();
+
+        $parts = Part::orderBy('name')->get(['id', 'name', 'quantity', 'sale_price']);
+
+        return view('workshop.work-orders.create', compact('customers', 'vehicles', 'parts'));
+    }
+
+    public function workOrdersStore(Request $request)
+    {
+        $validated = $request->validate([
+            'customer_id'         => ['required', 'integer', 'exists:customers,id'],
+            'vehicle_id'          => ['required', 'integer', 'exists:vehicles,id'],
+            'problem_description' => ['required', 'string', 'max:5000'],
+            'labor_cost'          => ['nullable', 'numeric', 'min:0'],
+
+            // single part card
+            'part.source'       => ['nullable', 'string', 'in:from_stock,purchased_for_job,customer_supplied'],
+            'part.part_id'      => ['nullable', 'integer', 'exists:parts,id'],
+            'part.description'  => ['nullable', 'string', 'max:500'],
+            'part.quantity'     => ['nullable', 'numeric', 'min:0.001'],
+            'part.unit_cost'    => ['nullable', 'numeric', 'min:0'],
+            'part.unit_price'   => ['nullable', 'numeric', 'min:0'],
+        ]);
+
+        $laborCost = (float) ($validated['labor_cost'] ?? 0);
+
+        // ── Create the WorkOrder skeleton ──────────────────────────
+        $workOrder = WorkOrder::create([
+            'customer_id'         => $validated['customer_id'],
+            'vehicle_id'          => $validated['vehicle_id'],
+            'problem_description' => $validated['problem_description'],
+            'labor_cost'          => $laborCost,
+            'parts_cost'          => 0,
+            'total_cost'          => $laborCost,
+            'status'              => 'new',
+        ]);
+
+        // ── Process single part card ───────────────────────────────
+        $partRow = $validated['part'] ?? [];
+        $source  = $partRow['source'] ?? null;
+
+        // A part is considered present only if source is set AND has the
+        // required identifier for that source type.
+        $hasPartId = ! empty($partRow['part_id']);
+        $hasDesc   = ! empty(trim($partRow['description'] ?? ''));
+        $partValid = $source &&
+            (($source === 'from_stock' && $hasPartId) ||
+             ($source !== 'from_stock' && $hasDesc));
+
+        if ($partValid) {
+            $qty       = max(0.001, (float) ($partRow['quantity']   ?? 1));
+            $unitCost  = (float) ($partRow['unit_cost']  ?? 0);
+            $unitPrice = (float) ($partRow['unit_price'] ?? 0);
+
+            // customer_supplied: cost always 0
+            if ($source === 'customer_supplied') {
+                $unitCost = 0;
+            }
+
+            $lineTotal = $qty * $unitPrice;
+
+            WorkOrderPart::create([
+                'work_order_id' => $workOrder->id,
+                'source'        => $source,
+                'part_id'       => $source === 'from_stock' ? (int) $partRow['part_id'] : null,
+                'description'   => $hasDesc ? $partRow['description'] : null,
+                'quantity'      => $qty,
+                'unit_cost'     => $unitCost,
+                'unit_price'    => $unitPrice,
+                'line_total'    => $lineTotal,
+            ]);
+
+            // WorkOrderPart::created event calls calculatePartsCost() —
+            // refresh to get updated parts_cost / total_cost.
+            $workOrder->refresh();
+        }
+
+        return redirect()
+            ->route('workshop.work-orders.show', $workOrder)
+            ->with('success', 'Η εντολή εργασίας δημιουργήθηκε.');
+    }
+
+    public function workOrdersShow(WorkOrder $workOrder)
+    {
+        $workOrder->load(['customer', 'vehicle', 'workOrderParts.part']);
+
+        return view('workshop.work-orders.show', compact('workOrder'));
+    }
+
+    public function workOrdersUpdateStatus(Request $request, WorkOrder $workOrder)
+    {
+        $request->validate([
+            'status' => ['required', 'string', 'in:new,in_progress,completed,cancelled'],
+        ]);
+
+        $workOrder->update(['status' => $request->status]);
+
+        $labels = [
+            'new'         => 'Νέα',
+            'in_progress' => 'Σε εξέλιξη',
+            'completed'   => 'Ολοκληρωμένη',
+            'cancelled'   => 'Ακυρωμένη',
+        ];
+
+        $label = $labels[$request->status] ?? $request->status;
+
+        return redirect()
+            ->route('workshop.work-orders.show', $workOrder)
+            ->with('success', "Κατάσταση → {$label}");
+    }
+}

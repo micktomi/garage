@@ -1,3 +1,230 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer utilities {
+  @media (max-width: 768px) {
+    * {
+      backdrop-filter: none !important;
+      -webkit-backdrop-filter: none !important;
+    }
+
+    .backdrop-blur,
+    .backdrop-blur-sm,
+    .backdrop-blur-md,
+    .backdrop-blur-lg,
+    .backdrop-blur-xl,
+    .glass,
+    .glass-card {
+      backdrop-filter: none !important;
+      -webkit-backdrop-filter: none !important;
+    }
+
+    header,
+    nav,
+    .mobile-nav,
+    .bottom-nav,
+    .card,
+    .glass,
+    .glass-card {
+      transform: none !important;
+      filter: none !important;
+    }
+  }
+}
+html,
+body {
+    max-width: 100%;
+    overflow-x: hidden;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+@media (max-width: 640px) {
+    .page,
+    .dashboard,
+    .main-content,
+    .content,
+    .container,
+    .fi-page,
+    .fi-main,
+    .fi-section,
+    .fi-wi,
+    .fi-widgets,
+    .fi-widget {
+        max-width: 100% !important;
+        overflow-x: hidden !important;
+    }
+
+    .stats-grid,
+    .quick-actions-grid,
+    .dashboard-grid {
+        display: grid !important;
+        grid-template-columns: 1fr 1fr !important;
+        gap: 12px !important;
+        width: 100% !important;
+    }
+
+    .quick-search,
+    .search-box,
+    input[type="search"],
+    input[type="text"] {
+        width: 100% !important;
+        max-width: 100% !important;
+    }
+
+    .card,
+    .stat-card,
+    .action-card {
+        min-width: 0 !important;
+        width: 100% !important;
+    }
+}
+@media (max-width: 768px) {
+    html,
+    body {
+        width: 100% !important;
+        max-width: 100% !important;
+        overflow-x: hidden !important;
+        position: relative !important;
+    }
+
+    *,
+    *::before,
+    *::after {
+        box-sizing: border-box !important;
+        max-width: 100% !important;
+        animation: none !important;
+        transition: none !important;
+        scroll-behavior: auto !important;
+    }
+
+    body {
+        touch-action: pan-y !important;
+    }
+
+    .fi-main,
+    .fi-page,
+    .fi-page-content,
+    .fi-section,
+    .fi-widgets,
+    .fi-wi,
+    main,
+    section,
+    article,
+    div {
+        overflow-x: hidden !important;
+    }
+
+    [class*="grid"] {
+        min-width: 0 !important;
+    }
+
+    [class*="translate"],
+    [style*="transform"],
+    [style*="translate"] {
+        transform: none !important;
+    }
+
+    .stats-grid,
+    .quick-actions-grid,
+    .dashboard-grid {
+        display: grid !important;
+        grid-template-columns: 1fr 1fr !important;
+        gap: 12px !important;
+        width: 100% !important;
+        min-width: 0 !important;
+    }
+
+    .stat-card,
+    .action-card,
+    .card,
+    .fi-card,
+    .fi-section,
+    .fi-wi {
+        width: 100% !important;
+        min-width: 0 !important;
+        max-width: 100% !important;
+        transform: none !important;
+    }
+
+    input,
+    textarea,
+    select,
+    button {
+        max-width: 100% !important;
+    }
+
+    .bottom-nav,
+    nav.fixed,
+    .fixed,
+    .sticky {
+        transform: none !important;
+        will-change: auto !important;
+    }
+}
+
+/* Snow/Flake emergency cleanup CSS rules */
+.snow,
+.snowflake,
+.snowflakes,
+[class*="snow"],
+[id*="snow"],
+[class*="flake"],
+[id*="flake"] {
+    display: none !important;
+    visibility: hidden !important;
+    pointer-events: none !important;
+    animation: none !important;
+}
+/* Mobile / Filament contrast hard fix */
+
+.fi-main,
+.fi-page,
+.fi-section,
+.fi-section-content,
+.fi-fo-component-ctn {
+    background: #f7f3ea !important;
+    color: #1f2937 !important;
+}
+
+.fi-header-heading,
+.fi-fo-field-wrp-label label,
+.fi-fo-field-wrp-label span,
+.fi-input-wrp,
+.fi-input,
+.fi-select-input,
+.fi-placeholder,
+.fi-fo-field-wrp-helper-text {
+    color: #1f2937 !important;
+}
+
+.fi-input,
+.fi-select-input,
+input,
+select,
+textarea {
+    background: #ffffff !important;
+    color: #111827 !important;
+    border: 1px solid #d1d5db !important;
+}
+
+.fi-input::placeholder,
+textarea::placeholder {
+    color: #6b7280 !important;
+}
+
+.fi-input-wrp {
+    background: #ffffff !important;
+    border-radius: 12px !important;
+}
+
+.fi-fo-field-wrp-error-message {
+    color: #dc2626 !important;
+}
+
+.fi-btn {
+    color: inherit;
+}

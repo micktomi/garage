@@ -1,9 +1,19 @@
 <?php
 
+use App\Http\Controllers\WorkshopController;
 use App\Models\WorkOrder;
 use Illuminate\Support\Facades\Route;
 
 Route::redirect('/', '/admin');
+
+Route::middleware('auth')->prefix('workshop')->name('workshop.')->group(function () {
+    Route::get('/', [WorkshopController::class, 'dashboard'])->name('dashboard');
+    Route::get('/work-orders', [WorkshopController::class, 'workOrdersIndex'])->name('work-orders.index');
+    Route::get('/work-orders/create', [WorkshopController::class, 'workOrdersCreate'])->name('work-orders.create');
+    Route::post('/work-orders', [WorkshopController::class, 'workOrdersStore'])->name('work-orders.store');
+    Route::get('/work-orders/{workOrder}', [WorkshopController::class, 'workOrdersShow'])->name('work-orders.show');
+    Route::patch('/work-orders/{workOrder}/status', [WorkshopController::class, 'workOrdersUpdateStatus'])->name('work-orders.status');
+});
 
 Route::get('/work-orders/{workOrder}/print', function (WorkOrder $workOrder) {
     $workOrder->load('customer', 'vehicle', 'workOrderParts.part');

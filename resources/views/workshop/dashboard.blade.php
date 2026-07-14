@@ -79,6 +79,21 @@
         line-height: 1.3;
     }
 
+    a.ws-stat {
+        text-decoration: none;
+        color: inherit;
+        transition: border-color 0.15s, transform 0.12s, box-shadow 0.15s;
+        -webkit-tap-highlight-color: transparent;
+    }
+    a.ws-stat:hover,
+    a.ws-stat:focus-visible {
+        border-color: rgba(203, 213, 225, 0.28);
+        box-shadow: var(--highlight), var(--shadow-md);
+        transform: translateY(-1px);
+        outline: none;
+    }
+    a.ws-stat:active { transform: scale(0.985); }
+
     /* ── Search bar ─────────────────────────────────────────────── */
     .ws-search-wrap {
         position: relative;
@@ -306,10 +321,10 @@
         <div class="ws-stat-num">{{ $openWorkOrders }}</div>
         <div class="ws-stat-label">Ανοιχτές εντολές</div>
     </div>
-    <div class="ws-stat ws-stat--blue">
+    <a href="{{ route('workshop.appointments.index') }}" class="ws-stat ws-stat--blue">
         <div class="ws-stat-num">{{ $todayAppointments }}</div>
         <div class="ws-stat-label">Ραντεβού σήμερα</div>
-    </div>
+    </a>
     <div class="ws-stat {{ $kteoExpiring > 0 ? 'ws-stat--red' : 'ws-stat--green' }}">
         <div class="ws-stat-num">{{ $kteoExpiring }}</div>
         <div class="ws-stat-label">ΚΤΕΟ 30 ημερών</div>
@@ -341,8 +356,8 @@
 <div class="ws-label">Ενέργειες</div>
 <div class="ws-actions">
 
-    {{-- Αναζήτηση πινακίδας — disabled, ανεπτυγμένο αργότερα --}}
-    <a href="#" class="ws-card ws-card--disabled">
+    {{-- Αναζήτηση πινακίδας --}}
+    <a href="{{ route('workshop.search') }}" class="ws-card">
         <div class="ws-card-icon ws-card-icon--gray">
             <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round"
@@ -351,7 +366,7 @@
         </div>
         <div class="ws-card-body">
             <div class="ws-card-title">Αναζήτηση πινακίδας</div>
-            <div class="ws-card-sub">Σύντομα</div>
+            <div class="ws-card-sub">Πινακίδα, πελάτης, τηλέφωνο</div>
         </div>
     </a>
 

@@ -22,6 +22,12 @@ Route::middleware('auth')->prefix('workshop')->name('workshop.')->group(function
     Route::post('/vehicles', [WorkshopController::class, 'vehiclesStore'])->name('vehicles.store');
 
     Route::get('/kteo', [WorkshopController::class, 'kteoIndex'])->name('kteo');
+
+    Route::get('/search', [WorkshopController::class, 'search'])->name('search');
+
+    Route::get('/appointments', [WorkshopController::class, 'appointmentsIndex'])->name('appointments.index');
+    Route::get('/appointments/create', [WorkshopController::class, 'appointmentsCreate'])->name('appointments.create');
+    Route::post('/appointments', [WorkshopController::class, 'appointmentsStore'])->name('appointments.store');
 });
 
 Route::get('/work-orders/{workOrder}/print', function (WorkOrder $workOrder) {

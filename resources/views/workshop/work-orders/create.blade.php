@@ -367,7 +367,7 @@
                     class="woc-select {{ $errors->has('customer_id') ? 'is-invalid' : '' }}">
                     <option value="">— Επιλογή πελάτη —</option>
                     @foreach($customers as $customer)
-                        <option value="{{ $customer->id }}" {{ old('customer_id') == $customer->id ? 'selected' : '' }}>
+                        <option value="{{ $customer->id }}" {{ old('customer_id', request()->query('customer_id')) == $customer->id ? 'selected' : '' }}>
                             {{ $customer->full_name }}
                         </option>
                     @endforeach
@@ -751,9 +751,9 @@ function fmt(n) {
 
 /* ── Init ─────────────────────────────────────────────────── */
 document.addEventListener('DOMContentLoaded', function () {
-    // Restore vehicle dropdown scoped to the old customer_id (if any)
+    // Restore vehicle dropdown scoped to the old (or query-string) customer_id, if any
     const customerSel = document.getElementById('customer_id');
-    populateVehicles(customerSel.value, @json(old('vehicle_id')));
+    populateVehicles(customerSel.value, @json(old('vehicle_id', request()->query('vehicle_id'))));
 
     // Restore state from old() on validation failure
     const checked = document.querySelector('.woc-source-pill:checked');

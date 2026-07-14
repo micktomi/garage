@@ -244,11 +244,11 @@
                class="ws-dnav-item {{ request()->is('workshop/work-orders*') ? 'ws-active' : '' }}">
                 Εργασίες
             </a>
-            <a href="#"
+            <a href="{{ route('workshop.search') }}"
                class="ws-dnav-item {{ request()->is('workshop/search*') ? 'ws-active' : '' }}">
                 Αναζήτηση
             </a>
-            <a href="#"
+            <a href="{{ route('workshop.appointments.index') }}"
                class="ws-dnav-item {{ request()->is('workshop/appointments*') ? 'ws-active' : '' }}">
                 Ραντεβού
             </a>
@@ -283,14 +283,14 @@
             </svg>
             Εργασίες
         </a>
-        <a href="#" class="ws-nav-item {{ request()->is('workshop/search*') ? 'ws-active' : '' }}">
+        <a href="{{ route('workshop.search') }}" class="ws-nav-item {{ request()->is('workshop/search*') ? 'ws-active' : '' }}">
             <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round"
                       d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 15.803m10.607 0A7.5 7.5 0 0 1 5.196 15.803"/>
             </svg>
             Αναζήτηση
         </a>
-        <a href="#" class="ws-nav-item {{ request()->is('workshop/appointments*') ? 'ws-active' : '' }}">
+        <a href="{{ route('workshop.appointments.index') }}" class="ws-nav-item {{ request()->is('workshop/appointments*') ? 'ws-active' : '' }}">
             <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round"
                       d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 7.5v11.25m-18 0A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75m-18 0v-7.5A2.25 2.25 0 0 1 5.25 9h13.5A2.25 2.25 0 0 1 21 11.25v7.5"/>

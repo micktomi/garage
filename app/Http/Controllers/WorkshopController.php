@@ -43,9 +43,21 @@ class WorkshopController extends Controller
     {
         $customers = Customer::orderBy('full_name')->get(['id', 'full_name']);
 
-        // Grouped by customer_id so the create form can show only the
-        // vehicles that belong to whichever customer is selected.
-        $vehiclesByCustomer = Vehicle::orderBy('plate_number')
+        $vehiclesByCustomer = $this->vehiclesGroupedByCustomer();
+
+        $parts = Part::orderBy('name')->get(['id', 'name', 'quantity', 'sale_price']);
+
+        return view('workshop.work-orders.create', compact('customers', 'vehiclesByCustomer', 'parts'));
+    }
+
+    /**
+     * Vehicles grouped by customer_id, with a ready-to-display label —
+     * shared by the work order and appointment create forms so the
+     * "vehicle depends on customer" dropdown behaves identically.
+     */
+    private function vehiclesGroupedByCustomer()
+    {
+        return Vehicle::orderBy('plate_number')
             ->get(['id', 'customer_id', 'plate_number', 'make', 'model'])
             ->groupBy('customer_id')
             ->map(function ($vehicles) {
@@ -59,10 +71,6 @@ class WorkshopController extends Controller
                     return ['id' => $vehicle->id, 'label' => $label];
                 })->values();
             });
-
-        $parts = Part::orderBy('name')->get(['id', 'name', 'quantity', 'sale_price']);
-
-        return view('workshop.work-orders.create', compact('customers', 'vehiclesByCustomer', 'parts'));
     }
 
     public function workOrdersStore(Request $request)
@@ -289,5 +297,92 @@ class WorkshopController extends Controller
             ->get();
 
         return view('workshop.kteo.index', compact('vehicles', 'today'));
+    }
+
+    public function search(Request $request)
+    {
+        $q = trim((string) $request->query('q', ''));
+        $vehicles = collect();
+
+        if ($q !== '') {
+            // Normalize the plate query: uppercase, no spaces/dashes — so
+            // "ab 1234" / "ab-1234" / "AB1234" all match the same plate.
+            $normalized = strtoupper(str_replace([' ', '-'], '', $q));
+
+            $vehicles = Vehicle::with(['customer', 'workOrders' => function ($query) {
+                    $query->whereIn('status', ['new', 'in_progress'])->latest();
+                }])
+                ->where(function ($query) use ($q, $normalized) {
+                    $query->whereRaw("REPLACE(REPLACE(UPPER(plate_number), ' ', ''), '-', '') LIKE ?", ["%{$normalized}%"])
+                        ->orWhereHas('customer', function ($customerQuery) use ($q) {
+                            $customerQuery->where('full_name', 'like', "%{$q}%")
+                                ->orWhere('phone', 'like', "%{$q}%");
+                        });
+                })
+                ->orderBy('plate_number')
+                ->get();
+        }
+
+        return view('workshop.search', compact('vehicles', 'q'));
+    }
+
+    public function appointmentsIndex()
+    {
+        $today = Carbon::today();
+
+        $appointments = Appointment::with(['customer', 'vehicle'])
+            ->where('appointment_date', '>=', $today)
+            ->orderBy('appointment_date')
+            ->get();
+
+        return view('workshop.appointments.index', compact('appointments', 'today'));
+    }
+
+    public function appointmentsCreate()
+    {
+        $customers = Customer::orderBy('full_name')->get(['id', 'full_name']);
+
+        $vehiclesByCustomer = $this->vehiclesGroupedByCustomer();
+
+        return view('workshop.appointments.create', compact('customers', 'vehiclesByCustomer'));
+    }
+
+    public function appointmentsStore(Request $request)
+    {
+        $validated = $request->validate([
+            'customer_id'      => ['required', 'integer', 'exists:customers,id'],
+            'vehicle_id'       => [
+                'required',
+                'integer',
+                Rule::exists('vehicles', 'id')->where(function ($query) use ($request) {
+                    $query->where('customer_id', $request->input('customer_id'));
+                }),
+            ],
+            'appointment_date' => ['required', 'date'],
+            'appointment_time' => ['required', 'date_format:H:i'],
+            'description'      => ['nullable', 'string', 'max:2000'],
+        ], [
+            'customer_id.required'         => 'Επιλέξτε πελάτη.',
+            'customer_id.exists'           => 'Ο επιλεγμένος πελάτης δεν βρέθηκε.',
+            'vehicle_id.required'          => 'Επιλέξτε όχημα.',
+            'vehicle_id.exists'            => 'Το επιλεγμένο όχημα δεν ανήκει στον επιλεγμένο πελάτη.',
+            'appointment_date.required'    => 'Η ημερομηνία είναι υποχρεωτική.',
+            'appointment_date.date'        => 'Η ημερομηνία δεν είναι έγκυρη.',
+            'appointment_time.required'    => 'Η ώρα είναι υποχρεωτική.',
+            'appointment_time.date_format' => 'Η ώρα δεν είναι έγκυρη.',
+            'description.max'              => 'Η περιγραφή είναι πολύ μεγάλη.',
+        ]);
+
+        Appointment::create([
+            'customer_id'      => $validated['customer_id'],
+            'vehicle_id'       => $validated['vehicle_id'],
+            'appointment_date' => Carbon::parse($validated['appointment_date'] . ' ' . $validated['appointment_time']),
+            'description'      => $validated['description'] ?? null,
+            'status'           => 'scheduled',
+        ]);
+
+        return redirect()
+            ->route('workshop.appointments.index')
+            ->with('success', 'Το ραντεβού καταχωρήθηκε.');
     }
 }

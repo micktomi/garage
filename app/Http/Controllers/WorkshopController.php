@@ -10,6 +10,7 @@ use App\Models\WorkOrder;
 use App\Models\WorkOrderPart;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
+use Illuminate\Validation\Rule;
 
 class WorkshopController extends Controller
 {
@@ -42,20 +43,39 @@ class WorkshopController extends Controller
     {
         $customers = Customer::orderBy('full_name')->get(['id', 'full_name']);
 
-        $vehicles = Vehicle::with('customer')
-            ->orderBy('plate_number')
-            ->get();
+        // Grouped by customer_id so the create form can show only the
+        // vehicles that belong to whichever customer is selected.
+        $vehiclesByCustomer = Vehicle::orderBy('plate_number')
+            ->get(['id', 'customer_id', 'plate_number', 'make', 'model'])
+            ->groupBy('customer_id')
+            ->map(function ($vehicles) {
+                return $vehicles->map(function (Vehicle $vehicle) {
+                    $label = $vehicle->plate_number ?? '—';
+                    $makeModel = trim(($vehicle->make ?? '') . ' ' . ($vehicle->model ?? ''));
+                    if ($makeModel !== '') {
+                        $label .= ' — ' . $makeModel;
+                    }
+
+                    return ['id' => $vehicle->id, 'label' => $label];
+                })->values();
+            });
 
         $parts = Part::orderBy('name')->get(['id', 'name', 'quantity', 'sale_price']);
 
-        return view('workshop.work-orders.create', compact('customers', 'vehicles', 'parts'));
+        return view('workshop.work-orders.create', compact('customers', 'vehiclesByCustomer', 'parts'));
     }
 
     public function workOrdersStore(Request $request)
     {
         $validated = $request->validate([
             'customer_id'         => ['required', 'integer', 'exists:customers,id'],
-            'vehicle_id'          => ['required', 'integer', 'exists:vehicles,id'],
+            'vehicle_id'          => [
+                'required',
+                'integer',
+                Rule::exists('vehicles', 'id')->where(function ($query) use ($request) {
+                    $query->where('customer_id', $request->input('customer_id'));
+                }),
+            ],
             'problem_description' => ['required', 'string', 'max:5000'],
             'labor_cost'          => ['nullable', 'numeric', 'min:0'],
 
@@ -66,6 +86,8 @@ class WorkshopController extends Controller
             'part.quantity'     => ['nullable', 'numeric', 'min:0.001'],
             'part.unit_cost'    => ['nullable', 'numeric', 'min:0'],
             'part.unit_price'   => ['nullable', 'numeric', 'min:0'],
+        ], [
+            'vehicle_id.exists' => 'Το επιλεγμένο όχημα δεν ανήκει στον επιλεγμένο πελάτη.',
         ]);
 
         $laborCost = (float) ($validated['labor_cost'] ?? 0);

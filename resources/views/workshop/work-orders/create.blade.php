@@ -377,23 +377,12 @@
 
             <div class="woc-field">
                 <label for="vehicle_id" class="woc-label">Όχημα <span class="woc-req">*</span></label>
-                <select id="vehicle_id" name="vehicle_id"
+                <select id="vehicle_id" name="vehicle_id" disabled
                     class="woc-select {{ $errors->has('vehicle_id') ? 'is-invalid' : '' }}">
-                    <option value="">— Επιλογή οχήματος —</option>
-                    @foreach($vehicles as $vehicle)
-                        <option value="{{ $vehicle->id }}" {{ old('vehicle_id') == $vehicle->id ? 'selected' : '' }}>
-                            {{ $vehicle->plate_number ?? '—' }}
-                            @if($vehicle->make || $vehicle->model)
-                                — {{ trim(($vehicle->make ?? '') . ' ' . ($vehicle->model ?? '')) }}
-                            @endif
-                            @if($vehicle->customer)
-                                — {{ $vehicle->customer->full_name }}
-                            @endif
-                        </option>
-                    @endforeach
+                    <option value="">Πρώτα επιλέξτε πελάτη</option>
                 </select>
                 @error('vehicle_id') <span class="woc-error">{{ $message }}</span> @enderror
-                <span class="woc-hint">Πινακίδα — Μάρκα Μοντέλο — Ιδιοκτήτης</span>
+                <span class="woc-hint">Πινακίδα — Μάρκα Μοντέλο</span>
             </div>
 
         </div>
@@ -618,6 +607,62 @@
 @push('scripts')
 <script>
 /* ────────────────────────────────────────────────────────────
+   Vehicle dropdown — scoped to the selected customer
+─────────────────────────────────────────────────────────── */
+const VEHICLES_BY_CUSTOMER = @json($vehiclesByCustomer);
+
+function populateVehicles(customerId, selectedVehicleId) {
+    const sel = document.getElementById('vehicle_id');
+    sel.innerHTML = '';
+
+    if (!customerId) {
+        const opt = document.createElement('option');
+        opt.value = '';
+        opt.textContent = 'Πρώτα επιλέξτε πελάτη';
+        sel.appendChild(opt);
+        sel.disabled = true;
+        return;
+    }
+
+    const vehicles = VEHICLES_BY_CUSTOMER[customerId] || [];
+
+    if (vehicles.length === 0) {
+        const opt = document.createElement('option');
+        opt.value = '';
+        opt.textContent = 'Ο πελάτης δεν έχει καταχωρημένο όχημα';
+        sel.appendChild(opt);
+        sel.disabled = true;
+        return;
+    }
+
+    sel.disabled = false;
+
+    const placeholder = document.createElement('option');
+    placeholder.value = '';
+    placeholder.textContent = '— Επιλογή οχήματος —';
+    sel.appendChild(placeholder);
+
+    vehicles.forEach(v => {
+        const opt = document.createElement('option');
+        opt.value = v.id;
+        opt.textContent = v.label;
+        sel.appendChild(opt);
+    });
+
+    if (vehicles.length === 1) {
+        sel.value = String(vehicles[0].id);
+    } else if (selectedVehicleId && vehicles.some(v => String(v.id) === String(selectedVehicleId))) {
+        sel.value = String(selectedVehicleId);
+    } else {
+        sel.value = '';
+    }
+}
+
+document.getElementById('customer_id').addEventListener('change', function () {
+    populateVehicles(this.value, null);
+});
+
+/* ────────────────────────────────────────────────────────────
    Source radio → show/hide conditional fields
 ─────────────────────────────────────────────────────────── */
 const SOURCES = ['src-stock', 'src-cust', 'src-job'];
@@ -706,6 +751,10 @@ function fmt(n) {
 
 /* ── Init ─────────────────────────────────────────────────── */
 document.addEventListener('DOMContentLoaded', function () {
+    // Restore vehicle dropdown scoped to the old customer_id (if any)
+    const customerSel = document.getElementById('customer_id');
+    populateVehicles(customerSel.value, @json(old('vehicle_id')));
+
     // Restore state from old() on validation failure
     const checked = document.querySelector('.woc-source-pill:checked');
     if (checked) applySource(checked.value);

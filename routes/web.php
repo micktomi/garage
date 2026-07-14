@@ -13,6 +13,14 @@ Route::middleware('auth')->prefix('workshop')->name('workshop.')->group(function
     Route::post('/work-orders', [WorkshopController::class, 'workOrdersStore'])->name('work-orders.store');
     Route::get('/work-orders/{workOrder}', [WorkshopController::class, 'workOrdersShow'])->name('work-orders.show');
     Route::patch('/work-orders/{workOrder}/status', [WorkshopController::class, 'workOrdersUpdateStatus'])->name('work-orders.status');
+
+    Route::get('/customers/create', [WorkshopController::class, 'customersCreate'])->name('customers.create');
+    Route::post('/customers', [WorkshopController::class, 'customersStore'])->name('customers.store');
+
+    Route::get('/vehicles/create', [WorkshopController::class, 'vehiclesCreate'])->name('vehicles.create');
+    Route::post('/vehicles', [WorkshopController::class, 'vehiclesStore'])->name('vehicles.store');
+
+    Route::get('/kteo', [WorkshopController::class, 'kteoIndex'])->name('kteo');
 });
 
 Route::get('/work-orders/{workOrder}/print', function (WorkOrder $workOrder) {

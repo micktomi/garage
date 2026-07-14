@@ -383,8 +383,8 @@
         </div>
     </a>
 
-    {{-- Νέος πελάτης --}}
-    <a href="{{ route('workshop.customers.create') }}" class="ws-card">
+    {{-- Πελάτες --}}
+    <a href="{{ route('workshop.customers.index') }}" class="ws-card">
         <div class="ws-card-icon ws-card-icon--green">
             <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round"
@@ -392,8 +392,8 @@
             </svg>
         </div>
         <div class="ws-card-body">
-            <div class="ws-card-title">Νέος πελάτης</div>
-            <div class="ws-card-sub">Εγγραφή πελάτη</div>
+            <div class="ws-card-title">Πελάτες</div>
+            <div class="ws-card-sub">Αναζήτηση και καταχώρηση</div>
         </div>
     </a>
 

@@ -122,4 +122,100 @@ class WorkshopQuickPagesTest extends TestCase
         $response->assertDontSee('ΜΑΚΡ-0003');
         $response->assertDontSee('ΚΕΝΟ-0004');
     }
+
+    public function test_customers_index_page_loads(): void
+    {
+        $user = User::factory()->create();
+
+        $response = $this->actingAs($user)->get(route('workshop.customers.index'));
+
+        $response->assertOk();
+        $response->assertSee('Πελάτες');
+    }
+
+    public function test_customers_index_shows_customers_and_plates(): void
+    {
+        $user = User::factory()->create();
+        $customer = Customer::create(['full_name' => 'Ελένη Κωνσταντίνου', 'phone' => '6911112222']);
+        Vehicle::create(['customer_id' => $customer->id, 'plate_number' => 'ΧΨΩ-9999']);
+
+        $response = $this->actingAs($user)->get(route('workshop.customers.index'));
+
+        $response->assertOk();
+        $response->assertSee('Ελένη Κωνσταντίνου');
+        $response->assertSee('ΧΨΩ-9999');
+    }
+
+    public function test_customers_index_search_finds_customer_by_name(): void
+    {
+        $user = User::factory()->create();
+        Customer::create(['full_name' => 'Δημήτρης Αντωνίου', 'phone' => '6900001111']);
+        Customer::create(['full_name' => 'Κατερίνα Παππά', 'phone' => '6900002222']);
+
+        $response = $this->actingAs($user)->get(route('workshop.customers.index', ['q' => 'Αντωνίου']));
+
+        $response->assertOk();
+        $response->assertSee('Δημήτρης Αντωνίου');
+        $response->assertDontSee('Κατερίνα Παππά');
+    }
+
+    public function test_customers_index_search_finds_customer_by_plate(): void
+    {
+        $user = User::factory()->create();
+        $customerA = Customer::create(['full_name' => 'Πελάτης Α']);
+        $customerB = Customer::create(['full_name' => 'Πελάτης Β']);
+        Vehicle::create(['customer_id' => $customerA->id, 'plate_number' => 'ΑΑΑ-1111']);
+        Vehicle::create(['customer_id' => $customerB->id, 'plate_number' => 'ΒΒΒ-2222']);
+
+        $response = $this->actingAs($user)->get(route('workshop.customers.index', ['q' => 'ΑΑΑ-1111']));
+
+        $response->assertOk();
+        $response->assertSee('Πελάτης Α');
+        $response->assertDontSee('Πελάτης Β');
+    }
+
+    public function test_dashboard_card_links_to_customers_index(): void
+    {
+        $user = User::factory()->create();
+
+        $response = $this->actingAs($user)->get(route('workshop.dashboard'));
+
+        $response->assertOk();
+        $response->assertSee(route('workshop.customers.index'), false);
+    }
+
+    public function test_kteo_page_has_call_and_sms_actions_for_customer_with_phone(): void
+    {
+        $user = User::factory()->create();
+        $customer = Customer::create(['full_name' => 'Σπύρος Λαμπρόπουλος', 'phone' => '6944445555']);
+        Vehicle::create([
+            'customer_id'     => $customer->id,
+            'plate_number'    => 'ΚΤΕ-0001',
+            'kteo_expires_at' => now()->subDays(2)->toDateString(),
+        ]);
+
+        $response = $this->actingAs($user)->get(route('workshop.kteo'));
+
+        $response->assertOk();
+        $response->assertSee('tel:6944445555', false);
+        $response->assertSee('sms:6944445555', false);
+        $response->assertSee('Αντιγραφή μηνύματος');
+    }
+
+    public function test_kteo_page_no_longer_shows_filament_edit_action(): void
+    {
+        $user = User::factory()->create();
+        $customer = Customer::create(['full_name' => 'Άννα Βασιλείου', 'phone' => '6955556666']);
+        Vehicle::create([
+            'customer_id'     => $customer->id,
+            'plate_number'    => 'ΚΤΕ-0002',
+            'kteo_expires_at' => now()->subDays(2)->toDateString(),
+        ]);
+
+        $response = $this->actingAs($user)->get(route('workshop.kteo'));
+
+        $response->assertOk();
+        $response->assertDontSee('Πλήρης επεξεργασία');
+        $response->assertDontSee('/admin/vehicles', false);
+    }
 }

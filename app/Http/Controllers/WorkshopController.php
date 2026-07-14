@@ -177,6 +177,28 @@ class WorkshopController extends Controller
             ->with('success', "Κατάσταση → {$label}");
     }
 
+    public function customersIndex(Request $request)
+    {
+        $q = trim((string) $request->query('q', ''));
+
+        $customers = Customer::query()
+            ->with('vehicles')
+            ->withCount('vehicles')
+            ->when($q !== '', function ($query) use ($q) {
+                $query->where(function ($sub) use ($q) {
+                    $sub->where('full_name', 'like', "%{$q}%")
+                        ->orWhere('phone', 'like', "%{$q}%")
+                        ->orWhereHas('vehicles', function ($vehicleQuery) use ($q) {
+                            $vehicleQuery->where('plate_number', 'like', "%{$q}%");
+                        });
+                });
+            })
+            ->orderBy('full_name')
+            ->get();
+
+        return view('workshop.customers.index', compact('customers', 'q'));
+    }
+
     public function customersCreate()
     {
         return view('workshop.customers.create');

@@ -384,7 +384,7 @@
     </a>
 
     {{-- Νέος πελάτης --}}
-    <a href="/admin/customers/create" class="ws-card">
+    <a href="{{ route('workshop.customers.create') }}" class="ws-card">
         <div class="ws-card-icon ws-card-icon--green">
             <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round"
@@ -398,7 +398,7 @@
     </a>
 
     {{-- Νέο όχημα --}}
-    <a href="/admin/vehicles/create" class="ws-card">
+    <a href="{{ route('workshop.vehicles.create') }}" class="ws-card">
         <div class="ws-card-icon ws-card-icon--gray">
             <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round"
@@ -412,7 +412,7 @@
     </a>
 
     {{-- Υπενθυμίσεις ΚΤΕΟ — full width --}}
-    <a href="/admin" class="ws-card ws-card--wide ws-card--kteo {{ $kteoExpiring > 0 ? 'ws-card--kteo-alert' : '' }}">
+    <a href="{{ route('workshop.kteo') }}" class="ws-card ws-card--wide ws-card--kteo {{ $kteoExpiring > 0 ? 'ws-card--kteo-alert' : '' }}">
         <div class="ws-card-icon ws-card-icon--{{ $kteoExpiring > 0 ? 'red' : 'gray' }}">
             <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round"

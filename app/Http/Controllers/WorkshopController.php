@@ -176,4 +176,96 @@ class WorkshopController extends Controller
             ->route('workshop.work-orders.show', $workOrder)
             ->with('success', "Κατάσταση → {$label}");
     }
+
+    public function customersCreate()
+    {
+        return view('workshop.customers.create');
+    }
+
+    public function customersStore(Request $request)
+    {
+        $validated = $request->validate([
+            'first_name' => ['required', 'string', 'max:255'],
+            'last_name'  => ['required', 'string', 'max:255'],
+            'phone'      => ['required', 'string', 'max:50'],
+            'email'      => ['nullable', 'email', 'max:255'],
+        ], [
+            'first_name.required' => 'Το όνομα είναι υποχρεωτικό.',
+            'first_name.max'      => 'Το όνομα είναι πολύ μεγάλο.',
+            'last_name.required'  => 'Το επώνυμο είναι υποχρεωτικό.',
+            'last_name.max'       => 'Το επώνυμο είναι πολύ μεγάλο.',
+            'phone.required'      => 'Το τηλέφωνο είναι υποχρεωτικό.',
+            'phone.max'           => 'Το τηλέφωνο είναι πολύ μεγάλο.',
+            'email.email'        => 'Το email δεν είναι έγκυρο.',
+            'email.max'           => 'Το email είναι πολύ μεγάλο.',
+        ]);
+
+        Customer::create([
+            'full_name' => trim($validated['first_name'] . ' ' . $validated['last_name']),
+            'phone'     => $validated['phone'],
+            'email'     => $validated['email'] ?? null,
+        ]);
+
+        return redirect()
+            ->route('workshop.customers.create')
+            ->with('success', 'Ο πελάτης δημιουργήθηκε.');
+    }
+
+    public function vehiclesCreate()
+    {
+        $customers = Customer::orderBy('full_name')->get(['id', 'full_name']);
+
+        return view('workshop.vehicles.create', compact('customers'));
+    }
+
+    public function vehiclesStore(Request $request)
+    {
+        $validated = $request->validate([
+            'customer_id'     => ['required', 'integer', 'exists:customers,id'],
+            'license_plate'   => ['required', 'string', 'max:20', 'unique:vehicles,plate_number'],
+            'make'            => ['nullable', 'string', 'max:255'],
+            'model'           => ['nullable', 'string', 'max:255'],
+            'year'            => ['nullable', 'integer', 'min:1900', 'max:' . (date('Y') + 1)],
+            'kteo_expires_at' => ['nullable', 'date'],
+        ], [
+            'customer_id.required'    => 'Επιλέξτε πελάτη.',
+            'customer_id.exists'      => 'Ο επιλεγμένος πελάτης δεν βρέθηκε.',
+            'license_plate.required'  => 'Η πινακίδα είναι υποχρεωτική.',
+            'license_plate.max'       => 'Η πινακίδα είναι πολύ μεγάλη.',
+            'license_plate.unique'    => 'Η πινακίδα υπάρχει ήδη καταχωρημένη.',
+            'make.max'                => 'Η μάρκα είναι πολύ μεγάλη.',
+            'model.max'               => 'Το μοντέλο είναι πολύ μεγάλο.',
+            'year.integer'            => 'Το έτος πρέπει να είναι αριθμός.',
+            'year.min'                => 'Το έτος δεν είναι έγκυρο.',
+            'year.max'                => 'Το έτος δεν είναι έγκυρο.',
+            'kteo_expires_at.date'    => 'Η ημερομηνία ΚΤΕΟ δεν είναι έγκυρη.',
+        ]);
+
+        Vehicle::create([
+            'customer_id'     => $validated['customer_id'],
+            'plate_number'    => $validated['license_plate'],
+            'make'            => $validated['make'] ?? null,
+            'model'           => $validated['model'] ?? null,
+            'year'            => $validated['year'] ?? null,
+            'kteo_expires_at' => $validated['kteo_expires_at'] ?? null,
+        ]);
+
+        return redirect()
+            ->route('workshop.vehicles.create')
+            ->with('success', 'Το όχημα προστέθηκε.');
+    }
+
+    public function kteoIndex()
+    {
+        $today = Carbon::today();
+        $horizon = $today->copy()->addDays(30);
+
+        $vehicles = Vehicle::with('customer')
+            ->whereNotNull('kteo_expires_at')
+            ->where('kteo_expires_at', '<=', $horizon)
+            ->orderBy('kteo_expires_at')
+            ->get();
+
+        return view('workshop.kteo.index', compact('vehicles', 'today'));
+    }
 }

@@ -1,7 +1,7 @@
 @extends('layouts.workshop')
 
-@section('title', 'Υπενθυμίσεις ΚΤΕΟ — Συνεργείο')
-@section('header-title', 'Υπενθυμίσεις ΚΤΕΟ')
+@section('title', 'ΚΤΕΟ — ληγμένα & επερχόμενα — Συνεργείο')
+@section('header-title', 'ΚΤΕΟ — ληγμένα & επερχόμενα')
 
 @push('styles')
 <style>
@@ -223,7 +223,7 @@
         <div class="ws-greeting-date" style="font-size:0.75rem;color:var(--text-faint);margin-bottom:0.2rem;">
             {{ now()->translatedFormat('l, d F Y') }}
         </div>
-        <h1 class="kt-page-title">Υπενθυμίσεις ΚΤΕΟ</h1>
+        <h1 class="kt-page-title">ΚΤΕΟ — ληγμένα & επερχόμενα</h1>
     </div>
     <span class="kt-count-badge {{ $vehicles->isEmpty() ? 'kt-count-badge--ok' : '' }}">{{ $vehicles->count() }}</span>
 </div>
@@ -234,8 +234,8 @@
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
                   d="M14.857 17.082a23.848 23.848 0 0 0 5.454-1.31A8.967 8.967 0 0 1 18 9.75V9A6 6 0 0 0 6 9v.75a8.967 8.967 0 0 1-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 0 1-5.714 0m5.714 0a3 3 0 1 1-5.714 0"/>
         </svg>
-        <div class="kt-empty-title">Δεν υπάρχουν επείγουσες λήξεις ΚΤΕΟ</div>
-        <div class="kt-empty-sub">Κανένα όχημα δεν λήγει εντός 30 ημερών.</div>
+        <div class="kt-empty-title">Δεν υπάρχουν ληγμένα ή επερχόμενα ΚΤΕΟ</div>
+        <div class="kt-empty-sub">Κανένα όχημα δεν έχει λήξει ή λήγει εντός 30 ημερών.</div>
     </div>
 @else
     <div class="kt-list">

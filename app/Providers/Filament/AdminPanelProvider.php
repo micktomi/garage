@@ -4,9 +4,7 @@ namespace App\Providers\Filament;
 
 use App\Filament\Widgets\GarageStatsOverview;
 use App\Filament\Widgets\KteoRemindersWidget;
-use App\Filament\Widgets\QuickActionsWidget;
 use App\Filament\Widgets\QuickVehicleSearchWidget;
-use App\Filament\Widgets\WorkOrdersByStatusChart;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
@@ -34,24 +32,22 @@ class AdminPanelProvider extends PanelProvider
             ->login()
             ->brandName('Διαχείριση Συνεργείου')
             ->colors([
-                'primary' => Color::Amber,
+                'primary' => Color::Slate,
                 'success' => Color::Green,
                 'danger' => Color::Red,
                 'gray' => Color::Zinc,
             ])
             ->viteTheme('resources/css/filament/admin/theme.css')
+            ->darkMode(false)
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\Filament\Resources')
             ->discoverPages(in: app_path('Filament/Pages'), for: 'App\Filament\Pages')
             ->pages([
                 Pages\Dashboard::class,
             ])
-            ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\Filament\Widgets')
             ->widgets([
                 GarageStatsOverview::class,
-                KteoRemindersWidget::class,
-                WorkOrdersByStatusChart::class,
-                QuickActionsWidget::class,
                 QuickVehicleSearchWidget::class,
+                KteoRemindersWidget::class,
                 Widgets\AccountWidget::class,
             ])
             ->middleware([

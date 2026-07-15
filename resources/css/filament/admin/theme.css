@@ -112,3 +112,81 @@
 .fi-section-header-heading {
     color: var(--garage-anthracite);
 }
+
+/* Filament mobile contrast emergency fix */
+
+:root,
+html,
+html.dark {
+    color-scheme: light !important;
+}
+
+body,
+.fi-body,
+.fi-main,
+.fi-page,
+.fi-simple-main,
+.fi-section,
+.fi-section-content,
+.fi-fo-component-ctn {
+    background: #f7f3ea !important;
+    color: #111827 !important;
+}
+
+.fi-header-heading,
+.fi-header-subheading,
+.fi-section-header-heading,
+.fi-section-header-description,
+.fi-fo-field-wrp-label,
+.fi-fo-field-wrp-label label,
+.fi-fo-field-wrp-label span,
+.fi-fo-field-wrp-helper-text,
+.dark .fi-header-heading,
+.dark .fi-header-subheading,
+.dark .fi-section-header-heading,
+.dark .fi-section-header-description,
+.dark .fi-fo-field-wrp-label,
+.dark .fi-fo-field-wrp-label label,
+.dark .fi-fo-field-wrp-label span,
+.dark .fi-fo-field-wrp-helper-text {
+    color: #111827 !important;
+}
+
+.fi-input-wrp,
+.fi-input-wrp > div,
+.fi-select-input,
+.fi-input,
+input,
+select,
+textarea,
+.dark .fi-input-wrp,
+.dark .fi-input-wrp > div,
+.dark .fi-select-input,
+.dark .fi-input,
+.dark input,
+.dark select,
+.dark textarea {
+    background-color: #ffffff !important;
+    color: #111827 !important;
+    border-color: #d1d5db !important;
+}
+
+.fi-input::placeholder,
+textarea::placeholder,
+.dark .fi-input::placeholder,
+.dark textarea::placeholder {
+    color: #6b7280 !important;
+}
+
+.fi-input-wrp svg,
+.fi-select-input svg,
+.dark .fi-input-wrp svg,
+.dark .fi-select-input svg {
+    color: #374151 !important;
+}
+
+.fi-fo-field-wrp-error-message,
+.dark .fi-fo-field-wrp-error-message {
+    color: #dc2626 !important;
+}
+

@@ -22,10 +22,33 @@ class WorkshopController extends Controller
             ->where('kteo_expires_at', '<=', Carbon::today()->addDays(30))
             ->count();
 
+        // Same filters as the counts above, just also returning the rows
+        // so the dashboard can list them (not just show a number).
+        $recentWorkOrders = WorkOrder::with(['customer', 'vehicle'])
+            ->whereIn('status', ['new', 'in_progress'])
+            ->latest()
+            ->take(6)
+            ->get();
+
+        $todaysAppointments = Appointment::with(['customer', 'vehicle'])
+            ->whereDate('appointment_date', today())
+            ->orderBy('appointment_date')
+            ->get();
+
+        $expiringVehicles = Vehicle::with('customer')
+            ->whereNotNull('kteo_expires_at')
+            ->where('kteo_expires_at', '<=', Carbon::today()->addDays(30))
+            ->orderBy('kteo_expires_at')
+            ->take(6)
+            ->get();
+
         return view('workshop.dashboard', compact(
             'openWorkOrders',
             'todayAppointments',
             'kteoExpiring',
+            'recentWorkOrders',
+            'todaysAppointments',
+            'expiringVehicles',
         ));
     }
 
@@ -45,7 +68,7 @@ class WorkshopController extends Controller
 
         $vehiclesByCustomer = $this->vehiclesGroupedByCustomer();
 
-        $parts = Part::orderBy('name')->get(['id', 'name', 'quantity', 'sale_price']);
+        $parts = Part::orderBy('name')->get(['id', 'name', 'quantity', 'purchase_price', 'sale_price']);
 
         return view('workshop.work-orders.create', compact('customers', 'vehiclesByCustomer', 'parts'));
     }
@@ -75,6 +98,11 @@ class WorkshopController extends Controller
 
     public function workOrdersStore(Request $request)
     {
+        $partInput = $request->input('part', []);
+        $partSource = $partInput['source'] ?? null;
+        $hasSelectedPart = $partSource && (($partSource === 'from_stock' && ! empty($partInput['part_id']))
+            || ($partSource !== 'from_stock' && ! empty(trim($partInput['description'] ?? ''))));
+
         $validated = $request->validate([
             'customer_id'         => ['required', 'integer', 'exists:customers,id'],
             'vehicle_id'          => [
@@ -91,9 +119,9 @@ class WorkshopController extends Controller
             'part.source'       => ['nullable', 'string', 'in:from_stock,purchased_for_job,customer_supplied'],
             'part.part_id'      => ['nullable', 'integer', 'exists:parts,id'],
             'part.description'  => ['nullable', 'string', 'max:500'],
-            'part.quantity'     => ['nullable', 'numeric', 'min:0.001'],
-            'part.unit_cost'    => ['nullable', 'numeric', 'min:0'],
-            'part.unit_price'   => ['nullable', 'numeric', 'min:0'],
+            'part.quantity'     => [$hasSelectedPart ? 'required' : 'nullable', 'numeric', 'min:0.5'],
+            'part.unit_cost'    => ['nullable', 'numeric', ...(($hasSelectedPart && $partSource !== 'customer_supplied') ? ['min:0.01'] : [])],
+            'part.unit_price'   => [$hasSelectedPart ? 'required' : 'nullable', 'numeric', ...($hasSelectedPart ? ['min:0.01'] : [])],
         ], [
             'vehicle_id.exists' => 'Το επιλεγμένο όχημα δεν ανήκει στον επιλεγμένο πελάτη.',
         ]);
@@ -124,7 +152,7 @@ class WorkshopController extends Controller
              ($source !== 'from_stock' && $hasDesc));
 
         if ($partValid) {
-            $qty       = max(0.001, (float) ($partRow['quantity']   ?? 1));
+            $qty       = max(0.5, (float) ($partRow['quantity']   ?? 1));
             $unitCost  = (float) ($partRow['unit_cost']  ?? 0);
             $unitPrice = (float) ($partRow['unit_price'] ?? 0);
 
@@ -214,6 +242,11 @@ class WorkshopController extends Controller
 
     public function customersStore(Request $request)
     {
+        $partInput = $request->input('part', []);
+        $partSource = $partInput['source'] ?? null;
+        $hasSelectedPart = $partSource && (($partSource === 'from_stock' && ! empty($partInput['part_id']))
+            || ($partSource !== 'from_stock' && ! empty(trim($partInput['description'] ?? ''))));
+
         $validated = $request->validate([
             'first_name' => ['required', 'string', 'max:255'],
             'last_name'  => ['required', 'string', 'max:255'],
@@ -250,6 +283,11 @@ class WorkshopController extends Controller
 
     public function vehiclesStore(Request $request)
     {
+        $partInput = $request->input('part', []);
+        $partSource = $partInput['source'] ?? null;
+        $hasSelectedPart = $partSource && (($partSource === 'from_stock' && ! empty($partInput['part_id']))
+            || ($partSource !== 'from_stock' && ! empty(trim($partInput['description'] ?? ''))));
+
         $validated = $request->validate([
             'customer_id'     => ['required', 'integer', 'exists:customers,id'],
             'license_plate'   => ['required', 'string', 'max:20', 'unique:vehicles,plate_number'],
@@ -293,6 +331,7 @@ class WorkshopController extends Controller
         $vehicles = Vehicle::with('customer')
             ->whereNotNull('kteo_expires_at')
             ->where('kteo_expires_at', '<=', $horizon)
+            ->orderByRaw('CASE WHEN kteo_expires_at < ? THEN 0 ELSE 1 END', [$today])
             ->orderBy('kteo_expires_at')
             ->get();
 
@@ -349,6 +388,11 @@ class WorkshopController extends Controller
 
     public function appointmentsStore(Request $request)
     {
+        $partInput = $request->input('part', []);
+        $partSource = $partInput['source'] ?? null;
+        $hasSelectedPart = $partSource && (($partSource === 'from_stock' && ! empty($partInput['part_id']))
+            || ($partSource !== 'from_stock' && ! empty(trim($partInput['description'] ?? ''))));
+
         $validated = $request->validate([
             'customer_id'      => ['required', 'integer', 'exists:customers,id'],
             'vehicle_id'       => [

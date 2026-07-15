@@ -130,9 +130,10 @@
 
         /* ── Main content ────────────────────────────────────────── */
         .ws-main {
-            max-width: 1100px;
+            width: 100%;
+            max-width: 1536px;
             margin: 0 auto;
-            padding: 1.375rem 1rem calc(var(--nav-h) + 1.75rem);
+            padding: 1.375rem 2rem calc(var(--nav-h) + 1.75rem);
         }
 
         /* ── Section label ───────────────────────────────────────── */

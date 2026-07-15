@@ -414,7 +414,7 @@
                     <input type="number" id="labor_cost" name="labor_cost"
                         class="woc-input {{ $errors->has('labor_cost') ? 'is-invalid' : '' }}"
                         value="{{ old('labor_cost', '0') }}"
-                        min="0" step="0.01" placeholder="0.00"
+                        step="0.01" placeholder="0,00" lang="el"
                         oninput="recalc()">
                     <span class="woc-eur-sym">€</span>
                 </div>
@@ -485,10 +485,13 @@
                             <option value="">— Επιλογή από απόθεμα —</option>
                             @foreach($parts as $p)
                                 <option value="{{ $p->id }}"
+                                    data-cost="{{ $p->purchase_price ?? 0 }}"
                                     data-price="{{ $p->sale_price ?? 0 }}"
                                     {{ old('part.part_id') == $p->id ? 'selected' : '' }}>
                                     {{ $p->name }}
-                                    @if($p->quantity !== null) (αποθ: {{ $p->quantity }}) @endif
+                                    @if($p->quantity !== null)
+                                        (αποθ: {{ rtrim(rtrim(number_format((float) $p->quantity, 1, ',', '.'), '0'), ',') }})
+                                    @endif
                                     @if($p->sale_price) — {{ number_format($p->sale_price, 2, ',', '.') }} € @endif
                                 </option>
                             @endforeach
@@ -520,7 +523,7 @@
                         <input type="number" id="part_qty" name="part[quantity]"
                             class="woc-input {{ $errors->has('part.quantity') ? 'is-invalid' : '' }}"
                             value="{{ old('part.quantity', 1) }}"
-                            min="0.001" step="1" placeholder="1"
+                            min="0.5" step="0.5" placeholder="1" lang="el"
                             oninput="recalc()">
                         @error('part.quantity') <span class="woc-error">{{ $message }}</span> @enderror
                     </div>
@@ -532,7 +535,7 @@
                             <input type="number" id="part_cost" name="part[unit_cost]"
                                 class="woc-input {{ $errors->has('part.unit_cost') ? 'is-invalid' : '' }}"
                                 value="{{ old('part.unit_cost', '') }}"
-                                min="0" step="0.01" placeholder="0.00">
+                                step="0.01" placeholder="0,00" lang="el">
                             <span class="woc-eur-sym">€</span>
                         </div>
                         @error('part.unit_cost') <span class="woc-error">{{ $message }}</span> @enderror
@@ -544,7 +547,7 @@
                             <input type="number" id="part_price" name="part[unit_price]"
                                 class="woc-input {{ $errors->has('part.unit_price') ? 'is-invalid' : '' }}"
                                 value="{{ old('part.unit_price', '') }}"
-                                min="0" step="0.01" placeholder="0.00"
+                                step="0.01" placeholder="0,00" lang="el"
                                 oninput="recalc()">
                             <span class="woc-eur-sym">€</span>
                         </div>
@@ -675,6 +678,7 @@ function applySource(value) {
 
     if (!value) {
         pf.classList.remove('is-visible');
+        updateUnitPriceValidation();
         return;
     }
 
@@ -705,16 +709,17 @@ SOURCES.forEach(id => {
 });
 
 /* ────────────────────────────────────────────────────────────
-   Auto-fill unit_price from selected Part's sale_price
+   Auto-fill editable unit cost and price from the selected stock part
 ─────────────────────────────────────────────────────────── */
 function autofillPrice() {
-    const sel   = document.getElementById('part_id_sel');
-    const opt   = sel?.options[sel.selectedIndex];
-    const price = parseFloat(opt?.dataset?.price || 0);
-    const inp   = document.getElementById('part_price');
-    if (inp && price > 0 && !inp.value) {
-        inp.value = price.toFixed(2);
-    }
+    const sel = document.getElementById('part_id_sel');
+    const opt = sel?.options[sel.selectedIndex];
+    const cost = opt?.dataset?.cost;
+    const price = opt?.dataset?.price;
+
+    if (cost !== undefined) document.getElementById('part_cost').value = cost;
+    if (price !== undefined) document.getElementById('part_price').value = price;
+
     recalc();
 }
 
@@ -726,9 +731,13 @@ function recalc() {
     const qty   = Math.max(0, parseFloat(document.getElementById('part_qty')?.value   || 0) || 0);
     const price = Math.max(0, parseFloat(document.getElementById('part_price')?.value || 0) || 0);
 
-    // only count parts if the fields are visible
-    const partsVisible = document.getElementById('part-fields')?.classList.contains('is-visible');
-    const lineTotal = partsVisible ? qty * price : 0;
+    const source = document.querySelector('.woc-source-pill:checked')?.value;
+    const hasSelectedPart = source === 'from_stock'
+        ? Boolean(document.getElementById('part_id_sel')?.value)
+        : Boolean(document.getElementById('part_desc')?.value.trim());
+    const lineTotal = hasSelectedPart ? qty * price : 0;
+
+    updateUnitPriceValidation(hasSelectedPart, source);
 
     // update line total display
     const lt = document.getElementById('part_line_total');
@@ -747,6 +756,26 @@ function setText(id, val) {
 
 function fmt(n) {
     return n.toLocaleString('el-GR', {minimumFractionDigits: 2, maximumFractionDigits: 2}) + ' €';
+}
+
+function updateUnitPriceValidation(hasSelectedPart, source) {
+    if (hasSelectedPart === undefined) {
+        source = document.querySelector('.woc-source-pill:checked')?.value;
+        hasSelectedPart = source === 'from_stock'
+            ? Boolean(document.getElementById('part_id_sel')?.value)
+            : Boolean(document.getElementById('part_desc')?.value.trim());
+    }
+
+    const cost = document.getElementById('part_cost');
+    const price = document.getElementById('part_price');
+    const applyMin = (input, shouldApply) => {
+        if (!input) return;
+        if (shouldApply) input.setAttribute('min', '0.01');
+        else input.removeAttribute('min');
+    };
+
+    applyMin(cost, hasSelectedPart && source !== 'customer_supplied');
+    applyMin(price, hasSelectedPart);
 }
 
 /* ── Init ─────────────────────────────────────────────────── */

@@ -20,6 +20,8 @@ Route::middleware('auth')->prefix('workshop')->name('workshop.')->group(function
 
     Route::get('/vehicles/create', [WorkshopController::class, 'vehiclesCreate'])->name('vehicles.create');
     Route::post('/vehicles', [WorkshopController::class, 'vehiclesStore'])->name('vehicles.store');
+    Route::get('/vehicles/{vehicle}/edit', [WorkshopController::class, 'vehiclesEdit'])->name('vehicles.edit');
+    Route::put('/vehicles/{vehicle}', [WorkshopController::class, 'vehiclesUpdate'])->name('vehicles.update');
 
     Route::get('/kteo', [WorkshopController::class, 'kteoIndex'])->name('kteo');
 

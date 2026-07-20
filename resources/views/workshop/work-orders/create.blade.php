@@ -809,10 +809,30 @@ function populateVehicles(customerId, selectedVehicleId) {
     } else {
         sel.value = '';
     }
+
+    fillMileageForSelectedVehicle(customerId, sel.value);
+}
+
+// Auto-fill "current mileage" from the vehicle's last known reading — only
+// when the field is still empty, so it never overwrites a value the staff
+// already typed (or one restored via old() after a validation error).
+function fillMileageForSelectedVehicle(customerId, vehicleId) {
+    const mileageInput = document.getElementById('current_mileage');
+    if (!mileageInput || mileageInput.value !== '') return;
+
+    const vehicles = VEHICLES_BY_CUSTOMER[customerId] || [];
+    const vehicle = vehicles.find(v => String(v.id) === String(vehicleId));
+    if (vehicle && vehicle.mileage !== null && vehicle.mileage !== undefined) {
+        mileageInput.value = vehicle.mileage;
+    }
 }
 
 document.getElementById('customer_id').addEventListener('change', function () {
     populateVehicles(this.value, null);
+});
+
+document.getElementById('vehicle_id').addEventListener('change', function () {
+    fillMileageForSelectedVehicle(document.getElementById('customer_id').value, this.value);
 });
 
 document.addEventListener('DOMContentLoaded', function () {

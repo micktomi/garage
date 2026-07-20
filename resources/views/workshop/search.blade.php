@@ -249,6 +249,9 @@
                 <div class="sr-card-divider"></div>
 
                 <div class="sr-card-footer">
+                    <a href="{{ route('workshop.vehicles.edit', $vehicle) }}" class="sr-btn sr-btn-show">
+                        Επεξεργασία
+                    </a>
                     @if($openOrder)
                         <a href="{{ route('workshop.work-orders.show', $openOrder) }}" class="sr-btn sr-btn-show">
                             Προβολή εντολής

@@ -1,7 +1,7 @@
 @extends('layouts.workshop')
 
-@section('title', 'Νέο Όχημα — Συνεργείο')
-@section('header-title', 'Νέο Όχημα')
+@section('title', 'Επεξεργασία Οχήματος — Συνεργείο')
+@section('header-title', 'Επεξεργασία Οχήματος')
 
 @push('styles')
 <style>
@@ -128,6 +128,7 @@
         justify-content: center;
         flex-shrink: 0;
     }
+
     /* ── Validation alert ────────────────────────────────────── */
     .woc-alert {
         background: var(--danger-dim);
@@ -214,7 +215,7 @@
     </a>
 </div>
 
-<h1 class="woc-page-title">Νέο Όχημα</h1>
+<h1 class="woc-page-title">Επεξεργασία Οχήματος — {{ $vehicle->plate_number ?? '—' }}</h1>
 
 @if(session('success'))
     <div class="woc-success">
@@ -236,18 +237,19 @@
     </div>
 @endif
 
-<form method="POST" action="{{ route('workshop.vehicles.store') }}" novalidate>
+<form method="POST" action="{{ route('workshop.vehicles.update', $vehicle) }}" novalidate>
     @csrf
+    @method('PUT')
 
-    @include('workshop.vehicles._fields', ['vehicle' => null])
+    @include('workshop.vehicles._fields', ['vehicle' => $vehicle])
 
     <div class="woc-submit-row">
         <a href="{{ route('workshop.dashboard') }}" class="woc-cancel-btn">Άκυρο</a>
         <button type="submit" class="woc-submit-btn">
             <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/>
+                <path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5"/>
             </svg>
-            Καταχώρηση Οχήματος
+            Αποθήκευση
         </button>
     </div>
 

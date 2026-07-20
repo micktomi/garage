@@ -6,6 +6,7 @@ use App\Models\Appointment;
 use App\Models\Customer;
 use App\Models\Part;
 use App\Models\Vehicle;
+use App\Models\VehicleModel;
 use App\Models\WorkOrder;
 use App\Models\WorkOrderPart;
 use Illuminate\Http\Request;
@@ -82,7 +83,7 @@ class WorkshopController extends Controller
     private function vehiclesGroupedByCustomer()
     {
         return Vehicle::orderBy('plate_number')
-            ->get(['id', 'customer_id', 'plate_number', 'make', 'model'])
+            ->get(['id', 'customer_id', 'plate_number', 'make', 'model', 'mileage'])
             ->groupBy('customer_id')
             ->map(function ($vehicles) {
                 return $vehicles->map(function (Vehicle $vehicle) {
@@ -92,9 +93,22 @@ class WorkshopController extends Controller
                         $label .= ' — '.$makeModel;
                     }
 
-                    return ['id' => $vehicle->id, 'label' => $label];
+                    return ['id' => $vehicle->id, 'label' => $label, 'mileage' => $vehicle->mileage];
                 })->values();
             });
+    }
+
+    /**
+     * Distinct vehicle makes — same source Filament's VehicleResource uses
+     * for its searchable brand select, so both UIs suggest the same brands.
+     */
+    private function vehicleMakes()
+    {
+        return VehicleModel::query()
+            ->whereNotNull('make')
+            ->distinct()
+            ->orderBy('make')
+            ->pluck('make');
     }
 
     public function workOrdersStore(Request $request)
@@ -192,6 +206,15 @@ class WorkshopController extends Controller
                     'line_total' => $quantity * $unitPrice,
                     'note' => $row['note'] ?? null,
                 ]);
+            }
+
+            // Bump the vehicle's stored mileage from this work order's reading,
+            // but never let an older/lower reading overwrite a higher one.
+            if (! is_null($validated['current_mileage'] ?? null)) {
+                $vehicle = Vehicle::find($validated['vehicle_id']);
+                if ($vehicle && ($vehicle->mileage === null || $validated['current_mileage'] > $vehicle->mileage)) {
+                    $vehicle->update(['mileage' => $validated['current_mileage']]);
+                }
             }
 
             // WorkOrderPart::created events call calculatePartsCost() —
@@ -297,25 +320,31 @@ class WorkshopController extends Controller
     public function vehiclesCreate()
     {
         $customers = Customer::orderBy('full_name')->get(['id', 'full_name']);
+        $makes = $this->vehicleMakes();
 
-        return view('workshop.vehicles.create', compact('customers'));
+        return view('workshop.vehicles.create', compact('customers', 'makes'));
     }
 
-    public function vehiclesStore(Request $request)
+    private function vehicleValidationRules(?Vehicle $vehicle = null): array
     {
-        $partInput = $request->input('part', []);
-        $partSource = $partInput['source'] ?? null;
-        $hasSelectedPart = $partSource && (($partSource === 'from_stock' && ! empty($partInput['part_id']))
-            || ($partSource !== 'from_stock' && ! empty(trim($partInput['description'] ?? ''))));
-
-        $validated = $request->validate([
+        return [
             'customer_id' => ['required', 'integer', 'exists:customers,id'],
-            'license_plate' => ['required', 'string', 'max:20', 'unique:vehicles,plate_number'],
+            'license_plate' => [
+                'required', 'string', 'max:20',
+                Rule::unique('vehicles', 'plate_number')->ignore($vehicle?->id),
+            ],
             'make' => ['nullable', 'string', 'max:255'],
             'model' => ['nullable', 'string', 'max:255'],
             'year' => ['nullable', 'integer', 'min:1900', 'max:'.(date('Y') + 1)],
+            'vin' => ['nullable', 'string', 'max:50'],
+            'mileage' => ['nullable', 'integer', 'min:0'],
             'kteo_expires_at' => ['nullable', 'date'],
-        ], [
+        ];
+    }
+
+    private function vehicleValidationMessages(): array
+    {
+        return [
             'customer_id.required' => 'Επιλέξτε πελάτη.',
             'customer_id.exists' => 'Ο επιλεγμένος πελάτης δεν βρέθηκε.',
             'license_plate.required' => 'Η πινακίδα είναι υποχρεωτική.',
@@ -326,8 +355,19 @@ class WorkshopController extends Controller
             'year.integer' => 'Το έτος πρέπει να είναι αριθμός.',
             'year.min' => 'Το έτος δεν είναι έγκυρο.',
             'year.max' => 'Το έτος δεν είναι έγκυρο.',
+            'vin.max' => 'Το VIN / αρ. πλαισίου είναι πολύ μεγάλο.',
+            'mileage.integer' => 'Τα χιλιόμετρα πρέπει να είναι αριθμός.',
+            'mileage.min' => 'Τα χιλιόμετρα δεν είναι έγκυρα.',
             'kteo_expires_at.date' => 'Η ημερομηνία ΚΤΕΟ δεν είναι έγκυρη.',
-        ]);
+        ];
+    }
+
+    public function vehiclesStore(Request $request)
+    {
+        $validated = $request->validate(
+            $this->vehicleValidationRules(),
+            $this->vehicleValidationMessages()
+        );
 
         Vehicle::create([
             'customer_id' => $validated['customer_id'],
@@ -335,12 +375,47 @@ class WorkshopController extends Controller
             'make' => $validated['make'] ?? null,
             'model' => $validated['model'] ?? null,
             'year' => $validated['year'] ?? null,
+            'vin' => $validated['vin'] ?? null,
+            'mileage' => $validated['mileage'] ?? null,
             'kteo_expires_at' => $validated['kteo_expires_at'] ?? null,
         ]);
 
         return redirect()
             ->route('workshop.vehicles.create')
             ->with('success', 'Το όχημα προστέθηκε.');
+    }
+
+    public function vehiclesEdit(Vehicle $vehicle)
+    {
+        $customers = Customer::orderBy('full_name')->get(['id', 'full_name']);
+        $makes = $this->vehicleMakes();
+
+        return view('workshop.vehicles.edit', compact('vehicle', 'customers', 'makes'));
+    }
+
+    public function vehiclesUpdate(Request $request, Vehicle $vehicle)
+    {
+        $validated = $request->validate(
+            $this->vehicleValidationRules($vehicle),
+            $this->vehicleValidationMessages()
+        );
+
+        // Manual edits may correct a wrong mileage in either direction —
+        // unlike the work-order flow, there's no "never decrease" guard here.
+        $vehicle->update([
+            'customer_id' => $validated['customer_id'],
+            'plate_number' => $validated['license_plate'],
+            'make' => $validated['make'] ?? null,
+            'model' => $validated['model'] ?? null,
+            'year' => $validated['year'] ?? null,
+            'vin' => $validated['vin'] ?? null,
+            'mileage' => $validated['mileage'] ?? null,
+            'kteo_expires_at' => $validated['kteo_expires_at'] ?? null,
+        ]);
+
+        return redirect()
+            ->route('workshop.vehicles.edit', $vehicle)
+            ->with('success', 'Το όχημα ενημερώθηκε.');
     }
 
     public function kteoIndex()

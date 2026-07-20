@@ -264,6 +264,75 @@ class WorkOrderCreateTest extends TestCase
         $this->assertEquals(95000, $workOrder->next_service_mileage);
     }
 
+    public function test_create_form_exposes_vehicle_mileage_for_autofill(): void
+    {
+        $user = User::factory()->create();
+        $customer = Customer::create(['full_name' => 'Γιώργος Παπαδόπουλος']);
+        Vehicle::create([
+            'customer_id' => $customer->id,
+            'plate_number' => 'ΟΠΡ-7788',
+            'make' => 'Toyota',
+            'model' => 'Yaris',
+            'mileage' => 73500,
+        ]);
+
+        $response = $this->actingAs($user)->get(route('workshop.work-orders.create'));
+
+        $response->assertOk();
+        // The vehicle-select JS blob must carry each vehicle's mileage so
+        // it can auto-fill the "current mileage" field on selection.
+        $response->assertSee('"mileage":73500', false);
+    }
+
+    public function test_work_order_raises_vehicle_mileage_when_higher(): void
+    {
+        $user = User::factory()->create();
+        [$customer, $vehicle] = $this->makeCustomerAndVehicle('ΣΤΥ-4455');
+        $vehicle->update(['mileage' => 80000]);
+
+        $this->actingAs($user)->post(route('workshop.work-orders.store'), [
+            'customer_id' => $customer->id,
+            'vehicle_id' => $vehicle->id,
+            'problem_description' => 'Service',
+            'current_mileage' => 85000,
+        ]);
+
+        $this->assertEquals(85000, $vehicle->fresh()->mileage);
+    }
+
+    public function test_work_order_does_not_lower_vehicle_mileage(): void
+    {
+        $user = User::factory()->create();
+        [$customer, $vehicle] = $this->makeCustomerAndVehicle('ΦΧΨ-6677');
+        $vehicle->update(['mileage' => 90000]);
+
+        $this->actingAs($user)->post(route('workshop.work-orders.store'), [
+            'customer_id' => $customer->id,
+            'vehicle_id' => $vehicle->id,
+            'problem_description' => 'Service',
+            'current_mileage' => 50000, // older/lower reading — must not overwrite
+        ]);
+
+        $this->assertEquals(90000, $vehicle->fresh()->mileage);
+    }
+
+    public function test_work_order_sets_vehicle_mileage_when_previously_unknown(): void
+    {
+        $user = User::factory()->create();
+        [$customer, $vehicle] = $this->makeCustomerAndVehicle('ΩΑΒ-8899');
+
+        $this->assertNull($vehicle->mileage);
+
+        $this->actingAs($user)->post(route('workshop.work-orders.store'), [
+            'customer_id' => $customer->id,
+            'vehicle_id' => $vehicle->id,
+            'problem_description' => 'Service',
+            'current_mileage' => 60000,
+        ]);
+
+        $this->assertEquals(60000, $vehicle->fresh()->mileage);
+    }
+
     public function test_invalid_part_row_prevents_work_order_creation(): void
     {
         $user = User::factory()->create();

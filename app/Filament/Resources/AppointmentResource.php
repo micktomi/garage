@@ -46,6 +46,8 @@ class AppointmentResource extends Resource
                     ->required(),
                 Forms\Components\DateTimePicker::make('appointment_date')
                     ->label('Ημερομηνία / Ώρα')
+                    ->minDate(today())
+                    ->rule('after_or_equal:today')
                     ->required(),
                 Forms\Components\Select::make('status')
                     ->label('Κατάσταση')

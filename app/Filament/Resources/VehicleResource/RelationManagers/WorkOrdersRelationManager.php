@@ -74,7 +74,15 @@ class WorkOrdersRelationManager extends RelationManager
                 //
             ])
             ->headerActions([
-                Tables\Actions\CreateAction::make(),
+                Tables\Actions\CreateAction::make()
+                    ->mutateFormDataUsing(function (array $data): array {
+                        $vehicle = $this->getOwnerRecord();
+
+                        $data['vehicle_id'] = $vehicle->getKey();
+                        $data['customer_id'] = $vehicle->customer_id;
+
+                        return $data;
+                    }),
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),

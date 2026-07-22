@@ -497,7 +497,7 @@ class WorkshopController extends Controller
                     $query->where('customer_id', $request->input('customer_id'));
                 }),
             ],
-            'appointment_date' => ['required', 'date'],
+            'appointment_date' => ['required', 'date', 'after_or_equal:today'],
             'appointment_time' => ['required', 'date_format:H:i'],
             'description' => ['nullable', 'string', 'max:2000'],
         ], [
@@ -507,6 +507,7 @@ class WorkshopController extends Controller
             'vehicle_id.exists' => 'Το επιλεγμένο όχημα δεν ανήκει στον επιλεγμένο πελάτη.',
             'appointment_date.required' => 'Η ημερομηνία είναι υποχρεωτική.',
             'appointment_date.date' => 'Η ημερομηνία δεν είναι έγκυρη.',
+            'appointment_date.after_or_equal' => 'Η ημερομηνία δεν μπορεί να είναι στο παρελθόν.',
             'appointment_time.required' => 'Η ώρα είναι υποχρεωτική.',
             'appointment_time.date_format' => 'Η ώρα δεν είναι έγκυρη.',
             'description.max' => 'Η περιγραφή είναι πολύ μεγάλη.',

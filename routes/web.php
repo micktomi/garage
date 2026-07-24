@@ -13,6 +13,7 @@ Route::middleware('auth')->prefix('workshop')->name('workshop.')->group(function
     Route::post('/work-orders', [WorkshopController::class, 'workOrdersStore'])->name('work-orders.store');
     Route::get('/work-orders/{workOrder}', [WorkshopController::class, 'workOrdersShow'])->name('work-orders.show');
     Route::patch('/work-orders/{workOrder}/status', [WorkshopController::class, 'workOrdersUpdateStatus'])->name('work-orders.status');
+    Route::patch('/work-orders/{workOrder}/blocking-reason', [WorkshopController::class, 'workOrdersUpdateBlockingReason'])->name('work-orders.blocking-reason');
 
     Route::get('/customers', [WorkshopController::class, 'customersIndex'])->name('customers.index');
     Route::get('/customers/create', [WorkshopController::class, 'customersCreate'])->name('customers.create');

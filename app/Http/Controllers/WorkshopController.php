@@ -2,16 +2,16 @@
 
 namespace App\Http\Controllers;
 
+use App\Actions\CreateAppointmentAction;
+use App\Actions\CreateWorkOrderAction;
 use App\Models\Appointment;
 use App\Models\Customer;
 use App\Models\Part;
 use App\Models\Vehicle;
 use App\Models\VehicleModel;
 use App\Models\WorkOrder;
-use App\Models\WorkOrderPart;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 
 class WorkshopController extends Controller
@@ -111,7 +111,7 @@ class WorkshopController extends Controller
             ->pluck('make');
     }
 
-    public function workOrdersStore(Request $request)
+    public function workOrdersStore(Request $request, CreateWorkOrderAction $createWorkOrder)
     {
         $validated = $request->validate([
             'customer_id' => ['required', 'integer', 'exists:customers,id'],
@@ -165,62 +165,7 @@ class WorkshopController extends Controller
             'vehicle_id.exists' => 'Το επιλεγμένο όχημα δεν ανήκει στον επιλεγμένο πελάτη.',
         ]);
 
-        $laborCost = (float) ($validated['labor_cost'] ?? 0);
-
-        $workOrder = DB::transaction(function () use ($validated, $laborCost) {
-            // ── Create the WorkOrder skeleton ──────────────────────
-            $workOrder = WorkOrder::create([
-                'customer_id' => $validated['customer_id'],
-                'vehicle_id' => $validated['vehicle_id'],
-                'problem_description' => $validated['problem_description'],
-                'labor_cost' => $laborCost,
-                'parts_cost' => 0,
-                'total_cost' => $laborCost,
-                'current_mileage' => $validated['current_mileage'] ?? null,
-                'next_service_date' => $validated['next_service_date'] ?? null,
-                'next_service_mileage' => $validated['next_service_mileage'] ?? null,
-                'status' => 'new',
-            ]);
-
-            // ── Create every non-blank part row ─────────────────────
-            foreach ($validated['parts'] ?? [] as $row) {
-                $source = $row['source'] ?? null;
-
-                if (! $source) {
-                    continue;
-                }
-
-                $quantity = (float) $row['quantity'];
-                $unitPrice = (float) $row['unit_price'];
-                $unitCost = $source === 'customer_supplied' ? 0.0 : (float) ($row['unit_cost'] ?? 0);
-
-                WorkOrderPart::create([
-                    'work_order_id' => $workOrder->id,
-                    'source' => $source,
-                    'part_id' => $source === 'from_stock' ? (int) $row['part_id'] : null,
-                    'description' => $row['description'] ?? null,
-                    'quantity' => $quantity,
-                    'unit_cost' => $unitCost,
-                    'unit_price' => $unitPrice,
-                    // server-authoritative — never trust a client-computed total.
-                    'line_total' => $quantity * $unitPrice,
-                    'note' => $row['note'] ?? null,
-                ]);
-            }
-
-            // Bump the vehicle's stored mileage from this work order's reading,
-            // but never let an older/lower reading overwrite a higher one.
-            if (! is_null($validated['current_mileage'] ?? null)) {
-                $vehicle = Vehicle::find($validated['vehicle_id']);
-                if ($vehicle && ($vehicle->mileage === null || $validated['current_mileage'] > $vehicle->mileage)) {
-                    $vehicle->update(['mileage' => $validated['current_mileage']]);
-                }
-            }
-
-            // WorkOrderPart::created events call calculatePartsCost() —
-            // refresh to get the up-to-date parts_cost / total_cost.
-            return $workOrder->refresh();
-        });
+        $workOrder = $createWorkOrder->execute($validated, $request->user(), 'workshop');
 
         return redirect()
             ->route('workshop.work-orders.show', $workOrder)
@@ -254,6 +199,28 @@ class WorkshopController extends Controller
         return redirect()
             ->route('workshop.work-orders.show', $workOrder)
             ->with('success', "Κατάσταση → {$label}");
+    }
+
+    public function workOrdersUpdateBlockingReason(Request $request, WorkOrder $workOrder)
+    {
+        $validated = $request->validate([
+            // A reason only makes sense while the job is in_progress — for
+            // any other status the field must stay empty (the model also
+            // auto-clears it on status change, this rejects the mismatch
+            // explicitly instead of silently discarding it).
+            'blocking_reason' => [
+                'nullable', 'string', 'in:waiting_parts,waiting_customer_approval,other',
+                Rule::prohibitedIf(fn () => $workOrder->status !== 'in_progress'),
+            ],
+        ], [
+            'blocking_reason.prohibited' => 'Η αιτία καθυστέρησης ορίζεται μόνο όταν η εντολή είναι σε εξέλιξη.',
+        ]);
+
+        $workOrder->update(['blocking_reason' => $validated['blocking_reason'] ?? null]);
+
+        return redirect()
+            ->route('workshop.work-orders.show', $workOrder)
+            ->with('success', 'Η αιτία καθυστέρησης ενημερώθηκε.');
     }
 
     public function customersIndex(Request $request)
@@ -481,7 +448,7 @@ class WorkshopController extends Controller
         return view('workshop.appointments.create', compact('customers', 'vehiclesByCustomer'));
     }
 
-    public function appointmentsStore(Request $request)
+    public function appointmentsStore(Request $request, CreateAppointmentAction $createAppointment)
     {
         $partInput = $request->input('part', []);
         $partSource = $partInput['source'] ?? null;
@@ -513,13 +480,12 @@ class WorkshopController extends Controller
             'description.max' => 'Η περιγραφή είναι πολύ μεγάλη.',
         ]);
 
-        Appointment::create([
+        $createAppointment->execute([
             'customer_id' => $validated['customer_id'],
             'vehicle_id' => $validated['vehicle_id'],
             'appointment_date' => Carbon::parse($validated['appointment_date'].' '.$validated['appointment_time']),
             'description' => $validated['description'] ?? null,
-            'status' => 'scheduled',
-        ]);
+        ], $request->user(), 'workshop');
 
         return redirect()
             ->route('workshop.appointments.index')

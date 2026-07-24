@@ -266,6 +266,8 @@
     .wo-badge--pending::before      { background: var(--success); }
     .wo-badge--default      { background: var(--surface-2);   color: var(--text-muted); }
     .wo-badge--default::before      { background: var(--text-faint); }
+    .wo-badge--blocking     { background: var(--danger-dim);  color: var(--danger); }
+    .wo-badge--blocking::before     { background: var(--danger); }
 
     /* Appointment row */
     .ws-dash-appt {
@@ -480,6 +482,12 @@
                             'pending'     => ['label' => 'Αναμονή',    'class' => 'pending'],
                         ];
                         $statusInfo = $statusMap[$wo->status] ?? ['label' => ucfirst($wo->status ?? '-'), 'class' => 'default'];
+                        $blockingReasonMap = [
+                            'waiting_parts' => 'Αναμονή ανταλλακτικού',
+                            'waiting_customer_approval' => 'Αναμονή έγκρισης πελάτη',
+                            'other' => 'Άλλος λόγος',
+                        ];
+                        $blockingReasonLabel = $blockingReasonMap[$wo->blocking_reason] ?? null;
                     @endphp
                     <a href="{{ route('workshop.work-orders.show', $wo) }}" class="ws-dash-order">
                         <span class="ws-dash-order-top">
@@ -498,6 +506,9 @@
                         </span>
                         <span class="ws-dash-order-meta">
                             <span class="wo-badge wo-badge--{{ $statusInfo['class'] }}">{{ $statusInfo['label'] }}</span>
+                            @if($blockingReasonLabel)
+                                <span class="wo-badge wo-badge--blocking">{{ $blockingReasonLabel }}</span>
+                            @endif
                             <span class="ws-dash-order-age">{{ $wo->created_at?->diffForHumans() }}</span>
                         </span>
                     </a>

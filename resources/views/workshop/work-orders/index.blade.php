@@ -55,6 +55,8 @@
     .wo-badge--pending::before   { background: var(--success); }
     .wo-badge--default   { background: var(--surface-2);    color: var(--text-muted); }
     .wo-badge--default::before   { background: var(--text-faint); }
+    .wo-badge--blocking  { background: var(--danger-dim);   color: var(--danger); }
+    .wo-badge--blocking::before  { background: var(--danger); }
 
     /* ── Work order card ─────────────────────────────────────── */
     .wo-list {
@@ -287,12 +289,23 @@
                     'pending'     => ['label' => 'Αναμονή',     'class' => 'pending'],
                 ];
                 $statusInfo = $statusMap[$wo->status] ?? ['label' => ucfirst($wo->status ?? '-'), 'class' => 'default'];
+                $blockingReasonMap = [
+                    'waiting_parts' => 'Αναμονή ανταλλακτικού',
+                    'waiting_customer_approval' => 'Αναμονή έγκρισης πελάτη',
+                    'other' => 'Άλλος λόγος',
+                ];
+                $blockingReasonLabel = $blockingReasonMap[$wo->blocking_reason] ?? null;
             @endphp
             <div class="wo-card">
                 {{-- ID + status --}}
                 <div class="wo-card-top">
                     <span class="wo-card-id">#{{ str_pad($wo->id, 4, '0', STR_PAD_LEFT) }}</span>
-                    <span class="wo-badge wo-badge--{{ $statusInfo['class'] }}">{{ $statusInfo['label'] }}</span>
+                    <span style="display:flex;gap:0.375rem;">
+                        <span class="wo-badge wo-badge--{{ $statusInfo['class'] }}">{{ $statusInfo['label'] }}</span>
+                        @if($blockingReasonLabel)
+                            <span class="wo-badge wo-badge--blocking">{{ $blockingReasonLabel }}</span>
+                        @endif
+                    </span>
                 </div>
 
                 {{-- Customer + Vehicle --}}

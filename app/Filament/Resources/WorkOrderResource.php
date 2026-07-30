@@ -2,8 +2,8 @@
 
 namespace App\Filament\Resources;
 
+use App\Enums\WorkOrderStatus;
 use App\Filament\Resources\WorkOrderResource\Pages;
-use App\Filament\Resources\WorkOrderResource\RelationManagers;
 use App\Models\Part;
 use App\Models\WorkOrder;
 use Filament\Forms;
@@ -14,7 +14,6 @@ use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\SoftDeletingScope;
 
 class WorkOrderResource extends Resource
 {
@@ -44,8 +43,7 @@ class WorkOrderResource extends Resource
                             ->afterStateUpdated(fn (Forms\Set $set) => $set('vehicle_id', null)),
                         Forms\Components\Select::make('vehicle_id')
                             ->label('Όχημα')
-                            ->relationship('vehicle', 'plate_number', fn (Builder $query, Forms\Get $get) =>
-                                $query->when($get('customer_id'), fn ($q) => $q->where('customer_id', $get('customer_id')))
+                            ->relationship('vehicle', 'plate_number', fn (Builder $query, Forms\Get $get) => $query->when($get('customer_id'), fn ($q) => $q->where('customer_id', $get('customer_id')))
                             )
                             ->searchable()
                             ->preload()
@@ -81,7 +79,7 @@ class WorkOrderResource extends Resource
                                 }
 
                                 $set('parts_cost', $totalPartsCost);
-                                
+
                                 $laborCost = (float) ($get('labor_cost') ?? 0);
                                 $set('total_cost', $totalPartsCost + $laborCost);
                             })
@@ -89,7 +87,7 @@ class WorkOrderResource extends Resource
                                 Forms\Components\Select::make('source')
                                     ->label('Προέλευση')
                                     ->options([
-                                        'from_stock'        => 'Από απόθεμα',
+                                        'from_stock' => 'Από απόθεμα',
                                         'customer_supplied' => 'Έφερε ο πελάτης',
                                         'purchased_for_job' => 'Αγοράστηκε για τη δουλειά',
                                     ])
@@ -137,11 +135,17 @@ class WorkOrderResource extends Resource
                                     })
                                     ->rule(function (Forms\Get $get) {
                                         return function (string $attribute, $value, $fail) use ($get) {
-                                            if ($get('source') !== 'from_stock') return;
+                                            if ($get('source') !== 'from_stock') {
+                                                return;
+                                            }
                                             $partId = $get('part_id');
-                                            if (!$partId) return;
+                                            if (! $partId) {
+                                                return;
+                                            }
                                             $part = Part::find($partId);
-                                            if (!$part) return;
+                                            if (! $part) {
+                                                return;
+                                            }
                                             if ($value > $part->quantity) {
                                                 $fail("Ανεπαρκές απόθεμα. Διαθέσιμο: {$part->quantity}");
                                             }
@@ -215,13 +219,8 @@ class WorkOrderResource extends Resource
                             ->readOnly(),
                         Forms\Components\Select::make('status')
                             ->label('Κατάσταση')
-                            ->options([
-                                'new' => 'Νέα',
-                                'in_progress' => 'Σε εξέλιξη',
-                                'completed' => 'Ολοκληρώθηκε',
-                                'cancelled' => 'Ακυρώθηκε',
-                            ])
-                            ->default('new')
+                            ->options(WorkOrderStatus::options())
+                            ->default(WorkOrderStatus::New->value)
                             ->required(),
                     ])->columns(2),
             ]);
@@ -243,20 +242,8 @@ class WorkOrderResource extends Resource
                                 Infolists\Components\TextEntry::make('status')
                                     ->label('Κατάσταση')
                                     ->badge()
-                                    ->formatStateUsing(fn (string $state): string => match ($state) {
-                                        'new' => 'Νέα',
-                                        'in_progress' => 'Σε εξέλιξη',
-                                        'completed' => 'Ολοκληρώθηκε',
-                                        'cancelled' => 'Ακυρώθηκε',
-                                        default => $state,
-                                    })
-                                    ->color(fn (string $state): string => match ($state) {
-                                        'new' => 'info',
-                                        'in_progress' => 'warning',
-                                        'completed' => 'success',
-                                        'cancelled' => 'danger',
-                                        default => 'gray',
-                                    }),
+                                    ->formatStateUsing(fn (WorkOrderStatus|string $state): string => WorkOrderStatus::resolve($state)->label())
+                                    ->color(fn (WorkOrderStatus|string $state): string => WorkOrderStatus::resolve($state)->filamentColor()),
                             ]),
                         Infolists\Components\TextEntry::make('problem_description')
                             ->label('Περιγραφή προβλήματος')
@@ -324,20 +311,8 @@ class WorkOrderResource extends Resource
                 Tables\Columns\TextColumn::make('status')
                     ->label('Κατάσταση')
                     ->badge()
-                    ->formatStateUsing(fn (string $state): string => match ($state) {
-                        'new' => 'Νέα',
-                        'in_progress' => 'Σε εξέλιξη',
-                        'completed' => 'Ολοκληρώθηκε',
-                        'cancelled' => 'Ακυρώθηκε',
-                        default => $state,
-                    })
-                    ->color(fn (string $state): string => match ($state) {
-                        'new' => 'info',
-                        'in_progress' => 'warning',
-                        'completed' => 'success',
-                        'cancelled' => 'danger',
-                        default => 'gray',
-                    }),
+                    ->formatStateUsing(fn (WorkOrderStatus|string $state): string => WorkOrderStatus::resolve($state)->label())
+                    ->color(fn (WorkOrderStatus|string $state): string => WorkOrderStatus::resolve($state)->filamentColor()),
                 Tables\Columns\TextColumn::make('created_at')
                     ->label('Ημερομηνία')
                     ->dateTime()
@@ -355,7 +330,7 @@ class WorkOrderResource extends Resource
                     ->color('success')
                     ->modalHeading('SMS — Έτοιμο για παραλαβή')
                     ->modalContent(fn (WorkOrder $record) => view('filament.sms-modal', [
-                        'phone'   => $record->customer?->phone,
+                        'phone' => $record->customer?->phone,
                         'message' => "Καλησπέρα σας. Το όχημά σας με πινακίδα {$record->vehicle?->plate_number} είναι έτοιμο για παραλαβή από το συνεργείο.",
                     ]))
                     ->modalSubmitAction(false)

@@ -13,28 +13,31 @@ class WorkshopSearchAndAppointmentsTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_search_page_loads(): void
+    public function test_dashboard_search_form_uses_the_existing_get_search_flow(): void
     {
         $user = User::factory()->create();
 
-        $response = $this->actingAs($user)->get(route('workshop.search'));
+        $response = $this->actingAs($user)->get(route('workshop.dashboard'));
 
-        $response->assertOk();
-        $response->assertSee('Αναζήτηση Πινακίδας');
+        $response->assertOk()
+            ->assertSee('<form action="'.route('workshop.search').'" method="GET" class="ws-search-form" role="search">', false)
+            ->assertSee('name="q"', false)
+            ->assertSee('type="submit"', false);
     }
 
     public function test_search_finds_vehicle_by_full_plate(): void
     {
         $user = User::factory()->create();
         $customer = Customer::create(['full_name' => 'Νίκος Παπαδόπουλος', 'phone' => '6911112222']);
-        Vehicle::create(['customer_id' => $customer->id, 'plate_number' => 'ΑΒΓ-1234']);
+        Vehicle::create(['customer_id' => $customer->id, 'plate_number' => 'MEK-9900']);
         Vehicle::create(['customer_id' => $customer->id, 'plate_number' => 'ΔΕΖ-5678']);
 
-        $response = $this->actingAs($user)->get(route('workshop.search', ['q' => 'ΑΒΓ-1234']));
+        $response = $this->actingAs($user)->get(route('workshop.search', ['q' => 'MEK-9900']));
 
         $response->assertOk();
-        $response->assertSee('ΑΒΓ-1234');
+        $response->assertSee('MEK-9900');
         $response->assertDontSee('ΔΕΖ-5678');
+        $response->assertSee('value="MEK-9900"', false);
     }
 
     public function test_search_finds_vehicle_by_partial_plate(): void
@@ -51,16 +54,51 @@ class WorkshopSearchAndAppointmentsTest extends TestCase
         $response->assertDontSee('ΞΨΩ-9999');
     }
 
-    public function test_search_without_query_does_not_list_all_vehicles(): void
+    public function test_search_finds_vehicle_by_partial_customer_name(): void
     {
         $user = User::factory()->create();
-        $customer = Customer::create(['full_name' => 'Κατερίνα Παππά']);
-        Vehicle::create(['customer_id' => $customer->id, 'plate_number' => 'ΑΒΓ-1234']);
+        $matchingCustomer = Customer::create(['full_name' => 'Κατερίνα Χριστοδούλου']);
+        $otherCustomer = Customer::create(['full_name' => 'Μαρία Παππά']);
+        Vehicle::create(['customer_id' => $matchingCustomer->id, 'plate_number' => 'ΝΑΜ-1010']);
+        Vehicle::create(['customer_id' => $otherCustomer->id, 'plate_number' => 'ΖΗΤ-2020']);
 
-        $response = $this->actingAs($user)->get(route('workshop.search'));
+        $response = $this->actingAs($user)->get(route('workshop.search', ['q' => 'Χριστοδ']));
 
-        $response->assertOk();
-        $response->assertDontSee('ΑΒΓ-1234');
+        $response->assertOk()
+            ->assertSee('Κατερίνα Χριστοδούλου')
+            ->assertSee('ΝΑΜ-1010')
+            ->assertDontSee('ΖΗΤ-2020');
+    }
+
+    public function test_search_finds_vehicle_by_customer_phone(): void
+    {
+        $user = User::factory()->create();
+        $matchingCustomer = Customer::create(['full_name' => 'Ελένη Αντωνίου', 'phone' => '6944556677']);
+        $otherCustomer = Customer::create(['full_name' => 'Πέτρος Ιωάννου', 'phone' => '6900112233']);
+        Vehicle::create(['customer_id' => $matchingCustomer->id, 'plate_number' => 'ΤΗΛ-3030']);
+        Vehicle::create(['customer_id' => $otherCustomer->id, 'plate_number' => 'ΑΛΛ-4040']);
+
+        $response = $this->actingAs($user)->get(route('workshop.search', ['q' => '6944556677']));
+
+        $response->assertOk()
+            ->assertSee('6944556677')
+            ->assertSee('ΤΗΛ-3030')
+            ->assertDontSee('ΑΛΛ-4040');
+    }
+
+    public function test_empty_search_query_shows_the_normal_dashboard(): void
+    {
+        $user = User::factory()->create();
+
+        $response = $this->actingAs($user)->get(route('workshop.search', ['q' => '']));
+
+        $response->assertRedirect(route('workshop.dashboard'));
+
+        $this->actingAs($user)->get(route('workshop.dashboard'))
+            ->assertOk()
+            ->assertSee('Αρχική')
+            ->assertSee('Ανοιχτές εντολές')
+            ->assertSee('Νέα εντολή');
     }
 
     public function test_search_result_new_work_order_link_has_correct_customer_and_vehicle(): void
@@ -74,8 +112,8 @@ class WorkshopSearchAndAppointmentsTest extends TestCase
         $response->assertOk();
         // Blade HTML-escapes the "&" between query params, so check the
         // href contains the right path and both query values.
-        $response->assertSee('/workshop/work-orders/create?customer_id=' . $customer->id, false);
-        $response->assertSee('vehicle_id=' . $vehicle->id, false);
+        $response->assertSee('/workshop/work-orders/create?customer_id='.$customer->id, false);
+        $response->assertSee('vehicle_id='.$vehicle->id, false);
     }
 
     public function test_appointments_index_loads(): void
@@ -96,7 +134,7 @@ class WorkshopSearchAndAppointmentsTest extends TestCase
 
         Appointment::create([
             'customer_id' => $customer->id,
-            'vehicle_id'  => $vehicle->id,
+            'vehicle_id' => $vehicle->id,
             'appointment_date' => now()->subDays(3),
             'description' => 'Παλιό ραντεβού',
             'status' => 'scheduled',
@@ -104,7 +142,7 @@ class WorkshopSearchAndAppointmentsTest extends TestCase
 
         Appointment::create([
             'customer_id' => $customer->id,
-            'vehicle_id'  => $vehicle->id,
+            'vehicle_id' => $vehicle->id,
             'appointment_date' => now()->addDays(5)->setTime(9, 0),
             'description' => 'Μελλοντικό ραντεβού',
             'status' => 'scheduled',
@@ -112,7 +150,7 @@ class WorkshopSearchAndAppointmentsTest extends TestCase
 
         Appointment::create([
             'customer_id' => $customer->id,
-            'vehicle_id'  => $vehicle->id,
+            'vehicle_id' => $vehicle->id,
             'appointment_date' => now()->setTime(16, 0),
             'description' => 'Σημερινό ραντεβού',
             'status' => 'scheduled',
@@ -154,7 +192,7 @@ class WorkshopSearchAndAppointmentsTest extends TestCase
 
         $this->assertDatabaseHas('appointments', [
             'customer_id' => $customer->id,
-            'vehicle_id'  => $vehicle->id,
+            'vehicle_id' => $vehicle->id,
             'description' => 'Έλεγχος φρένων',
         ]);
     }

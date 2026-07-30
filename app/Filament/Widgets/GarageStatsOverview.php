@@ -2,6 +2,7 @@
 
 namespace App\Filament\Widgets;
 
+use App\Enums\WorkOrderStatus;
 use App\Models\Appointment;
 use App\Models\Customer;
 use App\Models\Part;
@@ -21,7 +22,7 @@ class GarageStatsOverview extends BaseWidget
             Stat::make('Σύνολο οχημάτων', Vehicle::count())
                 ->icon('heroicon-o-truck'),
 
-            Stat::make('Ανοιχτές εντολές εργασίας', WorkOrder::whereIn('status', ['new', 'in_progress'])->count())
+            Stat::make('Ανοιχτές εντολές εργασίας', WorkOrder::whereIn('status', WorkOrderStatus::openValues())->count())
                 ->description('Σε εξέλιξη')
                 ->color('warning')
                 ->icon('heroicon-o-clipboard-document-list'),
@@ -30,7 +31,7 @@ class GarageStatsOverview extends BaseWidget
                 ->description('Για σήμερα')
                 ->icon('heroicon-o-calendar-days'),
 
-            Stat::make('Ολοκληρωμένες εντολές', WorkOrder::where('status', 'completed')->count())
+            Stat::make('Ολοκληρωμένες εντολές', WorkOrder::where('status', WorkOrderStatus::Completed->value)->count())
                 ->description('Συνολικά')
                 ->color('success')
                 ->icon('heroicon-o-check-circle'),

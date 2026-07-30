@@ -2,6 +2,7 @@
 
 namespace App\Actions;
 
+use App\Enums\WorkOrderStatus;
 use App\Models\User;
 use App\Models\Vehicle;
 use App\Models\WorkOrder;
@@ -48,7 +49,7 @@ class CreateWorkOrderAction
                 'current_mileage' => $validated['current_mileage'] ?? null,
                 'next_service_date' => $validated['next_service_date'] ?? null,
                 'next_service_mileage' => $validated['next_service_mileage'] ?? null,
-                'status' => 'new',
+                'status' => WorkOrderStatus::New,
             ]);
 
             foreach ($validated['parts'] ?? [] as $row) {

@@ -56,13 +56,7 @@
         <div class="section">
             <div class="section-title">Κατάσταση & Περιγραφή</div>
             <p><span class="label">Κατάσταση:</span>
-                @switch ($workOrder->status)
-                    @case('new') Νέα @break
-                    @case('in_progress') Σε εξέλιξη @break
-                    @case('completed') Ολοκληρώθηκε @break
-                    @case('cancelled') Ακυρώθηκε @break
-                    @default {{ $workOrder->status }}
-                @endswitch
+                {{ $workOrder->status->label() }}
             </p>
             <p><strong>Περιγραφή Προβλήματος:</strong></p>
             <p>{{ $workOrder->problem_description }}</p>

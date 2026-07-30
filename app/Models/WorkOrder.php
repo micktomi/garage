@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\WorkOrderStatus;
 use Illuminate\Database\Eloquent\Model;
 
 class WorkOrder extends Model
@@ -19,13 +20,13 @@ class WorkOrder extends Model
         'parts_cost',
         'total_cost',
         'status',
-        'blocking_reason',
     ];
 
     protected function casts(): array
     {
         return [
             'next_service_date' => 'date',
+            'status' => WorkOrderStatus::class,
         ];
     }
 
@@ -53,20 +54,11 @@ class WorkOrder extends Model
 
     protected static function booted(): void
     {
-        // blocking_reason only ever means something while a job is
-        // in_progress — moving to any other status clears it automatically
-        // so a completed/cancelled/new order never carries a stale reason.
-        static::saving(function (WorkOrder $workOrder) {
-            if ($workOrder->status !== 'in_progress' && $workOrder->blocking_reason !== null) {
-                $workOrder->blocking_reason = null;
-            }
-        });
-
         static::updated(function (WorkOrder $workOrder) {
             if (
                 $workOrder->wasChanged('status') &&
-                $workOrder->status === 'cancelled' &&
-                $workOrder->getOriginal('status') !== 'cancelled'
+                $workOrder->status === WorkOrderStatus::Cancelled &&
+                $workOrder->getRawOriginal('status') !== WorkOrderStatus::Cancelled->value
             ) {
                 foreach ($workOrder->workOrderParts as $workOrderPart) {
                     if ($workOrderPart->source === 'from_stock' && $workOrderPart->part) {

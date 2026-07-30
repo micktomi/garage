@@ -12,15 +12,20 @@ class WorkshopQuickPagesTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_customer_can_be_created(): void
+    public function test_existing_new_customer_form_opens_and_submits_successfully(): void
     {
         $user = User::factory()->create();
 
+        $this->actingAs($user)->get(route('workshop.customers.create'))
+            ->assertOk()
+            ->assertSee('Νέος Πελάτης')
+            ->assertSee('action="'.route('workshop.customers.store').'"', false);
+
         $response = $this->actingAs($user)->post(route('workshop.customers.store'), [
             'first_name' => 'Γιώργος',
-            'last_name'  => 'Παπαδόπουλος',
-            'phone'      => '6912345678',
-            'email'      => 'giorgos@example.com',
+            'last_name' => 'Παπαδόπουλος',
+            'phone' => '6912345678',
+            'email' => 'giorgos@example.com',
         ]);
 
         $response->assertRedirect(route('workshop.customers.create'));
@@ -28,8 +33,8 @@ class WorkshopQuickPagesTest extends TestCase
 
         $this->assertDatabaseHas('customers', [
             'full_name' => 'Γιώργος Παπαδόπουλος',
-            'phone'     => '6912345678',
-            'email'     => 'giorgos@example.com',
+            'phone' => '6912345678',
+            'email' => 'giorgos@example.com',
         ]);
     }
 
@@ -39,12 +44,31 @@ class WorkshopQuickPagesTest extends TestCase
 
         $response = $this->actingAs($user)->post(route('workshop.customers.store'), [
             'first_name' => '',
-            'last_name'  => '',
-            'phone'      => '',
+            'last_name' => '',
+            'phone' => '',
         ]);
 
         $response->assertSessionHasErrors(['first_name', 'last_name', 'phone']);
         $this->assertDatabaseCount('customers', 0);
+    }
+
+    public function test_customers_workflow_is_reachable_from_dashboard_in_at_most_two_clicks(): void
+    {
+        $user = User::factory()->create();
+
+        $this->actingAs($user)->get(route('workshop.dashboard'))
+            ->assertOk()
+            ->assertSee('href="'.route('workshop.customers.index').'"', false)
+            ->assertSee('>Πελάτες</a>', false);
+
+        $this->actingAs($user)->get(route('workshop.customers.index'))
+            ->assertOk()
+            ->assertSee('href="'.route('workshop.customers.create').'"', false)
+            ->assertSee('Νέος πελάτης');
+
+        $this->actingAs($user)->get(route('workshop.customers.create'))
+            ->assertOk()
+            ->assertSee('Νέος Πελάτης');
     }
 
     public function test_vehicle_can_be_created(): void
@@ -53,11 +77,11 @@ class WorkshopQuickPagesTest extends TestCase
         $customer = Customer::create(['full_name' => 'Μαρία Ιωάννου']);
 
         $response = $this->actingAs($user)->post(route('workshop.vehicles.store'), [
-            'customer_id'     => $customer->id,
-            'license_plate'   => 'ΑΒΓ-1234',
-            'make'            => 'Toyota',
-            'model'           => 'Yaris',
-            'year'            => 2018,
+            'customer_id' => $customer->id,
+            'license_plate' => 'ΑΒΓ-1234',
+            'make' => 'Toyota',
+            'model' => 'Yaris',
+            'year' => 2018,
             'kteo_expires_at' => now()->addYear()->toDateString(),
         ]);
 
@@ -65,11 +89,11 @@ class WorkshopQuickPagesTest extends TestCase
         $response->assertSessionHas('success');
 
         $this->assertDatabaseHas('vehicles', [
-            'customer_id'  => $customer->id,
+            'customer_id' => $customer->id,
             'plate_number' => 'ΑΒΓ-1234',
-            'make'         => 'Toyota',
-            'model'        => 'Yaris',
-            'year'         => 2018,
+            'make' => 'Toyota',
+            'model' => 'Yaris',
+            'year' => 2018,
         ]);
     }
 
@@ -78,7 +102,7 @@ class WorkshopQuickPagesTest extends TestCase
         $user = User::factory()->create();
 
         $response = $this->actingAs($user)->post(route('workshop.vehicles.store'), [
-            'customer_id'   => 9999,
+            'customer_id' => 9999,
             'license_plate' => 'ΔΕΖ-5678',
         ]);
 
@@ -92,25 +116,25 @@ class WorkshopQuickPagesTest extends TestCase
         $customer = Customer::create(['full_name' => 'Νίκος Δημητρίου', 'phone' => '6900000000']);
 
         $expired = Vehicle::create([
-            'customer_id'     => $customer->id,
-            'plate_number'    => 'ΕΞΠ-0001',
+            'customer_id' => $customer->id,
+            'plate_number' => 'ΕΞΠ-0001',
             'kteo_expires_at' => now()->subDays(5)->toDateString(),
         ]);
 
         $soon = Vehicle::create([
-            'customer_id'     => $customer->id,
-            'plate_number'    => 'ΣΟΟΝ-0002',
+            'customer_id' => $customer->id,
+            'plate_number' => 'ΣΟΟΝ-0002',
             'kteo_expires_at' => now()->addDays(10)->toDateString(),
         ]);
 
         $farFuture = Vehicle::create([
-            'customer_id'     => $customer->id,
-            'plate_number'    => 'ΜΑΚΡ-0003',
+            'customer_id' => $customer->id,
+            'plate_number' => 'ΜΑΚΡ-0003',
             'kteo_expires_at' => now()->addDays(90)->toDateString(),
         ]);
 
         $noKteo = Vehicle::create([
-            'customer_id'  => $customer->id,
+            'customer_id' => $customer->id,
             'plate_number' => 'ΚΕΝΟ-0004',
         ]);
 
@@ -159,6 +183,20 @@ class WorkshopQuickPagesTest extends TestCase
         $response->assertDontSee('Κατερίνα Παππά');
     }
 
+    public function test_customers_index_search_finds_customer_by_phone(): void
+    {
+        $user = User::factory()->create();
+        Customer::create(['full_name' => 'Δημήτρης Αντωνίου', 'phone' => '6944556677']);
+        Customer::create(['full_name' => 'Κατερίνα Παππά', 'phone' => '6900002222']);
+
+        $response = $this->actingAs($user)->get(route('workshop.customers.index', ['q' => '6944556677']));
+
+        $response->assertOk();
+        $response->assertSee('Δημήτρης Αντωνίου');
+        $response->assertSee('6944556677');
+        $response->assertDontSee('Κατερίνα Παππά');
+    }
+
     public function test_customers_index_search_finds_customer_by_plate(): void
     {
         $user = User::factory()->create();
@@ -174,14 +212,14 @@ class WorkshopQuickPagesTest extends TestCase
         $response->assertDontSee('Πελάτης Β');
     }
 
-    public function test_dashboard_card_links_to_customers_index(): void
+    public function test_dashboard_primary_action_links_to_new_work_order(): void
     {
         $user = User::factory()->create();
 
         $response = $this->actingAs($user)->get(route('workshop.dashboard'));
 
         $response->assertOk();
-        $response->assertSee(route('workshop.customers.index'), false);
+        $response->assertSee(route('workshop.work-orders.create'), false);
     }
 
     public function test_kteo_page_has_call_and_sms_actions_for_customer_with_phone(): void
@@ -189,8 +227,8 @@ class WorkshopQuickPagesTest extends TestCase
         $user = User::factory()->create();
         $customer = Customer::create(['full_name' => 'Σπύρος Λαμπρόπουλος', 'phone' => '6944445555']);
         Vehicle::create([
-            'customer_id'     => $customer->id,
-            'plate_number'    => 'ΚΤΕ-0001',
+            'customer_id' => $customer->id,
+            'plate_number' => 'ΚΤΕ-0001',
             'kteo_expires_at' => now()->subDays(2)->toDateString(),
         ]);
 
@@ -207,8 +245,8 @@ class WorkshopQuickPagesTest extends TestCase
         $user = User::factory()->create();
         $customer = Customer::create(['full_name' => 'Άννα Βασιλείου', 'phone' => '6955556666']);
         Vehicle::create([
-            'customer_id'     => $customer->id,
-            'plate_number'    => 'ΚΤΕ-0002',
+            'customer_id' => $customer->id,
+            'plate_number' => 'ΚΤΕ-0002',
             'kteo_expires_at' => now()->subDays(2)->toDateString(),
         ]);
 

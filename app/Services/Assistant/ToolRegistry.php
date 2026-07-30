@@ -2,6 +2,7 @@
 
 namespace App\Services\Assistant;
 
+use App\Enums\WorkOrderStatus;
 use App\Models\Appointment;
 use App\Models\Customer;
 use App\Models\User;
@@ -34,7 +35,7 @@ class ToolRegistry
                 'date_from' => $this->stringProperty('Αρχική ημερομηνία YYYY-MM-DD.'),
                 'date_to' => $this->stringProperty('Τελική ημερομηνία YYYY-MM-DD.'),
             ], ['date_from', 'date_to']),
-            $this->declaration('list_open_work_orders', 'Λίστα εντολών με status new ή in_progress.', [], []),
+            $this->declaration('list_open_work_orders', 'Λίστα όλων των ανοιχτών εντολών εργασίας.', [], []),
             $this->declaration('prepare_appointment', 'Προετοιμάζει, αλλά δεν δημιουργεί, νέο ραντεβού.', [
                 'plate_number' => $this->stringProperty('Πινακίδα οχήματος.'),
                 'appointment_at' => $this->stringProperty('Ημερομηνία και ώρα ISO 8601.'),
@@ -135,7 +136,7 @@ class ToolRegistry
             'vehicle' => $this->vehicleData($vehicle),
             'work_orders' => $vehicle->workOrders->map(fn (WorkOrder $order) => [
                 'created_at' => $order->created_at?->toDateString(),
-                'status' => $order->status,
+                'status' => $order->status->value,
                 'problem_description' => $order->problem_description,
                 'diagnosis' => $order->diagnosis,
                 'work_performed' => $order->work_performed,
@@ -186,7 +187,7 @@ class ToolRegistry
     private function listOpenWorkOrders(): ToolResult
     {
         $orders = WorkOrder::with(['customer:id,full_name', 'vehicle:id,plate_number,make,model'])
-            ->whereIn('status', ['new', 'in_progress'])
+            ->whereIn('status', WorkOrderStatus::openValues())
             ->latest()
             ->limit(50)
             ->get();
@@ -195,7 +196,7 @@ class ToolRegistry
             $orders->isEmpty() ? 'Δεν υπάρχουν ανοιχτές εντολές εργασίας.' : 'Βρέθηκαν οι ανοιχτές εντολές εργασίας.',
             ['work_orders' => $orders->map(fn (WorkOrder $order) => [
                 'created_at' => $order->created_at?->toIso8601String(),
-                'status' => $order->status,
+                'status' => $order->status->value,
                 'problem_description' => $order->problem_description,
                 'customer' => $order->customer?->full_name,
                 'plate_number' => $order->vehicle?->plate_number,

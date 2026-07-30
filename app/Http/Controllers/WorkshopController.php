@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Actions\CreateAppointmentAction;
 use App\Actions\CreateWorkOrderAction;
+use App\Enums\WorkOrderStatus;
 use App\Models\Appointment;
 use App\Models\Customer;
 use App\Models\Part;
@@ -12,52 +13,54 @@ use App\Models\VehicleModel;
 use App\Models\WorkOrder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 
 class WorkshopController extends Controller
 {
     public function dashboard()
     {
-        $openWorkOrders = WorkOrder::whereIn('status', ['new', 'in_progress'])->count();
-        $todayAppointments = Appointment::whereDate('appointment_date', today())->count();
-        $kteoExpiring = Vehicle::whereNotNull('kteo_expires_at')
-            ->where('kteo_expires_at', '<=', Carbon::today()->addDays(30))
+        $today = Carbon::today();
+        $kteoHorizon = $today->copy()->addDays(30);
+        $openStatuses = WorkOrderStatus::openValues();
+
+        $openWorkOrders = WorkOrder::whereIn('status', $openStatuses)->count();
+        $todayAppointments = Appointment::whereDate('appointment_date', $today)->count();
+        $expiredKteo = Vehicle::whereNotNull('kteo_expires_at')
+            ->whereDate('kteo_expires_at', '<', $today)
             ->count();
+        $awaitingParts = WorkOrder::where('status', WorkOrderStatus::AwaitingParts->value)->count();
 
-        // Same filters as the counts above, just also returning the rows
-        // so the dashboard can list them (not just show a number).
         $recentWorkOrders = WorkOrder::with(['customer', 'vehicle'])
-            ->whereIn('status', ['new', 'in_progress'])
+            ->whereIn('status', $openStatuses)
             ->latest()
-            ->take(6)
-            ->get();
-
-        $todaysAppointments = Appointment::with(['customer', 'vehicle'])
-            ->whereDate('appointment_date', today())
-            ->orderBy('appointment_date')
+            ->take(8)
             ->get();
 
         $expiringVehicles = Vehicle::with('customer')
             ->whereNotNull('kteo_expires_at')
-            ->where('kteo_expires_at', '<=', Carbon::today()->addDays(30))
+            ->whereDate('kteo_expires_at', '<=', $kteoHorizon)
             ->orderBy('kteo_expires_at')
             ->take(6)
             ->get();
 
-        return view('workshop.dashboard', compact(
+        $todayLabel = Str::ucfirst($today->locale('el')->translatedFormat('l, j F Y'));
+
+        return view('workshop.index', compact(
             'openWorkOrders',
             'todayAppointments',
-            'kteoExpiring',
+            'expiredKteo',
+            'awaitingParts',
             'recentWorkOrders',
-            'todaysAppointments',
             'expiringVehicles',
+            'todayLabel',
         ));
     }
 
     public function workOrdersIndex()
     {
         $workOrders = WorkOrder::with(['customer', 'vehicle'])
-            ->whereNotIn('status', ['completed', 'cancelled'])
+            ->whereIn('status', WorkOrderStatus::openValues())
             ->latest()
             ->get();
 
@@ -175,52 +178,23 @@ class WorkshopController extends Controller
     public function workOrdersShow(WorkOrder $workOrder)
     {
         $workOrder->load(['customer', 'vehicle', 'workOrderParts.part']);
+        $statusOptions = WorkOrderStatus::cases();
 
-        return view('workshop.work-orders.show', compact('workOrder'));
+        return view('workshop.work-orders.show', compact('workOrder', 'statusOptions'));
     }
 
     public function workOrdersUpdateStatus(Request $request, WorkOrder $workOrder)
     {
-        $request->validate([
-            'status' => ['required', 'string', 'in:new,in_progress,completed,cancelled'],
-        ]);
-
-        $workOrder->update(['status' => $request->status]);
-
-        $labels = [
-            'new' => 'Νέα',
-            'in_progress' => 'Σε εξέλιξη',
-            'completed' => 'Ολοκληρωμένη',
-            'cancelled' => 'Ακυρωμένη',
-        ];
-
-        $label = $labels[$request->status] ?? $request->status;
-
-        return redirect()
-            ->route('workshop.work-orders.show', $workOrder)
-            ->with('success', "Κατάσταση → {$label}");
-    }
-
-    public function workOrdersUpdateBlockingReason(Request $request, WorkOrder $workOrder)
-    {
         $validated = $request->validate([
-            // A reason only makes sense while the job is in_progress — for
-            // any other status the field must stay empty (the model also
-            // auto-clears it on status change, this rejects the mismatch
-            // explicitly instead of silently discarding it).
-            'blocking_reason' => [
-                'nullable', 'string', 'in:waiting_parts,waiting_customer_approval,other',
-                Rule::prohibitedIf(fn () => $workOrder->status !== 'in_progress'),
-            ],
-        ], [
-            'blocking_reason.prohibited' => 'Η αιτία καθυστέρησης ορίζεται μόνο όταν η εντολή είναι σε εξέλιξη.',
+            'status' => ['required', Rule::enum(WorkOrderStatus::class)],
         ]);
 
-        $workOrder->update(['blocking_reason' => $validated['blocking_reason'] ?? null]);
+        $status = WorkOrderStatus::from($validated['status']);
+        $workOrder->update(['status' => $status]);
 
         return redirect()
             ->route('workshop.work-orders.show', $workOrder)
-            ->with('success', 'Η αιτία καθυστέρησης ενημερώθηκε.');
+            ->with('success', "Κατάσταση → {$status->label()}");
     }
 
     public function customersIndex(Request $request)
@@ -403,26 +377,27 @@ class WorkshopController extends Controller
     public function search(Request $request)
     {
         $q = trim((string) $request->query('q', ''));
-        $vehicles = collect();
 
-        if ($q !== '') {
-            // Normalize the plate query: uppercase, no spaces/dashes — so
-            // "ab 1234" / "ab-1234" / "AB1234" all match the same plate.
-            $normalized = strtoupper(str_replace([' ', '-'], '', $q));
-
-            $vehicles = Vehicle::with(['customer', 'workOrders' => function ($query) {
-                $query->whereIn('status', ['new', 'in_progress'])->latest();
-            }])
-                ->where(function ($query) use ($q, $normalized) {
-                    $query->whereRaw("REPLACE(REPLACE(UPPER(plate_number), ' ', ''), '-', '') LIKE ?", ["%{$normalized}%"])
-                        ->orWhereHas('customer', function ($customerQuery) use ($q) {
-                            $customerQuery->where('full_name', 'like', "%{$q}%")
-                                ->orWhere('phone', 'like', "%{$q}%");
-                        });
-                })
-                ->orderBy('plate_number')
-                ->get();
+        if ($q === '') {
+            return redirect()->route('workshop.dashboard');
         }
+
+        // Normalize the plate query: uppercase, no spaces/dashes — so
+        // "ab 1234" / "ab-1234" / "AB1234" all match the same plate.
+        $normalized = strtoupper(str_replace([' ', '-'], '', $q));
+
+        $vehicles = Vehicle::with(['customer', 'workOrders' => function ($query) {
+            $query->whereIn('status', WorkOrderStatus::openValues())->latest();
+        }])
+            ->where(function ($query) use ($q, $normalized) {
+                $query->whereRaw("REPLACE(REPLACE(UPPER(plate_number), ' ', ''), '-', '') LIKE ?", ["%{$normalized}%"])
+                    ->orWhereHas('customer', function ($customerQuery) use ($q) {
+                        $customerQuery->where('full_name', 'like', "%{$q}%")
+                            ->orWhere('phone', 'like', "%{$q}%");
+                    });
+            })
+            ->orderBy('plate_number')
+            ->get();
 
         return view('workshop.search', compact('vehicles', 'q'));
     }

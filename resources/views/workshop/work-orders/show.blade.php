@@ -52,40 +52,6 @@
     }
     .wos-print-btn svg { width: 14px; height: 14px; stroke-width: 2; }
 
-    /* ── Status badge ────────────────────────────────────────── */
-    .wo-badge {
-        display: inline-flex;
-        align-items: center;
-        gap: 0.3rem;
-        font-size: 0.6875rem;
-        font-weight: 600;
-        padding: 0.2rem 0.55rem;
-        border-radius: 999px;
-        letter-spacing: 0.02em;
-        text-transform: uppercase;
-    }
-    .wo-badge::before {
-        content: '';
-        width: 5px;
-        height: 5px;
-        border-radius: 50%;
-        flex-shrink: 0;
-    }
-    .wo-badge--new       { background: var(--info-dim);     color: var(--info);    }
-    .wo-badge--new::before       { background: var(--info); }
-    .wo-badge--in_progress { background: var(--accent-dim);  color: var(--accent); }
-    .wo-badge--in_progress::before { background: var(--accent); }
-    .wo-badge--pending   { background: var(--success-dim);  color: var(--success); }
-    .wo-badge--pending::before   { background: var(--success); }
-    .wo-badge--completed { background: var(--success-dim);  color: var(--success); }
-    .wo-badge--completed::before { background: var(--success); }
-    .wo-badge--cancelled { background: var(--danger-dim);   color: var(--danger); }
-    .wo-badge--cancelled::before { background: var(--danger); }
-    .wo-badge--default   { background: var(--surface-2);    color: var(--text-muted); }
-    .wo-badge--default::before   { background: var(--text-faint); }
-    .wo-badge--blocking  { background: var(--danger-dim);   color: var(--danger); }
-    .wo-badge--blocking::before  { background: var(--danger); }
-
     /* ── Info sections ───────────────────────────────────────── */
     .wos-section {
         background: var(--surface);
@@ -279,10 +245,10 @@
     /* per-status colours for active state */
     .wos-status-btn--new.is-current       { background: var(--info-dim);     border-color: rgba(88,166,255,.4);  color: var(--info); }
     .wos-status-btn--in_progress.is-current { background: var(--accent-dim); border-color: rgba(245,158,11,.4); color: var(--accent); }
+    .wos-status-btn--awaiting_parts.is-current { background: var(--ws-status-awaiting-bg); border-color: var(--ws-status-awaiting-fg); color: var(--ws-status-awaiting-fg); }
+    .wos-status-btn--ready.is-current { background: var(--ws-status-ready-bg); border-color: var(--ws-status-ready-fg); color: var(--ws-status-ready-fg); }
     .wos-status-btn--completed.is-current  { background: var(--success-dim); border-color: rgba(63,185,80,.4);  color: var(--success); }
     .wos-status-btn--cancelled.is-current  { background: var(--danger-dim);  border-color: rgba(248,81,73,.4);  color: var(--danger); }
-    .wos-status-btn--blocking.is-current   { background: var(--danger-dim);  border-color: rgba(248,81,73,.4);  color: var(--danger); }
-
     /* disabled look for current (not a submit) */
     .wos-status-btn.is-current { cursor: default; pointer-events: none; }
     .wos-status-btn.is-current::before { opacity: 1; }
@@ -311,24 +277,6 @@
     </div>
 @endif
 
-@php
-    $statusMap = [
-        'new'         => ['label' => 'Νέα',         'class' => 'new'],
-        'in_progress' => ['label' => 'Σε εξέλιξη',  'class' => 'in_progress'],
-        'pending'     => ['label' => 'Αναμονή',     'class' => 'pending'],
-        'completed'   => ['label' => 'Ολοκληρώθηκε','class' => 'completed'],
-        'cancelled'   => ['label' => 'Ακυρώθηκε',   'class' => 'cancelled'],
-    ];
-    $statusInfo = $statusMap[$workOrder->status] ?? ['label' => ucfirst($workOrder->status ?? '-'), 'class' => 'default'];
-
-    $blockingReasonMap = [
-        'waiting_parts' => 'Αναμονή ανταλλακτικού',
-        'waiting_customer_approval' => 'Αναμονή έγκρισης πελάτη',
-        'other' => 'Άλλος λόγος',
-    ];
-    $blockingReasonLabel = $blockingReasonMap[$workOrder->blocking_reason] ?? null;
-@endphp
-
 {{-- Toolbar --}}
 <div class="wos-toolbar">
     <a href="{{ route('workshop.work-orders.index') }}" class="wos-back-btn">
@@ -338,10 +286,7 @@
         Πίσω
     </a>
     <div style="display:flex;align-items:center;gap:0.5rem;">
-        <span class="wo-badge wo-badge--{{ $statusInfo['class'] }}">{{ $statusInfo['label'] }}</span>
-        @if($blockingReasonLabel)
-            <span class="wo-badge wo-badge--blocking">{{ $blockingReasonLabel }}</span>
-        @endif
+        <x-workshop.status-badge :status="$workOrder->status" />
         <a href="{{ route('work-orders.print', $workOrder) }}" target="_blank" class="wos-print-btn">
             <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round"
@@ -353,21 +298,13 @@
 </div>
 
 {{-- ── Status change ─────────────────────────────────────────── --}}
-@php
-    $statusButtons = [
-        'new'         => ['label' => 'Νέα',           'cls' => 'new'],
-        'in_progress' => ['label' => 'Σε εξέλιξη',    'cls' => 'in_progress'],
-        'completed'   => ['label' => 'Ολοκληρωμένη',  'cls' => 'completed'],
-        'cancelled'   => ['label' => 'Ακυρωμένη',     'cls' => 'cancelled'],
-    ];
-@endphp
 <div class="wos-status-section">
     <div class="wos-status-title">Αλλαγή Κατάστασης</div>
     <div class="wos-status-body">
-        @foreach($statusButtons as $value => $btn)
-            @if($value === $workOrder->status)
-                <span class="wos-status-btn wos-status-btn--{{ $btn['cls'] }} is-current">
-                    {{ $btn['label'] }}
+        @foreach($statusOptions as $status)
+            @if($status === $workOrder->status)
+                <span class="wos-status-btn wos-status-btn--{{ $status->value }} is-current">
+                    {{ $status->label() }}
                 </span>
             @else
                 <form method="POST"
@@ -375,54 +312,15 @@
                       style="display:contents">
                     @csrf
                     @method('PATCH')
-                    <input type="hidden" name="status" value="{{ $value }}">
-                    <button type="submit" class="wos-status-btn wos-status-btn--{{ $btn['cls'] }}">
-                        {{ $btn['label'] }}
+                    <input type="hidden" name="status" value="{{ $status->value }}">
+                    <button type="submit" class="wos-status-btn wos-status-btn--{{ $status->value }}">
+                        {{ $status->label() }}
                     </button>
                 </form>
             @endif
         @endforeach
     </div>
 </div>
-
-{{-- ── Blocking reason (only relevant while in_progress) ────────── --}}
-@if($workOrder->status === 'in_progress')
-    <div class="wos-status-section">
-        <div class="wos-status-title">Αιτία καθυστέρησης</div>
-        <div class="wos-status-body">
-            @foreach($blockingReasonMap as $value => $label)
-                @if($value === $workOrder->blocking_reason)
-                    <span class="wos-status-btn wos-status-btn--blocking is-current">
-                        {{ $label }}
-                    </span>
-                @else
-                    <form method="POST"
-                          action="{{ route('workshop.work-orders.blocking-reason', $workOrder) }}"
-                          style="display:contents">
-                        @csrf
-                        @method('PATCH')
-                        <input type="hidden" name="blocking_reason" value="{{ $value }}">
-                        <button type="submit" class="wos-status-btn wos-status-btn--blocking">
-                            {{ $label }}
-                        </button>
-                    </form>
-                @endif
-            @endforeach
-            @if($workOrder->blocking_reason)
-                <form method="POST"
-                      action="{{ route('workshop.work-orders.blocking-reason', $workOrder) }}"
-                      style="display:contents">
-                    @csrf
-                    @method('PATCH')
-                    <input type="hidden" name="blocking_reason" value="">
-                    <button type="submit" class="wos-status-btn">
-                        Καθαρισμός
-                    </button>
-                </form>
-            @endif
-        </div>
-    </div>
-@endif
 
 {{-- Customer & Vehicle --}}
 <div class="wos-section">
@@ -472,10 +370,7 @@
         <div class="wos-row">
             <span class="wos-row-label">Κατάσταση</span>
             <span class="wos-row-value">
-                <span class="wo-badge wo-badge--{{ $statusInfo['class'] }}">{{ $statusInfo['label'] }}</span>
-                @if($blockingReasonLabel)
-                    <span class="wo-badge wo-badge--blocking">{{ $blockingReasonLabel }}</span>
-                @endif
+                <x-workshop.status-badge :status="$workOrder->status" />
             </span>
         </div>
         <div class="wos-row">

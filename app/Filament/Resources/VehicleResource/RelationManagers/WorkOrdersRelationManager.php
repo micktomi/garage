@@ -2,13 +2,12 @@
 
 namespace App\Filament\Resources\VehicleResource\RelationManagers;
 
+use App\Enums\WorkOrderStatus;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Tables;
 use Filament\Tables\Table;
-use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\SoftDeletingScope;
 
 class WorkOrdersRelationManager extends RelationManager
 {
@@ -26,13 +25,8 @@ class WorkOrdersRelationManager extends RelationManager
                     ->columnSpanFull(),
                 Forms\Components\Select::make('status')
                     ->label('Κατάσταση')
-                    ->options([
-                        'new' => 'Νέα',
-                        'in_progress' => 'Σε εξέλιξη',
-                        'completed' => 'Ολοκληρώθηκε',
-                        'cancelled' => 'Ακυρώθηκε',
-                    ])
-                    ->default('new')
+                    ->options(WorkOrderStatus::options())
+                    ->default(WorkOrderStatus::New->value)
                     ->required(),
             ]);
     }
@@ -51,20 +45,8 @@ class WorkOrdersRelationManager extends RelationManager
                 Tables\Columns\TextColumn::make('status')
                     ->label('Κατάσταση')
                     ->badge()
-                    ->formatStateUsing(fn (string $state): string => match ($state) {
-                        'new' => 'Νέα',
-                        'in_progress' => 'Σε εξέλιξη',
-                        'completed' => 'Ολοκληρώθηκε',
-                        'cancelled' => 'Ακυρώθηκε',
-                        default => $state,
-                    })
-                    ->color(fn (string $state): string => match ($state) {
-                        'new' => 'info',
-                        'in_progress' => 'warning',
-                        'completed' => 'success',
-                        'cancelled' => 'danger',
-                        default => 'gray',
-                    }),
+                    ->formatStateUsing(fn (WorkOrderStatus|string $state): string => WorkOrderStatus::resolve($state)->label())
+                    ->color(fn (WorkOrderStatus|string $state): string => WorkOrderStatus::resolve($state)->filamentColor()),
                 Tables\Columns\TextColumn::make('created_at')
                     ->label('Ημερομηνία')
                     ->dateTime()

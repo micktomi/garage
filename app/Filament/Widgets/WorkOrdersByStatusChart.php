@@ -2,6 +2,7 @@
 
 namespace App\Filament\Widgets;
 
+use App\Enums\WorkOrderStatus;
 use App\Models\WorkOrder;
 use Filament\Widgets\ChartWidget;
 
@@ -11,25 +12,19 @@ class WorkOrdersByStatusChart extends ChartWidget
 
     protected function getData(): array
     {
-        $statuses = [
-            'new' => 'Νέες',
-            'in_progress' => 'Σε εξέλιξη',
-            'completed' => 'Ολοκληρωμένες',
-            'cancelled' => 'Ακυρωμένες',
-        ];
+        $statuses = collect(WorkOrderStatus::cases());
 
         return [
             'datasets' => [
                 [
                     'label' => 'Εντολές εργασίας',
-                    'data' => collect($statuses)
-                        ->keys()
-                        ->map(fn (string $status): int => WorkOrder::where('status', $status)->count())
+                    'data' => $statuses
+                        ->map(fn (WorkOrderStatus $status): int => WorkOrder::where('status', $status->value)->count())
                         ->all(),
-                    'backgroundColor' => ['#60a5fa', '#f59e0b', '#22c55e', '#ef4444'],
+                    'backgroundColor' => ['#60a5fa', '#3b82f6', '#f59e0b', '#22c55e', '#6b7280', '#ef4444'],
                 ],
             ],
-            'labels' => array_values($statuses),
+            'labels' => $statuses->map->label()->all(),
         ];
     }
 

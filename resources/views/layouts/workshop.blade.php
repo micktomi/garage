@@ -42,8 +42,6 @@
             --ws-primary-fg: #FFFFFF;
 
             /* Work-order statuses */
-            --ws-status-new-bg: #F1F1EF;
-            --ws-status-new-fg: #54534F;
             --ws-status-progress-bg: #E7F0FB;
             --ws-status-progress-fg: #1B5296;
             --ws-status-awaiting-bg: #FBF0DC;
@@ -547,8 +545,9 @@
         }
 
         .ws-status-badge--new {
-            background: var(--ws-status-new-bg);
-            color: var(--ws-status-new-fg);
+            border: 1px solid var(--ws-border);
+            background: transparent;
+            color: var(--ws-text-muted);
         }
 
         .ws-status-badge--in-progress {

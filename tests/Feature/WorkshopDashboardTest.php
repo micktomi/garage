@@ -84,6 +84,30 @@ class WorkshopDashboardTest extends TestCase
         $this->assertSame([], array_values(array_intersect($metricLabels, $sectionLabels)));
     }
 
+    public function test_only_the_expired_kteo_numeric_value_uses_the_danger_tone(): void
+    {
+        $user = User::factory()->create();
+        [$customer, $vehicle] = $this->makeCustomerAndVehicle('ΚΤΕ-2200');
+        $vehicle->update(['kteo_expires_at' => now()->subDay()]);
+
+        $response = $this->actingAs($user)->get(route('workshop.dashboard'))->assertOk();
+        $xpath = $this->xpath($response->getContent());
+
+        $kteoCards = $xpath->query(
+            '//*[contains(concat(" ", normalize-space(@class), " "), " ws-stat-card ")]'
+            .'[.//*[contains(concat(" ", normalize-space(@class), " "), " ws-stat-label ")'
+            .' and normalize-space(.)="ΚΤΕΟ έληξαν"]]',
+        );
+
+        $this->assertCount(1, $kteoCards);
+        $this->assertCount(1, $xpath->query(
+            './/*[contains(concat(" ", normalize-space(@class), " "), " ws-stat-value--danger ")]',
+            $kteoCards->item(0),
+        ));
+        $this->assertCount(1, $xpath->query('//*[@class and contains(concat(" ", normalize-space(@class), " "), " ws-stat-value--danger ")]'));
+        $this->assertStringNotContainsString('danger', $kteoCards->item(0)->getAttribute('class'));
+    }
+
     public function test_new_and_in_progress_orders_use_distinct_badge_presentations(): void
     {
         $user = User::factory()->create();
@@ -197,9 +221,8 @@ class WorkshopDashboardTest extends TestCase
 
         $this->assertStringContainsString('--ws-nav: #1C2733;', $layout);
         $this->assertStringContainsString('--ws-nav-active: #2B3A4A;', $layout);
-        $this->assertStringContainsString('--ws-status-new-bg: #F1F1EF;', $layout);
-        $this->assertStringContainsString('--ws-status-new-fg: #54534F;', $layout);
-        $this->assertStringNotContainsString('--ws-status-new-bg: #EFF3F8;', $layout);
+        $this->assertStringNotContainsString('--ws-status-new-bg:', $layout);
+        $this->assertStringNotContainsString('--ws-status-new-fg:', $layout);
         $this->assertSame(2, preg_match_all('/var\(--ws-primary\)/', $layout));
 
         $this->assertMatchesRegularExpression(
@@ -208,6 +231,14 @@ class WorkshopDashboardTest extends TestCase
         );
         $this->assertMatchesRegularExpression(
             '/\.ws-sidebar-item\[aria-current="page"\]\s*\{[^}]*color:\s*var\(--ws-nav-text-hi\);[^}]*background:\s*var\(--ws-nav-active\);[^}]*\}/s',
+            $layout,
+        );
+        $this->assertMatchesRegularExpression(
+            '/\.ws-status-badge\s*\{[^}]*padding:\s*3px 9px;[^}]*border-radius:\s*8px;[^}]*\}/s',
+            $layout,
+        );
+        $this->assertMatchesRegularExpression(
+            '/\.ws-status-badge--new\s*\{[^}]*border:\s*1px solid var\(--ws-border\);[^}]*background:\s*transparent;[^}]*color:\s*var\(--ws-text-muted\);[^}]*\}/s',
             $layout,
         );
         $this->assertMatchesRegularExpression(

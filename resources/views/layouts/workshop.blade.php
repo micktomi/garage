@@ -680,6 +680,11 @@
                     @if(request()->routeIs('workshop.customers.*')) aria-current="page" @endif
                 >Πελάτες</a>
                 <a
+                    href="{{ route('workshop.search') }}"
+                    class="ws-dnav-item {{ request()->routeIs('workshop.search', 'workshop.vehicles.*') ? 'ws-active' : '' }}"
+                    @if(request()->routeIs('workshop.search', 'workshop.vehicles.*')) aria-current="page" @endif
+                >Οχήματα</a>
+                <a
                     href="{{ route('workshop.appointments.index') }}"
                     class="ws-dnav-item {{ request()->routeIs('workshop.appointments.*') ? 'ws-active' : '' }}"
                     @if(request()->routeIs('workshop.appointments.*')) aria-current="page" @endif

@@ -12,6 +12,38 @@ class VehicleCreateTest extends TestCase
 {
     use RefreshDatabase;
 
+    public function test_vehicles_navigation_link_opens_the_existing_vehicle_index(): void
+    {
+        $user = User::factory()->create();
+
+        $this->actingAs($user)->get(route('workshop.dashboard'))
+            ->assertOk()
+            ->assertSee('href="'.route('workshop.search').'"', false)
+            ->assertSee('>Οχήματα</a>', false);
+
+        $this->actingAs($user)->get(route('workshop.search'))
+            ->assertOk()
+            ->assertSee('Αναζήτηση Πινακίδας')
+            ->assertSee('action="'.route('workshop.search').'"', false);
+    }
+
+    public function test_existing_new_vehicle_form_opens_from_the_vehicle_index(): void
+    {
+        $user = User::factory()->create();
+        $customer = Customer::create(['full_name' => 'Μαρία Ιωάννου']);
+
+        $this->actingAs($user)->get(route('workshop.search'))
+            ->assertOk()
+            ->assertSee('href="'.route('workshop.vehicles.create').'"', false)
+            ->assertSee('Νέο όχημα');
+
+        $this->actingAs($user)->get(route('workshop.vehicles.create'))
+            ->assertOk()
+            ->assertSee('Νέο Όχημα')
+            ->assertSee('action="'.route('workshop.vehicles.store').'"', false)
+            ->assertSee($customer->full_name);
+    }
+
     public function test_vehicle_can_be_created_with_vin_and_mileage(): void
     {
         $user = User::factory()->create();
@@ -32,6 +64,7 @@ class VehicleCreateTest extends TestCase
         $response->assertRedirect(route('workshop.vehicles.create'));
         $this->assertEquals('WVWZZZ1JZXW000001', $vehicle->vin);
         $this->assertEquals(85000, $vehicle->mileage);
+        $this->assertTrue($vehicle->customer->is($customer));
     }
 
     public function test_vehicle_edit_form_loads_with_existing_data(): void

@@ -6,12 +6,35 @@
 @push('styles')
 <style>
     /* ── Page header ─────────────────────────────────────────── */
+    .sr-page-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.75rem;
+        padding: 0.25rem 0 1.25rem;
+        flex-wrap: wrap;
+    }
     .sr-page-title {
         font-size: 1.375rem;
         font-weight: 700;
         letter-spacing: -0.03em;
         line-height: 1.2;
-        margin-bottom: 1.25rem;
+    }
+    .sr-new-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        padding: 0.5rem 1rem;
+        border-radius: var(--radius-sm);
+        color: var(--ws-primary-fg);
+        background: var(--ws-primary);
+        font-size: 0.8125rem;
+        font-weight: 700;
+        white-space: nowrap;
+        transition: filter 120ms ease;
+    }
+    .sr-new-btn:hover {
+        filter: brightness(0.94);
     }
 
     /* ── Search form ─────────────────────────────────────────── */
@@ -197,7 +220,15 @@
 
 @section('content')
 
-<h1 class="sr-page-title">Αναζήτηση Πινακίδας</h1>
+<div class="sr-page-header">
+    <h1 class="sr-page-title">Αναζήτηση Πινακίδας</h1>
+    <a href="{{ route('workshop.vehicles.create') }}" class="sr-new-btn">
+        <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/>
+        </svg>
+        Νέο όχημα
+    </a>
+</div>
 
 <form method="GET" action="{{ route('workshop.search') }}" class="sr-search-form">
     <input type="text" name="q" value="{{ $q }}" class="sr-search-input"

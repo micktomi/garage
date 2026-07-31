@@ -379,7 +379,10 @@ class WorkshopController extends Controller
         $q = trim((string) $request->query('q', ''));
 
         if ($q === '') {
-            return redirect()->route('workshop.dashboard');
+            return view('workshop.search', [
+                'vehicles' => collect(),
+                'q' => $q,
+            ]);
         }
 
         // Normalize the plate query: uppercase, no spaces/dashes — so

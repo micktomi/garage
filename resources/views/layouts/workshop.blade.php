@@ -8,11 +8,13 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500&display=swap" rel="stylesheet">
-    <script>
-        if (window.matchMedia('(max-width: 767px)').matches) {
-            window.location.replace(@js(url('/admin')));
-        }
-    </script>
+    @unless (app()->environment('local'))
+        <script>
+            if (window.matchMedia('(max-width: 767px)').matches) {
+                window.location.replace(@js(url('/admin')));
+            }
+        </script>
+    @endunless
     <style>
         :root {
             /* Surfaces */
@@ -91,6 +93,12 @@
             background: var(--ws-page);
             -webkit-text-size-adjust: 100%;
         }
+
+        @if (app()->environment('local'))
+            html {
+                min-width: 0;
+            }
+        @endif
 
         body {
             min-height: 100vh;
@@ -478,6 +486,65 @@
             background: var(--ws-sunken);
         }
 
+        .ws-work-order-grid {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr);
+            align-items: stretch;
+            gap: 12px;
+            border: 0;
+            border-radius: 0;
+            background: transparent;
+        }
+
+        .ws-work-order-grid .ws-work-order-row {
+            min-width: 0;
+            min-height: 84px;
+            height: 100%;
+            padding: 14px;
+            gap: 12px;
+            border: 1px solid var(--ws-border);
+            border-radius: 12px;
+            background: var(--ws-card);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .ws-work-order-grid .ws-work-order-row:hover {
+            border-color: var(--ws-border-hover);
+            background: var(--ws-sunken);
+        }
+
+        .ws-work-order-grid .ws-work-order-aside {
+            max-width: 45%;
+            margin-left: auto;
+        }
+
+        .ws-work-order-grid .ws-status-badge {
+            max-width: 100%;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .ws-work-order-chevron {
+            width: 16px;
+            height: 16px;
+            flex: 0 0 16px;
+            color: var(--ws-text-faint);
+            stroke-width: 1.8;
+            transition: color 120ms ease, transform 120ms ease;
+        }
+
+        .ws-work-order-grid .ws-work-order-row:hover .ws-work-order-chevron {
+            color: var(--ws-text-muted);
+            transform: translateX(2px);
+        }
+
+        .ws-work-order-grid > .ws-empty-state {
+            grid-column: 1 / -1;
+            border: 1px solid var(--ws-border);
+            border-radius: 12px;
+            background: var(--ws-card);
+        }
+
         .ws-plate {
             flex-shrink: 0;
             padding: 5px 9px;
@@ -708,6 +775,12 @@
                 font-size: 13px;
                 line-height: 18px;
                 text-align: left;
+            }
+        }
+
+        @media (min-width: 1120px) {
+            .ws-work-order-grid {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
             }
         }
 

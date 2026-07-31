@@ -10,6 +10,10 @@ class RedirectMobileWorkshop
 {
     public function handle(Request $request, Closure $next): Response
     {
+        if (app()->environment('local')) {
+            return $next($request);
+        }
+
         $userAgent = $request->userAgent() ?? '';
         $isPhone = preg_match('/iPhone|iPod|Windows Phone|Android.+Mobile/i', $userAgent) === 1;
 

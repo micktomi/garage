@@ -157,6 +157,66 @@ class WorkshopDashboardTest extends TestCase
         }
     }
 
+    public function test_open_work_orders_render_as_clickable_dashboard_cards(): void
+    {
+        $user = User::factory()->create();
+        [$customer, $vehicle] = $this->makeCustomerAndVehicle('ΚΑΡ-2048');
+        $order = WorkOrder::create([
+            'customer_id' => $customer->id,
+            'vehicle_id' => $vehicle->id,
+            'problem_description' => str_repeat('Μακρά περιγραφή εργασίας ', 8),
+            'status' => WorkOrderStatus::New,
+        ]);
+
+        $response = $this->actingAs($user)->get(route('workshop.dashboard'))->assertOk();
+        $xpath = $this->xpath($response->getContent());
+
+        $sections = $xpath->query('//section[@aria-label="Ανοιχτές εντολές"]');
+        $this->assertCount(1, $sections);
+
+        $grids = $xpath->query(
+            './/*[contains(concat(" ", normalize-space(@class), " "), " ws-work-order-grid ")]',
+            $sections->item(0),
+        );
+        $this->assertCount(1, $grids);
+
+        $cards = $xpath->query(
+            './/a[contains(concat(" ", normalize-space(@class), " "), " ws-work-order-row ")]',
+            $grids->item(0),
+        );
+        $this->assertCount(1, $cards);
+        $this->assertSame(route('workshop.work-orders.show', $order), $cards->item(0)->getAttribute('href'));
+        $this->assertCount(1, $xpath->query('.//*[contains(concat(" ", normalize-space(@class), " "), " ws-plate ")]', $cards->item(0)));
+        $this->assertCount(1, $xpath->query('.//*[contains(concat(" ", normalize-space(@class), " "), " ws-row-title ")]', $cards->item(0)));
+        $this->assertCount(1, $xpath->query('.//*[contains(concat(" ", normalize-space(@class), " "), " ws-row-meta ")]', $cards->item(0)));
+        $this->assertCount(1, $xpath->query('.//*[contains(concat(" ", normalize-space(@class), " "), " ws-status-badge ")]', $cards->item(0)));
+        $this->assertCount(1, $xpath->query('.//time[contains(concat(" ", normalize-space(@class), " "), " ws-row-time ")]', $cards->item(0)));
+        $this->assertCount(1, $xpath->query('.//svg[contains(concat(" ", normalize-space(@class), " "), " ws-work-order-chevron ")]', $cards->item(0)));
+        $this->assertCount(1, $xpath->query('.//svg', $cards->item(0)));
+    }
+
+    public function test_open_work_order_grid_has_only_one_and_two_column_states(): void
+    {
+        $layout = file_get_contents(resource_path('views/layouts/workshop.blade.php'));
+
+        $this->assertMatchesRegularExpression(
+            '/\.ws-work-order-grid\s*\{[^}]*grid-template-columns:\s*minmax\(0, 1fr\);[^}]*\}/s',
+            $layout,
+        );
+        $this->assertMatchesRegularExpression(
+            '/@media\s*\(min-width:\s*1120px\)\s*\{\s*\.ws-work-order-grid\s*\{[^}]*grid-template-columns:\s*repeat\(2, minmax\(0, 1fr\)\);[^}]*\}/s',
+            $layout,
+        );
+        $this->assertDoesNotMatchRegularExpression(
+            '/\.ws-work-order-grid\s*\{[^}]*grid-template-columns:\s*repeat\(3,/s',
+            $layout,
+        );
+        $this->assertMatchesRegularExpression(
+            '/\.ws-work-order-grid \.ws-work-order-row\s*\{[^}]*min-width:\s*0;[^}]*height:\s*100%;[^}]*background:\s*var\(--ws-card\);[^}]*box-shadow:\s*var\(--shadow-sm\);[^}]*\}/s',
+            $layout,
+        );
+    }
+
     public function test_kteo_actions_are_links_with_customer_specific_accessible_names(): void
     {
         $user = User::factory()->create();
@@ -198,6 +258,19 @@ class WorkshopDashboardTest extends TestCase
             ->withHeader('User-Agent', 'Mozilla/5.0 (iPad; CPU OS 18_0 like Mac OS X)')
             ->get(route('workshop.dashboard'))
             ->assertOk();
+    }
+
+    public function test_local_environment_allows_phone_user_agents_at_the_real_mobile_viewport_width(): void
+    {
+        $user = User::factory()->create();
+        $this->app->detectEnvironment(static fn (): string => 'local');
+
+        $this->actingAs($user)
+            ->withHeader('User-Agent', 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X)')
+            ->get(route('workshop.dashboard'))
+            ->assertOk()
+            ->assertDontSee('window.location.replace', false)
+            ->assertSee('min-width: 0;', false);
     }
 
     public function test_dashboard_composition_and_components_contain_no_hex_colors_or_php_blocks(): void

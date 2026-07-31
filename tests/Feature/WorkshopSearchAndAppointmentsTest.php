@@ -86,7 +86,7 @@ class WorkshopSearchAndAppointmentsTest extends TestCase
             ->assertDontSee('ΑΛΛ-4040');
     }
 
-    public function test_empty_search_query_opens_the_vehicle_index_without_results(): void
+    public function test_empty_search_query_opens_the_vehicle_index_with_existing_results(): void
     {
         $user = User::factory()->create();
         $customer = Customer::create(['full_name' => 'Μαρία Ιωάννου']);
@@ -95,9 +95,9 @@ class WorkshopSearchAndAppointmentsTest extends TestCase
         $response = $this->actingAs($user)->get(route('workshop.search', ['q' => '']));
 
         $response->assertOk()
-            ->assertSee('Αναζήτηση Πινακίδας')
+            ->assertSee('Οχήματα')
             ->assertSee('Νέο όχημα')
-            ->assertDontSee('ΑΒΓ-1234');
+            ->assertSee('ΑΒΓ-1234');
     }
 
     public function test_search_result_new_work_order_link_has_correct_customer_and_vehicle(): void

@@ -15,6 +15,14 @@ class VehicleCreateTest extends TestCase
     public function test_vehicles_navigation_link_opens_the_existing_vehicle_index(): void
     {
         $user = User::factory()->create();
+        $customer = Customer::create(['full_name' => 'Μαρία Ιωάννου']);
+        $vehicle = Vehicle::create([
+            'customer_id' => $customer->id,
+            'plate_number' => 'ΑΒΓ-1234',
+            'make' => 'Toyota',
+            'model' => 'Yaris',
+            'mileage' => 85000,
+        ]);
 
         $this->actingAs($user)->get(route('workshop.dashboard'))
             ->assertOk()
@@ -23,8 +31,12 @@ class VehicleCreateTest extends TestCase
 
         $this->actingAs($user)->get(route('workshop.search'))
             ->assertOk()
-            ->assertSee('Αναζήτηση Πινακίδας')
-            ->assertSee('action="'.route('workshop.search').'"', false);
+            ->assertSee('Οχήματα')
+            ->assertSee('action="'.route('workshop.search').'"', false)
+            ->assertSee('ΑΒΓ-1234')
+            ->assertSee('Toyota Yaris')
+            ->assertSee('85.000 km')
+            ->assertSee('href="'.route('workshop.vehicles.edit', $vehicle).'"', false);
     }
 
     public function test_existing_new_vehicle_form_opens_from_the_vehicle_index(): void

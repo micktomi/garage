@@ -1,7 +1,7 @@
 @extends('layouts.workshop')
 
-@section('title', 'Αναζήτηση Πινακίδας — Συνεργείο')
-@section('header-title', 'Αναζήτηση')
+@section('title', 'Οχήματα — Συνεργείο')
+@section('header-title', 'Οχήματα')
 
 @push('styles')
 <style>
@@ -15,79 +15,103 @@
         flex-wrap: wrap;
     }
     .sr-page-title {
-        font-size: 1.375rem;
-        font-weight: 700;
-        letter-spacing: -0.03em;
-        line-height: 1.2;
+        margin: 0;
+        color: var(--ws-text);
+        font-size: 28px;
+        font-weight: 500;
+        line-height: 32px;
     }
     .sr-new-btn {
+        min-height: 44px;
+        padding: 8px 16px;
         display: inline-flex;
         align-items: center;
         gap: 0.4rem;
-        padding: 0.5rem 1rem;
-        border-radius: var(--radius-sm);
+        border: 1px solid transparent;
+        border-radius: 8px;
         color: var(--ws-primary-fg);
         background: var(--ws-primary);
-        font-size: 0.8125rem;
-        font-weight: 700;
+        font-size: 13px;
+        font-weight: 500;
         white-space: nowrap;
-        transition: filter 120ms ease;
+        transition: opacity 120ms ease;
     }
-    .sr-new-btn:hover {
-        filter: brightness(0.94);
-    }
+    .sr-new-btn:hover { opacity: .92; }
 
     /* ── Search form ─────────────────────────────────────────── */
     .sr-search-form {
         display: flex;
-        gap: 0.5rem;
-        margin-bottom: 1.25rem;
+        gap: 8px;
+        margin-bottom: 20px;
     }
     .sr-search-input {
+        min-width: 0;
+        height: 44px;
         flex: 1;
-        background: var(--surface-3);
-        border: 1px solid var(--border);
-        border-radius: var(--radius-sm);
-        padding: 0.65rem 0.875rem;
-        font-size: 0.9375rem;
-        color: var(--text);
-        outline: none;
-        transition: border-color 0.15s, box-shadow 0.15s;
+        padding: 0 14px;
+        border: 1px solid var(--ws-border);
+        border-radius: 8px;
+        background: var(--ws-card);
+        color: var(--ws-text);
+        font-size: 14px;
+        transition: border-color 120ms ease;
     }
-    .sr-search-input::placeholder { color: var(--text-faint); }
+    .sr-search-input::placeholder { color: var(--ws-text-muted); }
+    .sr-search-input:hover { border-color: var(--ws-border-hover); }
     .sr-search-input:focus {
-        border-color: var(--accent);
-        box-shadow: 0 0 0 3px var(--accent-dim);
+        border-color: var(--ws-primary);
+        outline: 2px solid var(--ws-primary);
+        outline-offset: 2px;
     }
     .sr-search-btn {
+        min-height: 44px;
+        padding: 0 16px;
         display: inline-flex;
         align-items: center;
-        font-size: 0.875rem;
-        font-weight: 600;
-        color: #0d1117;
-        background: var(--accent);
-        border: none;
-        border-radius: var(--radius-sm);
-        padding: 0 1.125rem;
-        transition: background 0.15s, box-shadow 0.15s;
-        box-shadow: 0 1px 6px rgba(245,158,11,0.25);
+        border: 1px solid var(--ws-border);
+        border-radius: 8px;
+        background: var(--ws-card);
+        color: var(--ws-text);
+        font-size: 14px;
+        font-weight: 500;
+        transition: border-color 120ms ease, background-color 120ms ease;
     }
-    .sr-search-btn:hover { background: #fbbf24; }
+    .sr-search-btn:hover {
+        border-color: var(--ws-border-hover);
+        background: var(--ws-sunken);
+    }
 
     /* ── Result card ─────────────────────────────────────────── */
     .sr-list {
-        display: flex;
-        flex-direction: column;
-        gap: 0.625rem;
+        display: grid;
+        grid-template-columns: minmax(0, 1fr);
+        align-items: stretch;
+        gap: 12px;
     }
     .sr-card {
-        background: var(--surface);
-        border: 1px solid var(--border);
-        border-radius: var(--radius);
-        padding: 1rem 1.125rem;
+        position: relative;
+        min-width: 0;
+        min-height: 132px;
+        height: 100%;
+        padding: 14px;
         display: flex;
         flex-direction: column;
-        gap: 0.625rem;
+        gap: 10px;
+        border: 1px solid var(--ws-border);
+        border-radius: 12px;
+        background: var(--ws-card);
+        box-shadow: var(--shadow-sm);
+        transition: border-color 120ms ease, background-color 120ms ease;
+    }
+    .sr-card:hover {
+        border-color: var(--ws-border-hover);
+        background: var(--ws-sunken);
+    }
+    .sr-card-overlay {
+        position: absolute;
+        z-index: 1;
+        inset: 0;
+        border-radius: inherit;
     }
     .sr-card-top {
         display: flex;
@@ -95,125 +119,136 @@
         justify-content: space-between;
         gap: 0.5rem;
     }
-    .sr-plate {
-        display: inline-block;
-        background: var(--surface-2);
-        border: 1px solid var(--border);
-        border-radius: 5px;
-        padding: 0.15rem 0.5rem;
-        font-size: 0.875rem;
-        font-weight: 700;
-        letter-spacing: 0.06em;
-        color: var(--text);
-        font-family: monospace;
-    }
     .sr-open-badge {
-        background: var(--accent-dim);
-        color: var(--accent);
-        border: 1px solid rgba(245,158,11,0.25);
-        font-size: 0.6875rem;
-        font-weight: 700;
-        padding: 0.2rem 0.55rem;
-        border-radius: 999px;
+        padding: 3px 9px;
+        border: 1px solid var(--ws-border);
+        border-radius: 8px;
+        background: transparent;
+        color: var(--ws-text-muted);
+        font-size: 12px;
+        font-weight: 500;
+        line-height: 18px;
         white-space: nowrap;
     }
     .sr-card-main {
+        min-width: 0;
+        flex: 1;
         display: flex;
         flex-direction: column;
-        gap: 0.2rem;
+        gap: 2px;
     }
     .sr-card-vehicle {
-        font-size: 0.9375rem;
-        font-weight: 600;
-        color: var(--text);
+        overflow: hidden;
+        color: var(--ws-text);
+        font-size: 15px;
+        font-weight: 500;
+        line-height: 20px;
+        text-overflow: ellipsis;
+        white-space: nowrap;
     }
     .sr-card-customer {
-        font-size: 0.8125rem;
-        color: var(--text-muted);
+        overflow: hidden;
+        color: var(--ws-text-muted);
+        font-size: 13px;
+        line-height: 18px;
+        text-overflow: ellipsis;
+        white-space: nowrap;
     }
     .sr-card-phone {
-        font-size: 0.8125rem;
-        color: var(--info);
-        text-decoration: none;
+        align-self: flex-start;
+        color: var(--ws-text-muted);
+        font-size: 13px;
+        line-height: 18px;
     }
-    .sr-card-phone:hover { text-decoration: underline; }
-    .sr-card-kteo {
-        font-size: 0.75rem;
-        color: var(--text-faint);
+    .sr-card-phone:hover {
+        color: var(--ws-text);
+        text-decoration: underline;
+    }
+    .sr-card-meta {
+        margin-top: 4px;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 4px 12px;
+        color: var(--ws-text-muted);
+        font-size: 12px;
+        line-height: 16px;
     }
     .sr-card-divider {
-        height: 1px;
-        background: var(--border);
+        display: none;
     }
     .sr-card-footer {
+        position: relative;
+        z-index: 2;
+        margin-top: auto;
         display: flex;
         flex-wrap: wrap;
         align-items: center;
-        justify-content: flex-end;
-        gap: 0.5rem;
+        gap: 6px;
+    }
+    .sr-card-action {
+        position: relative;
+        z-index: 2;
     }
     .sr-btn {
+        min-height: 36px;
+        padding: 7px 10px;
         display: inline-flex;
         align-items: center;
         gap: 0.35rem;
-        font-size: 0.8125rem;
-        font-weight: 600;
-        padding: 0.4rem 0.875rem;
-        border-radius: var(--radius-sm);
-        transition: background 0.15s, border-color 0.15s, color 0.15s;
+        border: 1px solid var(--ws-border);
+        border-radius: 8px;
+        background: transparent;
+        color: var(--ws-text-muted);
+        font-size: 12px;
+        font-weight: 500;
         white-space: nowrap;
+        transition: color 120ms ease, border-color 120ms ease, background-color 120ms ease;
     }
-    .sr-btn-show {
-        color: var(--text-muted);
-        background: var(--surface-2);
-        border: 1px solid var(--border);
+    .sr-btn:hover {
+        border-color: var(--ws-border-hover);
+        background: var(--ws-card);
+        color: var(--ws-text);
     }
-    .sr-btn-show:hover { color: var(--text); border-color: var(--text-faint); background: var(--surface-3); }
     .sr-btn-new {
-        color: #0d1117;
-        background: var(--accent);
+        color: var(--ws-primary-fg);
+        background: var(--ws-primary);
         border: 1px solid transparent;
     }
-    .sr-btn-new:hover { background: #fbbf24; }
+    .sr-btn-new:hover {
+        border-color: transparent;
+        background: var(--ws-primary);
+        color: var(--ws-primary-fg);
+        opacity: .92;
+    }
     .sr-btn svg { width: 13px; height: 13px; stroke-width: 2.5; }
 
     /* Empty state */
     .sr-empty {
+        padding: 24px;
         text-align: center;
-        padding: 4rem 1rem;
-        color: var(--text-muted);
-    }
-    .sr-empty-icon {
-        width: 48px;
-        height: 48px;
-        margin: 0 auto 1rem;
-        color: var(--text-faint);
+        border: 1px solid var(--ws-border);
+        border-radius: 12px;
+        background: var(--ws-card);
+        color: var(--ws-text-muted);
     }
     .sr-empty-title {
-        font-size: 1rem;
-        font-weight: 600;
-        color: var(--text);
-        margin-bottom: 0.25rem;
+        margin-bottom: 2px;
+        color: var(--ws-text);
+        font-size: 14px;
+        font-weight: 500;
     }
     .sr-empty-sub {
-        font-size: 0.875rem;
-        color: var(--text-muted);
+        color: var(--ws-text-muted);
+        font-size: 13px;
+    }
+    .sr-pagination {
+        margin-top: 16px;
     }
 
-    /* Desktop enhancements */
-    @media (min-width: 768px) {
-        .sr-page-title { font-size: 2rem; }
-
-        .sr-card {
-            flex-direction: row;
-            align-items: center;
-            gap: 1.25rem;
-            padding: 1.125rem 1.375rem;
+    @media (min-width: 1120px) {
+        .sr-list {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
         }
-        .sr-card-top { flex-direction: column-reverse; align-items: flex-start; flex-shrink: 0; width: 150px; gap: 0.375rem; }
-        .sr-card-main { flex: 1; min-width: 0; }
-        .sr-card-divider { display: none; }
-        .sr-card-footer { flex-shrink: 0; }
     }
 </style>
 @endpush
@@ -221,7 +256,7 @@
 @section('content')
 
 <div class="sr-page-header">
-    <h1 class="sr-page-title">Αναζήτηση Πινακίδας</h1>
+    <h1 class="sr-page-title">Οχήματα</h1>
     <a href="{{ route('workshop.vehicles.create') }}" class="sr-new-btn">
         <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
             <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/>
@@ -236,16 +271,12 @@
     <button type="submit" class="sr-search-btn">Αναζήτηση</button>
 </form>
 
-@if($q === '')
-    {{-- No query yet — show only the form, not the whole database. --}}
-@elseif($vehicles->isEmpty())
+@if($vehicles->isEmpty())
     <div class="sr-empty">
-        <svg class="sr-empty-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
-                  d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 15.803m10.607 0A7.5 7.5 0 0 1 5.196 15.803"/>
-        </svg>
-        <div class="sr-empty-title">Δεν βρέθηκαν αποτελέσματα</div>
-        <div class="sr-empty-sub">Δοκιμάστε διαφορετική πινακίδα, όνομα ή τηλέφωνο.</div>
+        <div class="sr-empty-title">{{ $q === '' ? 'Δεν υπάρχουν καταχωρημένα οχήματα' : 'Δεν βρέθηκαν οχήματα' }}</div>
+        <div class="sr-empty-sub">
+            {{ $q === '' ? 'Προσθέστε το πρώτο όχημα για να ξεκινήσετε.' : 'Δοκιμάστε διαφορετική πινακίδα, όνομα ή τηλέφωνο.' }}
+        </div>
     </div>
 @else
     <div class="sr-list">
@@ -254,9 +285,15 @@
                 $openOrder = $vehicle->workOrders->first();
                 $openCount = $vehicle->workOrders->count();
             @endphp
-            <div class="sr-card">
+            <article class="sr-card">
+                <a
+                    href="{{ route('workshop.vehicles.edit', $vehicle) }}"
+                    class="sr-card-overlay"
+                    aria-label="Επεξεργασία οχήματος {{ $vehicle->plate_number ?? '—' }}"
+                ></a>
+
                 <div class="sr-card-top">
-                    <span class="sr-plate">{{ $vehicle->plate_number ?? '—' }}</span>
+                    <x-workshop.plate :value="$vehicle->plate_number ?? '—'" />
                     @if($openCount > 0)
                         <span class="sr-open-badge">{{ $openCount }} {{ $openCount === 1 ? 'ανοιχτή εντολή' : 'ανοιχτές εντολές' }}</span>
                     @endif
@@ -265,42 +302,57 @@
                 <div class="sr-card-main">
                     <div class="sr-card-vehicle">
                         {{ trim(($vehicle->make ?? '') . ' ' . ($vehicle->model ?? '')) ?: '—' }}
-                        @if($vehicle->year) <span style="color:var(--text-faint);">· {{ $vehicle->year }}</span> @endif
+                        @if($vehicle->year) · {{ $vehicle->year }} @endif
                     </div>
                     <div class="sr-card-customer">{{ $vehicle->customer?->full_name ?? '—' }}</div>
                     @if($vehicle->customer?->phone)
-                        <a href="tel:{{ $vehicle->customer->phone }}" class="sr-card-phone">{{ $vehicle->customer->phone }}</a>
+                        <a
+                            href="tel:{{ $vehicle->customer->phone }}"
+                            class="sr-card-phone sr-card-action"
+                            aria-label="Κλήση {{ $vehicle->customer->full_name }}"
+                        >{{ $vehicle->customer->phone }}</a>
                     @endif
-                    <div class="sr-card-kteo">
-                        ΚΤΕΟ:
-                        {{ $vehicle->kteo_expires_at ? $vehicle->kteo_expires_at->translatedFormat('d M Y') : '—' }}
+                    <div class="sr-card-meta">
+                        @if($vehicle->mileage !== null)
+                            <span>{{ number_format($vehicle->mileage, 0, ',', '.') }} km</span>
+                        @endif
+                        <span>ΚΤΕΟ {{ $vehicle->kteo_expires_at ? $vehicle->kteo_expires_at->translatedFormat('d M Y') : '—' }}</span>
                     </div>
                 </div>
 
                 <div class="sr-card-divider"></div>
 
                 <div class="sr-card-footer">
-                    <a href="{{ route('workshop.vehicles.edit', $vehicle) }}" class="sr-btn sr-btn-show">
+                    <a href="{{ route('workshop.vehicles.edit', $vehicle) }}" class="sr-btn sr-card-action">
                         Επεξεργασία
                     </a>
                     @if($openOrder)
-                        <a href="{{ route('workshop.work-orders.show', $openOrder) }}" class="sr-btn sr-btn-show">
+                        <a href="{{ route('workshop.work-orders.show', $openOrder) }}" class="sr-btn sr-card-action">
                             Προβολή εντολής
                             <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5"/>
                             </svg>
                         </a>
                     @endif
-                    <a href="{{ route('workshop.work-orders.create', ['customer_id' => $vehicle->customer_id, 'vehicle_id' => $vehicle->id]) }}" class="sr-btn sr-btn-new">
+                    <a
+                        href="{{ route('workshop.work-orders.create', ['customer_id' => $vehicle->customer_id, 'vehicle_id' => $vehicle->id]) }}"
+                        class="sr-btn sr-btn-new sr-card-action"
+                    >
                         <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/>
                         </svg>
                         Νέα εντολή εργασίας
                     </a>
                 </div>
-            </div>
+            </article>
         @endforeach
     </div>
+
+    @if($vehicles instanceof \Illuminate\Contracts\Pagination\Paginator && $vehicles->hasPages())
+        <div class="sr-pagination">
+            {{ $vehicles->onEachSide(1)->links() }}
+        </div>
+    @endif
 @endif
 
 @endsection

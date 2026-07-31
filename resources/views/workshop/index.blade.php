@@ -52,9 +52,9 @@
                 link="Όλες οι εργασίες"
             />
 
-            <div class="ws-list">
+            <div class="ws-list ws-work-order-grid">
                 @forelse($recentWorkOrders as $order)
-                    <x-workshop.work-order-row :order="$order" />
+                    <x-workshop.work-order-row :order="$order" dashboard />
                 @empty
                     <x-workshop.empty-state icon="clipboard" title="Δεν υπάρχουν ανοιχτές εντολές">
                         <a href="{{ route('workshop.work-orders.create') }}">Άνοιγμα νέας εντολής</a>

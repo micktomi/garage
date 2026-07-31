@@ -379,10 +379,14 @@ class WorkshopController extends Controller
         $q = trim((string) $request->query('q', ''));
 
         if ($q === '') {
-            return view('workshop.search', [
-                'vehicles' => collect(),
-                'q' => $q,
-            ]);
+            $vehicles = Vehicle::with(['customer', 'workOrders' => function ($query) {
+                $query->whereIn('status', WorkOrderStatus::openValues())->latest();
+            }])
+                ->orderBy('plate_number')
+                ->paginate(12)
+                ->withQueryString();
+
+            return view('workshop.search', compact('vehicles', 'q'));
         }
 
         // Normalize the plate query: uppercase, no spaces/dashes — so

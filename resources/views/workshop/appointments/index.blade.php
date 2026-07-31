@@ -15,159 +15,204 @@
         flex-wrap: wrap;
     }
     .ap-page-title {
-        font-size: 1.375rem;
-        font-weight: 700;
-        letter-spacing: -0.03em;
-        line-height: 1.2;
+        margin: 0;
+        color: var(--ws-text);
+        font-size: 28px;
+        font-weight: 500;
+        line-height: 32px;
     }
     .ap-new-btn {
+        min-height: 44px;
+        padding: 8px 16px;
         display: inline-flex;
         align-items: center;
         gap: 0.4rem;
-        font-size: 0.8125rem;
-        font-weight: 700;
-        color: #0d1117;
-        background: var(--accent);
-        border: none;
-        border-radius: var(--radius-sm);
-        padding: 0.5rem 1rem;
-        transition: background 0.15s, box-shadow 0.15s;
-        box-shadow: 0 1px 6px rgba(245,158,11,0.25);
+        border: 1px solid transparent;
+        border-radius: 8px;
+        background: var(--ws-primary);
+        color: var(--ws-primary-fg);
+        font-size: 13px;
+        font-weight: 500;
         white-space: nowrap;
+        transition: opacity 120ms ease;
     }
-    .ap-new-btn:hover { background: #fbbf24; box-shadow: 0 2px 10px rgba(245,158,11,0.4); }
+    .ap-new-btn:hover { opacity: .92; }
+
+    .ap-success {
+        margin-bottom: 16px;
+        padding: 12px 16px;
+        border: 1px solid var(--ws-border);
+        border-radius: 8px;
+        background: var(--ws-status-ready-bg);
+        color: var(--ws-status-ready-fg);
+        font-size: 13px;
+        font-weight: 500;
+    }
 
     /* ── Appointment card ────────────────────────────────────── */
     .ap-list {
-        display: flex;
-        flex-direction: column;
-        gap: 0.625rem;
+        display: grid;
+        grid-template-columns: minmax(0, 1fr);
+        align-items: stretch;
+        gap: 12px;
     }
     .ap-card {
-        background: var(--surface);
-        border: 1px solid var(--border);
-        border-radius: var(--radius);
-        padding: 1rem 1.125rem;
+        min-width: 0;
+        min-height: 116px;
+        height: 100%;
+        padding: 14px;
         display: flex;
         flex-direction: column;
-        gap: 0.625rem;
+        gap: 10px;
+        border: 1px solid var(--ws-border);
+        border-radius: 12px;
+        background: var(--ws-card);
+        box-shadow: var(--shadow-sm);
+        transition: border-color 120ms ease, background-color 120ms ease;
+    }
+    .ap-card:hover {
+        border-color: var(--ws-border-hover);
+        background: var(--ws-sunken);
     }
     .ap-card--today {
-        border-color: rgba(245,158,11,0.4);
-        background: rgba(245,158,11,0.06);
+        border-color: var(--ws-border-hover);
     }
     .ap-card-top {
         display: flex;
-        align-items: center;
+        align-items: flex-start;
         justify-content: space-between;
-        gap: 0.5rem;
+        gap: 12px;
     }
     .ap-datetime {
+        min-width: 0;
         display: flex;
         flex-direction: column;
-        gap: 0.1rem;
+        gap: 2px;
     }
     .ap-date {
-        font-size: 0.9375rem;
-        font-weight: 700;
-        color: var(--text);
-    }
-    .ap-time {
-        font-size: 0.8125rem;
-        color: var(--text-muted);
-        font-variant-numeric: tabular-nums;
-    }
-    .ap-today-badge {
-        display: inline-flex;
-        align-items: center;
-        gap: 0.3rem;
-        font-size: 0.6875rem;
-        font-weight: 700;
-        padding: 0.2rem 0.55rem;
-        border-radius: 999px;
-        letter-spacing: 0.02em;
-        text-transform: uppercase;
-        background: var(--accent-dim);
-        color: var(--accent);
-        border: 1px solid rgba(245,158,11,0.3);
+        overflow: hidden;
+        color: var(--ws-text);
+        font-size: 15px;
+        font-weight: 500;
+        line-height: 20px;
+        text-overflow: ellipsis;
         white-space: nowrap;
     }
+    .ap-time {
+        color: var(--ws-text-muted);
+        font-size: 13px;
+        line-height: 18px;
+        font-variant-numeric: tabular-nums;
+    }
+    .ap-status {
+        max-width: 45%;
+        padding: 3px 9px;
+        display: inline-flex;
+        align-items: center;
+        overflow: hidden;
+        border-radius: 8px;
+        font-size: 12px;
+        font-weight: 500;
+        line-height: 18px;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+    .ap-status--scheduled {
+        background: var(--ws-status-progress-bg);
+        color: var(--ws-status-progress-fg);
+    }
+    .ap-status--in-progress {
+        background: var(--ws-status-awaiting-bg);
+        color: var(--ws-status-awaiting-fg);
+    }
+    .ap-status--completed {
+        background: var(--ws-status-ready-bg);
+        color: var(--ws-status-ready-fg);
+    }
+    .ap-status--cancelled {
+        background: var(--ws-status-expired-bg);
+        color: var(--ws-status-expired-fg);
+    }
+    .ap-status--default {
+        border: 1px solid var(--ws-border);
+        background: transparent;
+        color: var(--ws-text-muted);
+    }
     .ap-card-main {
+        min-width: 0;
+        flex: 1;
         display: flex;
         flex-direction: column;
-        gap: 0.2rem;
+        gap: 2px;
     }
     .ap-card-customer {
-        font-size: 0.9375rem;
-        font-weight: 600;
-        color: var(--text);
+        overflow: hidden;
+        color: var(--ws-text);
+        font-size: 15px;
+        font-weight: 500;
+        line-height: 20px;
+        text-overflow: ellipsis;
+        white-space: nowrap;
     }
     .ap-card-vehicle {
+        min-width: 0;
         display: flex;
         align-items: center;
-        gap: 0.4rem;
-        font-size: 0.8125rem;
-        color: var(--text-muted);
+        gap: 8px;
+        color: var(--ws-text-muted);
+        font-size: 13px;
+        line-height: 18px;
     }
-    .ap-plate {
-        display: inline-block;
-        background: var(--surface-2);
-        border: 1px solid var(--border);
-        border-radius: 5px;
-        padding: 0.1rem 0.4rem;
-        font-size: 0.75rem;
-        font-weight: 700;
-        letter-spacing: 0.06em;
-        color: var(--text);
-        font-family: monospace;
+    .ap-card-vehicle-name {
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
     }
     .ap-card-phone {
-        font-size: 0.8125rem;
-        color: var(--info);
-        text-decoration: none;
+        align-self: flex-start;
+        color: var(--ws-text-muted);
+        font-size: 13px;
+        line-height: 18px;
     }
-    .ap-card-phone:hover { text-decoration: underline; }
+    .ap-card-phone:hover {
+        color: var(--ws-text);
+        text-decoration: underline;
+    }
     .ap-card-desc {
-        font-size: 0.8125rem;
-        color: var(--text-muted);
-        line-height: 1.4;
+        margin-top: 4px;
+        overflow: hidden;
+        color: var(--ws-text-muted);
+        font-size: 12px;
+        line-height: 16px;
+        text-overflow: ellipsis;
+        white-space: nowrap;
     }
 
     /* Empty state */
     .ap-empty {
+        padding: 24px;
         text-align: center;
-        padding: 4rem 1rem;
-        color: var(--text-muted);
-    }
-    .ap-empty-icon {
-        width: 48px;
-        height: 48px;
-        margin: 0 auto 1rem;
-        color: var(--text-faint);
+        border: 1px solid var(--ws-border);
+        border-radius: 12px;
+        background: var(--ws-card);
+        color: var(--ws-text-muted);
     }
     .ap-empty-title {
-        font-size: 1rem;
-        font-weight: 600;
-        color: var(--text);
-        margin-bottom: 0.25rem;
+        margin-bottom: 2px;
+        color: var(--ws-text);
+        font-size: 14px;
+        font-weight: 500;
     }
     .ap-empty-sub {
-        font-size: 0.875rem;
-        color: var(--text-muted);
+        color: var(--ws-text-muted);
+        font-size: 13px;
     }
 
-    /* Desktop enhancements */
-    @media (min-width: 768px) {
-        .ap-page-title { font-size: 2rem; }
-
-        .ap-card {
-            flex-direction: row;
-            align-items: center;
-            gap: 1.25rem;
-            padding: 1.125rem 1.375rem;
+    @media (min-width: 1120px) {
+        .ap-list {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
         }
-        .ap-card-top { flex-direction: column-reverse; align-items: flex-start; flex-shrink: 0; width: 140px; gap: 0.375rem; }
-        .ap-card-main { flex: 1; min-width: 0; }
     }
 </style>
 @endpush
@@ -185,25 +230,13 @@
 </div>
 
 @if(session('success'))
-    <div style="
-        display:flex;align-items:center;gap:0.625rem;
-        background:var(--success-dim);border:1px solid rgba(63,185,80,0.3);
-        border-radius:var(--radius-sm);padding:0.75rem 1rem;margin-bottom:1rem;
-        font-size:0.875rem;color:var(--success);font-weight:500;
-    ">
-        <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5" style="flex-shrink:0">
-            <path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5"/>
-        </svg>
+    <div class="ap-success">
         {{ session('success') }}
     </div>
 @endif
 
 @if($appointments->isEmpty())
     <div class="ap-empty">
-        <svg class="ap-empty-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
-                  d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 7.5v11.25m-18 0A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75m-18 0v-7.5A2.25 2.25 0 0 1 5.25 9h13.5A2.25 2.25 0 0 1 21 11.25v7.5"/>
-        </svg>
         <div class="ap-empty-title">Δεν υπάρχουν προγραμματισμένα ραντεβού</div>
         <div class="ap-empty-sub">Προσθέστε το πρώτο ραντεβού για να ξεκινήσετε.</div>
     </div>
@@ -212,38 +245,56 @@
         @foreach($appointments as $appointment)
             @php
                 $isToday = $appointment->appointment_date->isToday();
+                $statusLabel = match ($appointment->status) {
+                    'scheduled' => 'Προγραμματισμένο',
+                    'in_progress' => 'Σε εξέλιξη',
+                    'completed' => 'Ολοκληρώθηκε',
+                    'cancelled' => 'Ακυρώθηκε',
+                    default => $appointment->status,
+                };
+                $statusClass = match ($appointment->status) {
+                    'scheduled' => 'scheduled',
+                    'in_progress' => 'in-progress',
+                    'completed' => 'completed',
+                    'cancelled' => 'cancelled',
+                    default => 'default',
+                };
             @endphp
-            <div class="ap-card {{ $isToday ? 'ap-card--today' : '' }}">
+            <article class="ap-card {{ $isToday ? 'ap-card--today' : '' }}">
                 <div class="ap-card-top">
                     <div class="ap-datetime">
-                        <span class="ap-date">{{ $appointment->appointment_date->translatedFormat('d M Y') }}</span>
+                        <span class="ap-date">
+                            @if($isToday)Σήμερα · @endif{{ $appointment->appointment_date->translatedFormat('d M Y') }}
+                        </span>
                         <span class="ap-time">{{ $appointment->appointment_date->format('H:i') }}</span>
                     </div>
-                    @if($isToday)
-                        <span class="ap-today-badge">Σήμερα</span>
-                    @endif
+                    <span class="ap-status ap-status--{{ $statusClass }}">{{ $statusLabel }}</span>
                 </div>
 
                 <div class="ap-card-main">
                     <div class="ap-card-customer">{{ $appointment->customer?->full_name ?? '—' }}</div>
                     <div class="ap-card-vehicle">
                         @if($appointment->vehicle)
-                            <span class="ap-plate">{{ $appointment->vehicle->plate_number ?? '—' }}</span>
+                            <x-workshop.plate :value="$appointment->vehicle->plate_number ?? '—'" />
                             @if($appointment->vehicle->make || $appointment->vehicle->model)
-                                <span>{{ trim(($appointment->vehicle->make ?? '') . ' ' . ($appointment->vehicle->model ?? '')) }}</span>
+                                <span class="ap-card-vehicle-name">
+                                    {{ trim(($appointment->vehicle->make ?? '') . ' ' . ($appointment->vehicle->model ?? '')) }}
+                                </span>
                             @endif
                         @else
                             <span>—</span>
                         @endif
                     </div>
                     @if($appointment->customer?->phone)
-                        <a href="tel:{{ $appointment->customer->phone }}" class="ap-card-phone">{{ $appointment->customer->phone }}</a>
+                        <a href="tel:{{ $appointment->customer->phone }}" class="ap-card-phone" aria-label="Κλήση {{ $appointment->customer->full_name }}">
+                            {{ $appointment->customer->phone }}
+                        </a>
                     @endif
                     @if($appointment->description)
-                        <div class="ap-card-desc">{{ $appointment->description }}</div>
+                        <div class="ap-card-desc" title="{{ $appointment->description }}">{{ $appointment->description }}</div>
                     @endif
                 </div>
-            </div>
+            </article>
         @endforeach
     </div>
 @endif

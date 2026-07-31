@@ -25,17 +25,16 @@
         align-items: center;
         gap: 0.4rem;
         font-size: 0.8125rem;
-        font-weight: 700;
-        color: #0d1117;
-        background: var(--accent);
-        border: none;
-        border-radius: var(--radius-sm);
+        font-weight: 500;
+        color: var(--ws-primary-fg);
+        background: var(--ws-primary);
+        border: 1px solid transparent;
+        border-radius: 8px;
         padding: 0.5rem 1rem;
-        transition: background 0.15s, box-shadow 0.15s;
-        box-shadow: 0 1px 6px rgba(245,158,11,0.25);
+        transition: opacity 120ms ease;
         white-space: nowrap;
     }
-    .cu-new-btn:hover { background: #fbbf24; box-shadow: 0 2px 10px rgba(245,158,11,0.4); }
+    .cu-new-btn:hover { opacity: .92; }
 
     /* ── Search ──────────────────────────────────────────────── */
     .cu-search-form {
@@ -83,65 +82,98 @@
 
     /* ── Customer card ───────────────────────────────────────── */
     .cu-list {
-        display: flex;
-        flex-direction: column;
-        gap: 0.625rem;
+        display: grid;
+        grid-template-columns: minmax(0, 1fr);
+        align-items: stretch;
+        gap: 12px;
     }
     .cu-card {
-        background: var(--surface);
-        border: 1px solid var(--border);
-        border-radius: var(--radius);
-        padding: 1rem 1.125rem;
+        min-width: 0;
+        min-height: 84px;
+        height: 100%;
+        padding: 14px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        border: 1px solid var(--ws-border);
+        border-radius: 12px;
+        background: var(--ws-card);
+        box-shadow: var(--shadow-sm);
+        transition: border-color 120ms ease, background-color 120ms ease;
+    }
+    .cu-card:hover {
+        border-color: var(--ws-border-hover);
+        background: var(--ws-sunken);
+    }
+    .cu-card-main {
+        min-width: 0;
+        flex: 1;
         display: flex;
         flex-direction: column;
-        gap: 0.625rem;
+        gap: 2px;
     }
     .cu-card-name {
-        font-size: 0.9375rem;
-        font-weight: 700;
-        color: var(--text);
+        overflow: hidden;
+        color: var(--ws-text);
+        font-size: 15px;
+        font-weight: 500;
+        line-height: 20px;
+        text-overflow: ellipsis;
+        white-space: nowrap;
     }
     .cu-card-contact {
+        min-width: 0;
         display: flex;
         flex-wrap: wrap;
-        gap: 0.75rem;
-        font-size: 0.8125rem;
-        color: var(--text-muted);
+        gap: 2px 10px;
+        color: var(--ws-text-muted);
+        font-size: 13px;
+        line-height: 18px;
     }
-    .cu-card-contact a { color: var(--info); text-decoration: none; }
-    .cu-card-contact a:hover { text-decoration: underline; }
+    .cu-card-contact a { color: var(--ws-text-muted); }
+    .cu-card-contact a:hover { color: var(--ws-text); text-decoration: underline; }
+    .cu-card-email {
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
     .cu-card-divider {
-        height: 1px;
-        background: var(--border);
+        display: none;
     }
     .cu-card-vehicles {
+        min-width: 0;
+        flex: 0 1 45%;
         display: flex;
         flex-direction: column;
-        gap: 0.4rem;
+        align-items: flex-end;
+        gap: 6px;
     }
     .cu-vehicle-count {
-        font-size: 0.75rem;
-        font-weight: 600;
-        color: var(--text-faint);
-        text-transform: uppercase;
-        letter-spacing: 0.04em;
+        color: var(--ws-text-muted);
+        font-size: 12px;
+        font-weight: 500;
+        line-height: 16px;
+        white-space: nowrap;
     }
     .cu-plate-list {
         display: flex;
         flex-wrap: wrap;
-        gap: 0.375rem;
+        justify-content: flex-end;
+        gap: 4px;
     }
     .cu-plate {
         display: inline-block;
-        background: var(--surface-2);
-        border: 1px solid var(--border);
-        border-radius: 5px;
-        padding: 0.15rem 0.45rem;
-        font-size: 0.75rem;
-        font-weight: 700;
-        letter-spacing: 0.05em;
-        color: var(--text);
-        font-family: monospace;
+        padding: 3px 7px;
+        border: 1px solid var(--ws-border);
+        border-radius: 8px;
+        background: var(--ws-sunken);
+        color: var(--ws-text);
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+        font-size: 12px;
+        font-weight: 400;
+        line-height: 18px;
+        white-space: nowrap;
     }
 
     /* Empty state */
@@ -170,16 +202,12 @@
     /* Desktop enhancements */
     @media (min-width: 768px) {
         .cu-page-title { font-size: 2rem; }
+    }
 
-        .cu-card {
-            flex-direction: row;
-            align-items: center;
-            gap: 1.5rem;
-            padding: 1.125rem 1.375rem;
+    @media (min-width: 1120px) {
+        .cu-list {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
         }
-        .cu-card-main { flex: 0 0 260px; display: flex; flex-direction: column; gap: 0.3rem; }
-        .cu-card-divider { display: none; }
-        .cu-card-vehicles { flex: 1; }
     }
 </style>
 @endpush
@@ -227,10 +255,10 @@
                     <div class="cu-card-name">{{ $customer->full_name }}</div>
                     <div class="cu-card-contact">
                         @if($customer->phone)
-                            <a href="tel:{{ $customer->phone }}">{{ $customer->phone }}</a>
+                            <a href="tel:{{ $customer->phone }}" aria-label="Κλήση {{ $customer->full_name }}">{{ $customer->phone }}</a>
                         @endif
                         @if($customer->email)
-                            <span>{{ $customer->email }}</span>
+                            <span class="cu-card-email" title="{{ $customer->email }}">{{ $customer->email }}</span>
                         @endif
                     </div>
                 </div>

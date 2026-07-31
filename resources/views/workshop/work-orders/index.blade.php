@@ -16,9 +16,9 @@
     <section>
         <x-workshop.section-header title="Ανοιχτές εντολές" />
 
-        <div class="ws-list">
+        <div class="ws-list ws-work-order-grid">
             @forelse($workOrders as $order)
-                <x-workshop.work-order-row :order="$order" />
+                <x-workshop.work-order-row :order="$order" variant="index" />
             @empty
                 <x-workshop.empty-state icon="clipboard" title="Δεν υπάρχουν ανοιχτές εντολές">
                     <a href="{{ route('workshop.work-orders.create') }}">Άνοιγμα νέας εντολής</a>

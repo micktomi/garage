@@ -191,10 +191,12 @@ class WorkshopDashboardTest extends TestCase
         }
     }
 
-    public function test_dashboard_v11_accent_palette_and_truncation_contract(): void
+    public function test_dashboard_v21_sidebar_accent_palette_and_truncation_contract(): void
     {
         $layout = file_get_contents(resource_path('views/layouts/workshop.blade.php'));
 
+        $this->assertStringContainsString('--ws-nav: #1C2733;', $layout);
+        $this->assertStringContainsString('--ws-nav-active: #2B3A4A;', $layout);
         $this->assertStringContainsString('--ws-status-new-bg: #F1F1EF;', $layout);
         $this->assertStringContainsString('--ws-status-new-fg: #54534F;', $layout);
         $this->assertStringNotContainsString('--ws-status-new-bg: #EFF3F8;', $layout);
@@ -205,7 +207,7 @@ class WorkshopDashboardTest extends TestCase
             $layout,
         );
         $this->assertMatchesRegularExpression(
-            '/\.ws-dnav-item\.ws-active\s*\{[^}]*color:\s*var\(--ws-text-muted\);[^}]*\}/s',
+            '/\.ws-sidebar-item\[aria-current="page"\]\s*\{[^}]*color:\s*var\(--ws-nav-text-hi\);[^}]*background:\s*var\(--ws-nav-active\);[^}]*\}/s',
             $layout,
         );
         $this->assertMatchesRegularExpression(

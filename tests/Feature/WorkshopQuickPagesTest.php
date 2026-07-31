@@ -59,7 +59,7 @@ class WorkshopQuickPagesTest extends TestCase
         $this->actingAs($user)->get(route('workshop.dashboard'))
             ->assertOk()
             ->assertSee('href="'.route('workshop.customers.index').'"', false)
-            ->assertSee('>Πελάτες</a>', false);
+            ->assertSee('Πελάτες');
 
         $this->actingAs($user)->get(route('workshop.customers.index'))
             ->assertOk()

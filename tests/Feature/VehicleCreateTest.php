@@ -19,7 +19,7 @@ class VehicleCreateTest extends TestCase
         $this->actingAs($user)->get(route('workshop.dashboard'))
             ->assertOk()
             ->assertSee('href="'.route('workshop.search').'"', false)
-            ->assertSee('>Οχήματα</a>', false);
+            ->assertSee('Οχήματα');
 
         $this->actingAs($user)->get(route('workshop.search'))
             ->assertOk()

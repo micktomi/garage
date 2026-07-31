@@ -29,6 +29,14 @@
             --ws-border: #E5E7EB;
             --ws-border-hover: #D4D4D8;
 
+            /* Sidebar */
+            --ws-nav: #1C2733;
+            --ws-nav-hover: #24313F;
+            --ws-nav-active: #2B3A4A;
+            --ws-nav-text: #93A4B5;
+            --ws-nav-text-hi: #F1F5F9;
+            --ws-nav-divider: #334456;
+
             /* The only accent. Darkened from #C2620E so white text meets 4.5:1. */
             --ws-primary: #BA5D0D;
             --ws-primary-fg: #FFFFFF;
@@ -128,75 +136,124 @@
             border: 0;
         }
 
-        .ws-header {
+        .ws-shell {
+            min-height: 100vh;
+            display: flex;
+            align-items: flex-start;
+        }
+
+        .ws-sidebar {
             position: sticky;
             top: 0;
-            z-index: 20;
-            height: 56px;
-            background: var(--ws-card);
-            border-bottom: 1px solid var(--ws-border);
+            width: 80px;
+            height: 100vh;
+            padding: 16px 8px;
+            flex: 0 0 80px;
+            display: flex;
+            flex-direction: column;
+            background: var(--ws-nav);
+            color: var(--ws-nav-text);
         }
 
-        .ws-header-inner {
+        .ws-sidebar-brand {
             width: 100%;
-            max-width: 1200px;
-            height: 100%;
-            margin: 0 auto;
-            padding: 0 24px;
+            min-height: 48px;
+            margin-bottom: 12px;
             display: flex;
-            align-items: center;
-            gap: 32px;
-        }
-
-        .ws-brand {
-            flex: 0 0 auto;
-            font-size: 15px;
-            font-weight: 500;
-            white-space: nowrap;
-        }
-
-        .ws-desktop-nav {
-            display: flex;
-            align-items: center;
-            gap: 4px;
-        }
-
-        .ws-dnav-item,
-        .ws-admin-btn {
-            min-height: 36px;
-            padding: 8px 12px;
-            display: inline-flex;
             align-items: center;
             justify-content: center;
-            gap: 4px;
             border-radius: 8px;
-            color: var(--ws-text-muted);
-            font-size: 13px;
+            color: var(--ws-nav-text-hi);
+            font-size: 15px;
+            font-weight: 500;
+            line-height: 20px;
+        }
+
+        .ws-sidebar-brand:hover {
+            background: var(--ws-nav-hover);
+        }
+
+        .ws-sidebar-brand-full {
+            display: none;
+        }
+
+        .ws-sidebar-brand-compact {
+            display: block;
+        }
+
+        .ws-sidebar-nav,
+        .ws-sidebar-primary {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .ws-sidebar-nav {
+            min-height: 0;
+            flex: 1;
+        }
+
+        .ws-sidebar-item {
+            width: 100%;
+            min-height: 56px;
+            padding: 4px 2px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 3px;
+            border-radius: 8px;
+            color: var(--ws-nav-text);
+            font-size: 12px;
             font-weight: 400;
-            white-space: nowrap;
+            line-height: 14px;
+            text-align: center;
             transition: color 120ms ease, background-color 120ms ease;
         }
 
-        .ws-dnav-item:hover,
-        .ws-admin-btn:hover {
-            color: var(--ws-text);
-            background: var(--ws-sunken);
+        .ws-sidebar-item:hover {
+            color: var(--ws-nav-text-hi);
+            background: var(--ws-nav-hover);
         }
 
-        .ws-dnav-item.ws-active {
-            color: var(--ws-text-muted);
-            background: var(--ws-sunken);
+        .ws-sidebar-item[aria-current="page"] {
+            color: var(--ws-nav-text-hi);
+            background: var(--ws-nav-active);
         }
 
-        .ws-admin-btn {
-            margin-left: auto;
-            border: 1px solid var(--ws-border);
-            background: var(--ws-card);
+        .ws-sidebar-icon {
+            width: 20px;
+            height: 20px;
+            flex: 0 0 auto;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .ws-sidebar-icon svg {
+            width: 20px;
+            height: 20px;
+            stroke-width: 1.8;
+        }
+
+        .ws-sidebar-label {
+            display: block;
+        }
+
+        .ws-sidebar-footer {
+            margin-top: auto;
+            padding-top: 12px;
+            border-top: 1px solid var(--ws-nav-divider);
+        }
+
+        .ws-content {
+            min-width: 0;
+            flex: 1;
         }
 
         .ws-main {
             width: 100%;
-            max-width: 1200px;
+            max-width: 1100px;
             margin: 0 auto;
             padding: 24px 24px 32px;
         }
@@ -623,21 +680,42 @@
             height: 16px;
         }
 
+        @media (min-width: 1280px) {
+            .ws-sidebar {
+                width: 240px;
+                padding: 16px;
+                flex-basis: 240px;
+            }
+
+            .ws-sidebar-brand {
+                padding: 0 12px;
+                justify-content: flex-start;
+            }
+
+            .ws-sidebar-brand-full {
+                display: block;
+            }
+
+            .ws-sidebar-brand-compact {
+                display: none;
+            }
+
+            .ws-sidebar-item {
+                min-height: 44px;
+                padding: 10px 12px;
+                flex-direction: row;
+                justify-content: flex-start;
+                gap: 12px;
+                font-size: 13px;
+                line-height: 18px;
+                text-align: left;
+            }
+        }
+
         @media (max-width: 1023px) {
-            .ws-header-inner,
             .ws-main {
                 padding-left: 16px;
                 padding-right: 16px;
-            }
-
-            .ws-header-inner {
-                gap: 16px;
-            }
-
-            .ws-dnav-item,
-            .ws-admin-btn {
-                padding-left: 8px;
-                padding-right: 8px;
             }
 
             .ws-stat-grid {
@@ -659,47 +737,15 @@
     @vite(['resources/js/app.js'])
 </head>
 <body>
-    <header class="ws-header">
-        <div class="ws-header-inner">
-            <a href="{{ route('workshop.dashboard') }}" class="ws-brand">Συνεργείο</a>
+    <div class="ws-shell">
+        <x-workshop.shell.sidebar />
 
-            <nav class="ws-desktop-nav" aria-label="Κύρια πλοήγηση">
-                <a
-                    href="{{ route('workshop.dashboard') }}"
-                    class="ws-dnav-item {{ request()->routeIs('workshop.dashboard') ? 'ws-active' : '' }}"
-                    @if(request()->routeIs('workshop.dashboard')) aria-current="page" @endif
-                >Αρχική</a>
-                <a
-                    href="{{ route('workshop.work-orders.index') }}"
-                    class="ws-dnav-item {{ request()->routeIs('workshop.work-orders.*') ? 'ws-active' : '' }}"
-                    @if(request()->routeIs('workshop.work-orders.*')) aria-current="page" @endif
-                >Εργασίες</a>
-                <a
-                    href="{{ route('workshop.customers.index') }}"
-                    class="ws-dnav-item {{ request()->routeIs('workshop.customers.*') ? 'ws-active' : '' }}"
-                    @if(request()->routeIs('workshop.customers.*')) aria-current="page" @endif
-                >Πελάτες</a>
-                <a
-                    href="{{ route('workshop.search') }}"
-                    class="ws-dnav-item {{ request()->routeIs('workshop.search', 'workshop.vehicles.*') ? 'ws-active' : '' }}"
-                    @if(request()->routeIs('workshop.search', 'workshop.vehicles.*')) aria-current="page" @endif
-                >Οχήματα</a>
-                <a
-                    href="{{ route('workshop.appointments.index') }}"
-                    class="ws-dnav-item {{ request()->routeIs('workshop.appointments.*') ? 'ws-active' : '' }}"
-                    @if(request()->routeIs('workshop.appointments.*')) aria-current="page" @endif
-                >Ραντεβού</a>
-            </nav>
-
-            <a href="{{ url('/admin') }}" class="ws-admin-btn">
-                Admin <span aria-hidden="true">→</span>
-            </a>
+        <div class="ws-content">
+            <main class="ws-main">
+                @yield('content')
+            </main>
         </div>
-    </header>
-
-    <main class="ws-main">
-        @yield('content')
-    </main>
+    </div>
 
     @stack('scripts')
 </body>

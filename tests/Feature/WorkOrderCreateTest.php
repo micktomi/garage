@@ -8,6 +8,8 @@ use App\Models\User;
 use App\Models\Vehicle;
 use App\Models\WorkOrder;
 use App\Models\WorkOrderPart;
+use DOMDocument;
+use DOMXPath;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -35,7 +37,87 @@ class WorkOrderCreateTest extends TestCase
         $response = $this->actingAs($user)->get(route('workshop.work-orders.create'));
 
         $response->assertOk();
-        $response->assertSee('Νέα Εντολή Εργασίας');
+        $response->assertSee('Νέα εντολή εργασίας');
+    }
+
+    public function test_create_form_uses_one_card_with_internal_sections_and_sticky_actions(): void
+    {
+        $user = User::factory()->create();
+        $response = $this->actingAs($user)->get(route('workshop.work-orders.create'))->assertOk();
+        $xpath = $this->xpath($response->getContent());
+
+        $forms = $xpath->query('//form[@action="'.route('workshop.work-orders.store').'"]');
+        $this->assertCount(1, $forms);
+        $form = $forms->item(0);
+
+        $cards = $xpath->query(
+            './/*[contains(concat(" ", normalize-space(@class), " "), " woc-card ")]',
+            $form,
+        );
+        $this->assertCount(1, $cards);
+
+        $sections = $xpath->query(
+            './/*[contains(concat(" ", normalize-space(@class), " "), " woc-form-section ")]',
+            $cards->item(0),
+        );
+        $this->assertCount(5, $sections);
+
+        $sectionTitles = [];
+        foreach ($xpath->query(
+            './/*[contains(concat(" ", normalize-space(@class), " "), " woc-form-section-title ")]',
+            $cards->item(0),
+        ) as $title) {
+            $sectionTitles[] = trim($title->textContent);
+        }
+
+        $this->assertSame([
+            'Πελάτης και όχημα',
+            'Τι δηλώνει ο πελάτης',
+            'Κόστος και ανταλλακτικά',
+            'Στοιχεία service',
+            'Σύνοψη κόστους',
+        ], $sectionTitles);
+
+        $actionBars = $xpath->query(
+            './/*[contains(concat(" ", normalize-space(@class), " "), " woc-action-bar ")]',
+            $cards->item(0),
+        );
+        $this->assertCount(1, $actionBars);
+        $this->assertCount(1, $xpath->query('.//button[@type="submit" and normalize-space(.)="Αποθήκευση"]', $actionBars->item(0)));
+        $this->assertCount(1, $xpath->query('.//a[normalize-space(.)="Ακύρωση"]', $actionBars->item(0)));
+    }
+
+    public function test_create_form_starts_with_collapsed_parts_and_uses_two_row_autogrow_textarea(): void
+    {
+        $user = User::factory()->create();
+        $response = $this->actingAs($user)->get(route('workshop.work-orders.create'))->assertOk();
+        $xpath = $this->xpath($response->getContent());
+
+        $textareas = $xpath->query('//textarea[@id="problem_description" and @rows="2" and @data-autogrow]');
+        $this->assertCount(1, $textareas);
+        $this->assertSame('Τριγμός από εμπρός δεξιά κατά την οδήγηση', $textareas->item(0)->getAttribute('placeholder'));
+
+        $response->assertSee("x-data='workOrderForm([],", false);
+        $response->assertSee('Προσθήκη ανταλλακτικού');
+
+        $view = file_get_contents(resource_path('views/workshop/work-orders/create.blade.php'));
+        $this->assertStringContainsString('const maxRows = 8;', $view);
+        $this->assertStringNotContainsString('text-transform: uppercase', $view);
+        $this->assertDoesNotMatchRegularExpression('/letter-spacing\s*:/', $view);
+    }
+
+    public function test_create_form_uses_muted_destructive_actions_and_sticky_action_bar(): void
+    {
+        $view = file_get_contents(resource_path('views/workshop/work-orders/create.blade.php'));
+
+        $this->assertMatchesRegularExpression(
+            '/\.woc-remove-btn\s*\{[^}]*color:\s*var\(--ws-text-muted\);[^}]*background:\s*transparent;[^}]*border:\s*1px solid transparent;[^}]*\}/s',
+            $view,
+        );
+        $this->assertMatchesRegularExpression(
+            '/\.woc-action-bar\s*\{[^}]*position:\s*sticky;[^}]*bottom:\s*0;[^}]*background:\s*var\(--ws-sunken\);[^}]*\}/s',
+            $view,
+        );
     }
 
     public function test_work_order_can_be_created_with_vehicle_belonging_to_customer(): void
@@ -369,5 +451,13 @@ class WorkOrderCreateTest extends TestCase
         $this->assertDatabaseCount('work_orders', 0);
         $this->assertDatabaseCount('work_order_parts', 0);
         $this->assertEquals(5, $part->fresh()->quantity);
+    }
+
+    private function xpath(string $html): DOMXPath
+    {
+        $document = new DOMDocument;
+        @$document->loadHTML($html);
+
+        return new DOMXPath($document);
     }
 }

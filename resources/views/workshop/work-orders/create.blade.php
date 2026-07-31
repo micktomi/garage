@@ -1,7 +1,7 @@
 @extends('layouts.workshop')
 
-@section('title', 'Νέα Εντολή Εργασίας — Συνεργείο')
-@section('header-title', 'Νέα Εντολή')
+@section('title', 'Νέα εντολή εργασίας — Συνεργείο')
+@section('header-title', 'Νέα εντολή')
 
 @push('styles')
 <style>
@@ -32,32 +32,40 @@
 
     /* ── Page title ──────────────────────────────────────────── */
     .woc-page-title {
-        font-size: 1.375rem;
-        font-weight: 700;
-        letter-spacing: -0.03em;
-        line-height: 1.2;
-        margin-bottom: 1.375rem;
+        margin: 0 0 1.375rem;
+        color: var(--ws-text);
+        font-size: 1.75rem;
+        font-weight: 500;
+        line-height: 2rem;
     }
 
     /* ── Form card ───────────────────────────────────────────── */
     .woc-card {
-        background: var(--surface);
-        border: 1px solid var(--border);
-        border-radius: var(--radius);
-        overflow: hidden;
-        margin-bottom: 0.875rem;
+        margin-bottom: 1rem;
+        border: 1px solid var(--ws-border);
+        border-radius: 12px;
+        background: var(--ws-card);
+        overflow: visible;
     }
-    .woc-card-title {
-        font-size: 0.6875rem;
-        font-weight: 600;
-        letter-spacing: 0.07em;
-        text-transform: uppercase;
-        color: var(--text-faint);
-        padding: 0.75rem 1.125rem 0.5rem;
-        border-bottom: 1px solid var(--border);
+    .woc-form-section {
+        padding: 1.25rem;
+    }
+    .woc-form-section + .woc-form-section {
+        border-top: 1px solid var(--ws-border);
+    }
+    .woc-form-section-title {
+        margin: 0 0 0.625rem;
+        color: var(--ws-text-muted);
+        font-size: 0.8125rem;
+        font-weight: 500;
+        line-height: 1rem;
+    }
+    .woc-form-section-body {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
     }
     .woc-card-body {
-        padding: 1rem 1.125rem;
         display: flex;
         flex-direction: column;
         gap: 1rem;
@@ -71,25 +79,29 @@
     }
     .woc-label {
         font-size: 0.8125rem;
-        font-weight: 600;
-        color: var(--text-muted);
+        font-weight: 500;
+        color: var(--ws-text);
     }
-    .woc-label .woc-req { color: var(--danger); margin-left: 2px; }
+    .woc-label .woc-req { color: var(--ws-text-faint); margin-left: 2px; }
 
     .woc-input,
     .woc-select,
     .woc-textarea {
         width: 100%;
-        background: var(--surface-3);
-        border: 1px solid var(--border);
-        border-radius: var(--radius-sm);
-        padding: 0.65rem 0.875rem;
-        font-size: 0.9375rem;
-        color: var(--text);
-        outline: none;
+        min-height: 36px;
+        padding: 0.45rem 0.75rem;
+        border: 1px solid var(--ws-border);
+        border-radius: 8px;
+        background: var(--ws-card);
+        color: var(--ws-text);
+        font-size: 0.875rem;
         transition: border-color 0.15s, box-shadow 0.15s;
         -webkit-appearance: none;
         font-family: inherit;
+    }
+    .woc-input,
+    .woc-select {
+        height: 36px;
     }
     .woc-select {
         cursor: pointer;
@@ -99,23 +111,27 @@
         padding-right: 2.5rem;
     }
     .woc-textarea {
-        resize: vertical;
-        min-height: 110px;
-        line-height: 1.6;
+        min-height: 0;
+        max-height: calc(8 * 1.25rem + 1rem);
+        resize: none;
+        overflow-y: hidden;
+        line-height: 1.25rem;
     }
     .woc-input::placeholder,
-    .woc-textarea::placeholder { color: var(--text-faint); }
+    .woc-textarea::placeholder { color: var(--ws-text-faint); }
     .woc-input:focus,
     .woc-select:focus,
     .woc-textarea:focus {
-        border-color: var(--accent);
-        box-shadow: 0 0 0 3px var(--accent-dim);
+        border-color: var(--ws-primary);
+        outline: 2px solid var(--ws-primary);
+        outline-offset: 2px;
+        box-shadow: none;
     }
     .woc-input.is-invalid,
     .woc-select.is-invalid,
     .woc-textarea.is-invalid {
         border-color: var(--danger);
-        box-shadow: 0 0 0 3px rgba(248,81,73,0.12);
+        box-shadow: none;
     }
     .woc-error {
         font-size: 0.75rem;
@@ -129,9 +145,9 @@
         display: inline-flex;
         width: 14px; height: 14px;
         background: var(--danger);
-        color: #fff;
+        color: var(--ws-primary-fg);
         font-size: 0.625rem;
-        font-weight: 800;
+        font-weight: 500;
         border-radius: 50%;
         align-items: center;
         justify-content: center;
@@ -203,12 +219,21 @@
         color: var(--text);
         border-color: var(--text-faint);
     }
-    /* checked states per source */
-    .woc-source-pill[value="from_stock"]:checked    + .woc-source-label { background: var(--accent-dim);  border-color: rgba(245,158,11,.4); color: var(--accent); }
-    .woc-source-pill[value="customer_supplied"]:checked + .woc-source-label { background: var(--success-dim); border-color: rgba(63,185,80,.4);  color: var(--success); }
-    .woc-source-pill[value="purchased_for_job"]:checked  + .woc-source-label { background: var(--info-dim);    border-color: rgba(88,166,255,.4); color: var(--info); }
+    .woc-source-pill:checked + .woc-source-label {
+        background: var(--ws-sunken);
+        border-color: var(--ws-border-hover);
+        color: var(--ws-text);
+    }
 
     /* ── Repeater row ────────────────────────────────────────── */
+    .woc-parts-block {
+        margin-top: 1.25rem;
+        padding-top: 1.25rem;
+        display: flex;
+        flex-direction: column;
+        gap: 1.25rem;
+        border-top: 1px solid var(--ws-border);
+    }
     .woc-part-row {
         display: flex;
         flex-direction: column;
@@ -227,47 +252,49 @@
     }
     .woc-part-row-num {
         font-size: 0.75rem;
-        font-weight: 700;
-        letter-spacing: 0.04em;
-        text-transform: uppercase;
-        color: var(--text-faint);
+        font-weight: 500;
+        color: var(--ws-text-muted);
     }
     .woc-remove-btn {
+        min-height: 36px;
         display: inline-flex;
         align-items: center;
         gap: 0.3rem;
         font-size: 0.75rem;
-        font-weight: 600;
-        color: var(--danger);
+        font-weight: 500;
+        color: var(--ws-text-muted);
         background: transparent;
-        border: 1px solid rgba(248,81,73,0.3);
-        border-radius: var(--radius-sm);
+        border: 1px solid transparent;
+        border-radius: 8px;
         padding: 0.3rem 0.6rem;
         cursor: pointer;
-        transition: background 0.15s, border-color 0.15s;
+        transition: color 0.15s, background 0.15s, border-color 0.15s;
     }
     .woc-remove-btn:hover {
+        color: var(--danger);
         background: var(--danger-dim);
-        border-color: rgba(248,81,73,0.5);
+        border-color: var(--ws-border);
     }
     .woc-remove-btn svg { width: 12px; height: 12px; stroke-width: 2.5; }
     .woc-add-btn {
+        min-height: 36px;
         display: inline-flex;
         align-items: center;
         gap: 0.4rem;
         align-self: flex-start;
         font-size: 0.8125rem;
-        font-weight: 600;
-        color: var(--accent);
-        background: var(--accent-dim);
-        border: 1px solid rgba(245,158,11,.4);
-        border-radius: var(--radius-sm);
+        font-weight: 500;
+        color: var(--ws-text);
+        background: transparent;
+        border: 1px solid var(--ws-border);
+        border-radius: 8px;
         padding: 0.5rem 0.875rem;
         cursor: pointer;
         transition: background 0.15s, border-color 0.15s;
     }
     .woc-add-btn:hover {
-        background: rgba(245,158,11,0.24);
+        background: var(--ws-sunken);
+        border-color: var(--ws-border-hover);
     }
     .woc-add-btn svg { width: 14px; height: 14px; stroke-width: 2.5; }
 
@@ -300,12 +327,18 @@
         padding-top: 0.375rem;
     }
     .woc-line-total-val {
-        font-weight: 700;
+        font-weight: 500;
         font-variant-numeric: tabular-nums;
         color: var(--text);
         min-width: 90px;
         text-align: right;
         font-size: 0.9375rem;
+    }
+    .woc-line-total-input {
+        background: var(--ws-sunken);
+        color: var(--ws-text);
+        font-weight: 500;
+        cursor: default;
     }
 
     /* ── Summary ─────────────────────────────────────────────── */
@@ -326,21 +359,44 @@
     }
     .woc-sum-row:last-child { border-bottom: none; }
     .woc-sum-row--grand {
-        font-weight: 700;
+        font-weight: 500;
         font-size: 0.9375rem;
         color: var(--text);
         background: var(--surface);
     }
-    .woc-sum-val { font-weight: 600; font-variant-numeric: tabular-nums; }
-    .woc-sum-row--grand .woc-sum-val { color: var(--accent); }
+    .woc-sum-val { font-weight: 500; font-variant-numeric: tabular-nums; }
+    .woc-sum-row--grand .woc-sum-val { color: var(--ws-text); }
 
-    /* ── Submit row ──────────────────────────────────────────── */
-    .woc-submit-row {
+    /* ── Sticky action bar ───────────────────────────────────── */
+    .woc-action-bar {
+        position: sticky;
+        bottom: 0;
+        z-index: 10;
+        min-height: 64px;
+        padding: 0.75rem 1.25rem;
         display: flex;
         align-items: center;
-        justify-content: flex-end;
+        justify-content: space-between;
         gap: 0.75rem;
-        padding-top: 0.25rem;
+        border-top: 1px solid var(--ws-border);
+        border-radius: 0 0 12px 12px;
+        background: var(--ws-sunken);
+    }
+    .woc-action-summary {
+        color: var(--ws-text-muted);
+        font-size: 0.8125rem;
+    }
+    .woc-action-summary strong {
+        margin-left: 0.375rem;
+        color: var(--ws-text);
+        font-size: 0.9375rem;
+        font-weight: 500;
+        font-variant-numeric: tabular-nums;
+    }
+    .woc-action-actions {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
     }
     .woc-cancel-btn {
         display: inline-flex;
@@ -359,24 +415,20 @@
         align-items: center;
         gap: 0.4rem;
         font-size: 0.875rem;
-        font-weight: 700;
-        color: #0d1117;
-        background: var(--accent);
+        font-weight: 500;
+        color: var(--ws-primary-fg);
+        background: var(--ws-primary);
         border: none;
-        border-radius: var(--radius-sm);
+        border-radius: 8px;
         padding: 0.55rem 1.375rem;
         cursor: pointer;
-        transition: background 0.15s, transform 0.1s, box-shadow 0.15s;
-        box-shadow: 0 1px 6px rgba(245,158,11,0.25);
+        transition: opacity 0.15s;
     }
-    .woc-submit-btn:hover { background: #fbbf24; box-shadow: 0 2px 10px rgba(245,158,11,0.4); }
-    .woc-submit-btn:active { transform: scale(0.98); }
+    .woc-submit-btn:hover { opacity: 0.92; }
     .woc-submit-btn svg { width: 15px; height: 15px; stroke-width: 2.5; }
 
     /* ── Desktop ─────────────────────────────────────────────── */
     @media (min-width: 768px) {
-        .woc-page-title { font-size: 2rem; }
-        .woc-card-body { padding: 1.25rem 1.375rem; }
         .woc-card-body--grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -403,7 +455,7 @@
     </a>
 </div>
 
-<h1 class="woc-page-title">Νέα Εντολή Εργασίας</h1>
+<h1 class="woc-page-title">Νέα εντολή εργασίας</h1>
 
 @if($errors->any())
     <div class="woc-alert">
@@ -424,7 +476,7 @@
     ];
     $initialParts = is_array($oldParts) && count($oldParts) > 0
         ? array_map(fn ($row) => array_merge($blankPartRow, is_array($row) ? $row : []), array_values($oldParts))
-        : [$blankPartRow];
+        : [];
     $partsCatalog = $parts->mapWithKeys(fn ($p) => [$p->id => [
         'purchase_price' => $p->purchase_price,
         'sale_price'     => $p->sale_price,
@@ -439,9 +491,8 @@
     x-data='workOrderForm(@json($initialParts, $jsonFlags), @json($partsCatalog, $jsonFlags), {{ (float) old('labor_cost', 0) }}, @json($errors->messages(), $jsonFlags))'>
     @csrf
 
-    {{-- ── Πελάτης & Όχημα ────────────────────────────────────── --}}
-    <div class="woc-card">
-        <div class="woc-card-title">Πελάτης &amp; Όχημα</div>
+    <div class="woc-card" data-work-order-form-card>
+        <x-workshop.form.section title="Πελάτης και όχημα">
         <div class="woc-card-body woc-card-body--grid">
 
             <div class="woc-field">
@@ -469,27 +520,22 @@
             </div>
 
         </div>
-    </div>
-
-    {{-- ── Πρόβλημα / Εργασία ──────────────────────────────────── --}}
-    <div class="woc-card">
-        <div class="woc-card-title">Περιγραφή Εργασίας</div>
+        </x-workshop.form.section>
+        <x-workshop.form.section title="Τι δηλώνει ο πελάτης">
         <div class="woc-card-body">
             <div class="woc-field">
                 <label for="problem_description" class="woc-label">
-                    Πρόβλημα / Εργασία <span class="woc-req">*</span>
+                    Πρόβλημα ή εργασία <span class="woc-req">*</span>
                 </label>
-                <textarea id="problem_description" name="problem_description" rows="4"
+                <textarea id="problem_description" name="problem_description" rows="2" data-autogrow
                     class="woc-textarea {{ $errors->has('problem_description') ? 'is-invalid' : '' }}"
-                    placeholder="Περιγράψτε το πρόβλημα ή την εργασία που θα εκτελεστεί…">{{ old('problem_description') }}</textarea>
+                    placeholder="Τριγμός από εμπρός δεξιά κατά την οδήγηση">{{ old('problem_description') }}</textarea>
                 @error('problem_description') <span class="woc-error">{{ $message }}</span> @enderror
             </div>
         </div>
-    </div>
+        </x-workshop.form.section>
 
-    {{-- ── Κόστος Εργασίας ─────────────────────────────────────── --}}
-    <div class="woc-card">
-        <div class="woc-card-title">Κόστος Εργασίας</div>
+        <x-workshop.form.section title="Κόστος και ανταλλακτικά">
         <div class="woc-card-body">
             <div class="woc-field" style="max-width:220px;">
                 <label for="labor_cost" class="woc-label">Αμοιβή εργασίας</label>
@@ -503,12 +549,7 @@
                 @error('labor_cost') <span class="woc-error">{{ $message }}</span> @enderror
             </div>
         </div>
-    </div>
-
-    {{-- ── Ανταλλακτικά / Υλικά ────────────────────────────────── --}}
-    <div class="woc-card">
-        <div class="woc-card-title">Ανταλλακτικά / Υλικά</div>
-        <div class="woc-card-body" style="gap:1.25rem;">
+        <div class="woc-parts-block">
 
             <template x-for="(row, index) in parts" :key="row._key">
                 <div class="woc-part-row">
@@ -655,9 +696,8 @@
                             <div class="woc-field">
                                 <label class="woc-label">Σύνολο γραμμής</label>
                                 <div class="woc-eur">
-                                    <input type="text" class="woc-input" readonly tabindex="-1"
-                                        :value="fmt(lineTotal(row))"
-                                        style="color:var(--accent);font-weight:700;background:var(--surface-2);cursor:default;">
+                                    <input type="text" class="woc-input woc-line-total-input" readonly tabindex="-1"
+                                        :value="fmt(lineTotal(row))">
                                     <span class="woc-eur-sym">€</span>
                                 </div>
                             </div>
@@ -686,11 +726,9 @@
             </button>
 
         </div>
-    </div>
+        </x-workshop.form.section>
 
-    {{-- ── Στοιχεία Service ────────────────────────────────────── --}}
-    <div class="woc-card">
-        <div class="woc-card-title">Στοιχεία Service</div>
+        <x-workshop.form.section title="Στοιχεία service">
         <div class="woc-card-body woc-card-body--grid">
 
             <div class="woc-field">
@@ -720,38 +758,37 @@
             </div>
 
         </div>
-    </div>
+        </x-workshop.form.section>
 
-    {{-- ── Σύνοψη ───────────────────────────────────────────────── --}}
-    <div class="woc-card">
-        <div class="woc-card-title">Σύνοψη Κόστους</div>
-        <div class="woc-card-body" style="padding-top:0.625rem;padding-bottom:0.625rem;">
-            <div class="woc-summary">
-                <div class="woc-sum-row">
-                    <span>Αμοιβή εργασίας</span>
-                    <span class="woc-sum-val" x-text="fmt(laborCost)">0,00 €</span>
-                </div>
-                <div class="woc-sum-row">
-                    <span>Ανταλλακτικά</span>
-                    <span class="woc-sum-val" x-text="fmt(partsTotal)">0,00 €</span>
-                </div>
-                <div class="woc-sum-row woc-sum-row--grand">
-                    <span>Σύνολο</span>
-                    <span class="woc-sum-val" x-text="fmt(grandTotal)">0,00 €</span>
+        <x-workshop.form.section title="Σύνοψη κόστους">
+            <div class="woc-card-body">
+                <div class="woc-summary">
+                    <div class="woc-sum-row">
+                        <span>Αμοιβή εργασίας</span>
+                        <span class="woc-sum-val" x-text="fmt(laborCost)">0,00 €</span>
+                    </div>
+                    <div class="woc-sum-row">
+                        <span>Ανταλλακτικά</span>
+                        <span class="woc-sum-val" x-text="fmt(partsTotal)">0,00 €</span>
+                    </div>
+                    <div class="woc-sum-row woc-sum-row--grand">
+                        <span>Σύνολο</span>
+                        <span class="woc-sum-val" x-text="fmt(grandTotal)">0,00 €</span>
+                    </div>
                 </div>
             </div>
-        </div>
-    </div>
+        </x-workshop.form.section>
 
-    {{-- ── Submit ───────────────────────────────────────────────── --}}
-    <div class="woc-submit-row">
-        <a href="{{ route('workshop.work-orders.index') }}" class="woc-cancel-btn">Άκυρο</a>
-        <button type="submit" class="woc-submit-btn">
-            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/>
-            </svg>
-            Δημιουργία Εντολής
-        </button>
+        <x-workshop.form.action-bar>
+            <x-slot:summary>
+                Σύνολο <strong x-text="fmt(grandTotal)">0,00 €</strong>
+            </x-slot:summary>
+
+            <a href="{{ route('workshop.work-orders.index') }}" class="woc-cancel-btn">Ακύρωση</a>
+            <button type="submit" class="woc-submit-btn">
+                Αποθήκευση
+            </button>
+        </x-workshop.form.action-bar>
     </div>
 
 </form>
@@ -763,6 +800,18 @@
    Vehicle dropdown — scoped to the selected customer
 ─────────────────────────────────────────────────────────── */
 const VEHICLES_BY_CUSTOMER = @json($vehiclesByCustomer);
+
+function autoGrowWorkOrderTextarea(textarea) {
+    const styles = window.getComputedStyle(textarea);
+    const lineHeight = parseFloat(styles.lineHeight) || 20;
+    const maxRows = 8;
+    const verticalPadding = parseFloat(styles.paddingTop) + parseFloat(styles.paddingBottom);
+    const maxHeight = (lineHeight * maxRows) + verticalPadding;
+
+    textarea.style.height = 'auto';
+    textarea.style.height = Math.min(textarea.scrollHeight, maxHeight) + 'px';
+    textarea.style.overflowY = textarea.scrollHeight > maxHeight ? 'auto' : 'hidden';
+}
 
 function populateVehicles(customerId, selectedVehicleId) {
     const sel = document.getElementById('vehicle_id');
@@ -839,6 +888,11 @@ document.addEventListener('DOMContentLoaded', function () {
     // Restore vehicle dropdown scoped to the old (or query-string) customer_id, if any
     const customerSel = document.getElementById('customer_id');
     populateVehicles(customerSel.value, @json(old('vehicle_id', request()->query('vehicle_id'))));
+
+    document.querySelectorAll('[data-autogrow]').forEach(textarea => {
+        autoGrowWorkOrderTextarea(textarea);
+        textarea.addEventListener('input', () => autoGrowWorkOrderTextarea(textarea));
+    });
 });
 
 /* ────────────────────────────────────────────────────────────
@@ -873,10 +927,6 @@ document.addEventListener('alpine:init', () => {
         },
 
         removeRow(index) {
-            if (this.parts.length === 1) {
-                this.parts.splice(0, 1, this.blankRow());
-                return;
-            }
             this.parts.splice(index, 1);
         },
 

@@ -263,17 +263,23 @@ class WorkshopDashboardTest extends TestCase
         }
     }
 
-    public function test_local_environment_allows_phone_user_agents_at_the_real_mobile_viewport_width(): void
+    public function test_layout_ships_no_client_side_mobile_guard_in_any_environment(): void
     {
         $user = User::factory()->create();
-        $this->app->detectEnvironment(static fn (): string => 'local');
 
-        $this->actingAs($user)
-            ->withHeader('User-Agent', 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X)')
-            ->get(route('workshop.dashboard'))
-            ->assertOk()
-            ->assertDontSee('window.location.replace', false)
-            ->assertSee('min-width: 0;', false);
+        foreach (['local', 'production'] as $environment) {
+            $this->app->detectEnvironment(static fn (): string => $environment);
+
+            $response = $this->actingAs($user)
+                ->withHeader('User-Agent', 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X)')
+                ->get(route('workshop.dashboard'))
+                ->assertOk();
+
+            // No redirect script and no minimum page width forcing a desktop layout.
+            $response->assertDontSee('window.location.replace', false);
+            $response->assertDontSee('min-width: 768px;', false);
+            $response->assertSee('ws-mobile-menu-trigger', false);
+        }
     }
 
     public function test_dashboard_composition_and_components_contain_no_hex_colors_or_php_blocks(): void

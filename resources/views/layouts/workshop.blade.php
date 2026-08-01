@@ -8,13 +8,6 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500&display=swap" rel="stylesheet">
-    @unless (app()->environment('local'))
-        <script>
-            if (window.matchMedia('(max-width: 767px)').matches) {
-                window.location.replace(@js(url('/admin')));
-            }
-        </script>
-    @endunless
     <style>
         :root {
             /* Surfaces */
@@ -89,16 +82,9 @@
         }
 
         html {
-            min-width: 768px;
             background: var(--ws-page);
             -webkit-text-size-adjust: 100%;
         }
-
-        @if (app()->environment('local'))
-            html {
-                min-width: 0;
-            }
-        @endif
 
         body {
             min-height: 100vh;

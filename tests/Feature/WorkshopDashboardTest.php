@@ -245,19 +245,22 @@ class WorkshopDashboardTest extends TestCase
             ->assertDontSee('Δεν βρέθηκαν εγγραφές');
     }
 
-    public function test_phone_user_agents_redirect_to_filament_but_tablets_remain_supported(): void
+    public function test_phone_and_tablet_user_agents_are_served_the_workshop(): void
     {
         $user = User::factory()->create();
 
-        $this->actingAs($user)
-            ->withHeader('User-Agent', 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X)')
-            ->get(route('workshop.dashboard'))
-            ->assertRedirect('/admin');
+        $agents = [
+            'Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X)',
+            'Mozilla/5.0 (iPad; CPU OS 18_0 like Mac OS X)',
+            'Mozilla/5.0 (Linux; Android 14) Mobile Safari/537.36',
+        ];
 
-        $this->actingAs($user)
-            ->withHeader('User-Agent', 'Mozilla/5.0 (iPad; CPU OS 18_0 like Mac OS X)')
-            ->get(route('workshop.dashboard'))
-            ->assertOk();
+        foreach ($agents as $agent) {
+            $this->actingAs($user)
+                ->withHeader('User-Agent', $agent)
+                ->get(route('workshop.dashboard'))
+                ->assertOk();
+        }
     }
 
     public function test_local_environment_allows_phone_user_agents_at_the_real_mobile_viewport_width(): void

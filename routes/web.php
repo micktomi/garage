@@ -6,7 +6,7 @@ use Illuminate\Support\Facades\Route;
 
 Route::redirect('/', '/admin');
 
-Route::middleware(['auth', 'workshop.desktop'])->prefix('workshop')->name('workshop.')->group(function () {
+Route::middleware('auth')->prefix('workshop')->name('workshop.')->group(function () {
     Route::get('/', [WorkshopController::class, 'dashboard'])->name('dashboard');
     Route::get('/work-orders', [WorkshopController::class, 'workOrdersIndex'])->name('work-orders.index');
     Route::get('/work-orders/create', [WorkshopController::class, 'workOrdersCreate'])->name('work-orders.create');

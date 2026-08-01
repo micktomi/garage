@@ -1,4 +1,21 @@
-<aside class="ws-sidebar">
+<aside
+    id="ws-sidebar"
+    class="ws-sidebar"
+    x-bind:class="{ 'ws-sidebar--open': open }"
+>
+    {{-- Mobile only: the drawer dismiss control. Hidden on desktop. --}}
+    <button
+        type="button"
+        class="ws-drawer-close"
+        x-ref="drawerClose"
+        x-on:click="closeDrawer()"
+        aria-label="Κλείσιμο μενού"
+    >
+        <svg aria-hidden="true" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M6 6l12 12M18 6 6 18"/>
+        </svg>
+    </button>
+
     <a
         href="{{ route('workshop.dashboard') }}"
         class="ws-sidebar-brand"
@@ -8,7 +25,7 @@
         <span class="ws-sidebar-brand-compact" aria-hidden="true">Σ</span>
     </a>
 
-    <nav class="ws-sidebar-nav" aria-label="Κύρια πλοήγηση">
+    <nav class="ws-sidebar-nav" aria-label="Κύρια πλοήγηση" x-on:click="open = false">
         <div class="ws-sidebar-primary">
             <x-workshop.shell.nav-item
                 :href="route('workshop.dashboard')"

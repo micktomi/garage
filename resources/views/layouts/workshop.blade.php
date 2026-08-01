@@ -130,6 +130,18 @@
             outline-offset: 2px;
         }
 
+        [x-cloak] {
+            display: none !important;
+        }
+
+        /* Mobile-only shell pieces. Hidden on desktop, so the desktop layout is untouched. */
+        .ws-mobile-header,
+        .ws-mobile-menu-trigger,
+        .ws-drawer-backdrop,
+        .ws-drawer-close {
+            display: none;
+        }
+
         .ws-sr-only {
             position: absolute;
             width: 1px;
@@ -795,6 +807,149 @@
             }
         }
 
+        /* Below 768px the rail is removed from the flow entirely and becomes an
+           off-canvas drawer, so the content keeps the full viewport width. */
+        @media (max-width: 767px) {
+            .ws-mobile-header {
+                position: sticky;
+                z-index: 30;
+                top: 0;
+                height: var(--header-h);
+                padding: 0 8px 0 4px;
+                display: flex;
+                align-items: center;
+                gap: 12px;
+                background: var(--ws-nav);
+                color: var(--ws-nav-text-hi);
+            }
+
+            .ws-mobile-menu-trigger {
+                min-height: 44px;
+                padding: 8px 12px;
+                display: inline-flex;
+                align-items: center;
+                gap: 8px;
+                border: 0;
+                border-radius: 8px;
+                background: transparent;
+                color: var(--ws-nav-text-hi);
+                font-size: 14px;
+                font-weight: 500;
+                cursor: pointer;
+            }
+
+            .ws-mobile-menu-trigger:hover {
+                background: var(--ws-nav-hover);
+            }
+
+            .ws-mobile-menu-trigger svg {
+                width: 22px;
+                height: 22px;
+                stroke-width: 1.8;
+            }
+
+            .ws-mobile-brand {
+                margin-left: auto;
+                padding-right: 8px;
+                color: var(--ws-nav-text);
+                font-size: 14px;
+                font-weight: 500;
+            }
+
+            .ws-drawer-backdrop {
+                position: fixed;
+                z-index: 40;
+                inset: 0;
+                display: block;
+                background: rgb(24 24 27 / 45%);
+            }
+
+            .ws-sidebar {
+                position: fixed;
+                z-index: 50;
+                top: 0;
+                left: 0;
+                width: 272px;
+                max-width: 82vw;
+                height: 100dvh;
+                padding: 16px 12px;
+                overflow-y: auto;
+                visibility: hidden;
+                transform: translateX(-100%);
+                transition: transform 220ms ease, visibility 0s linear 220ms;
+            }
+
+            .ws-sidebar--open {
+                visibility: visible;
+                transform: translateX(0);
+                transition: transform 220ms ease;
+            }
+
+            .ws-sidebar-brand {
+                padding: 0 56px 0 12px;
+                justify-content: flex-start;
+            }
+
+            .ws-sidebar-brand-full {
+                display: block;
+            }
+
+            .ws-sidebar-brand-compact {
+                display: none;
+            }
+
+            .ws-sidebar-item {
+                min-height: 48px;
+                padding: 12px;
+                flex-direction: row;
+                justify-content: flex-start;
+                gap: 12px;
+                font-size: 14px;
+                line-height: 20px;
+                text-align: left;
+            }
+
+            .ws-drawer-close {
+                position: absolute;
+                top: 12px;
+                right: 12px;
+                width: 44px;
+                height: 44px;
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                border: 0;
+                border-radius: 8px;
+                background: transparent;
+                color: var(--ws-nav-text-hi);
+                cursor: pointer;
+            }
+
+            .ws-drawer-close:hover {
+                background: var(--ws-nav-hover);
+            }
+
+            .ws-drawer-close svg {
+                width: 20px;
+                height: 20px;
+                stroke-width: 1.8;
+            }
+
+            .ws-content {
+                width: 100%;
+            }
+
+            .ws-main {
+                max-width: none;
+                margin: 0;
+                padding: 16px 16px 32px;
+            }
+
+            body.ws-drawer-open {
+                overflow: hidden;
+            }
+        }
+
         @media (prefers-reduced-motion: reduce) {
             *, *::before, *::after {
                 scroll-behavior: auto !important;
@@ -808,11 +963,59 @@
     @stack('styles')
     @vite(['resources/js/app.js'])
 </head>
-<body>
+<body
+    x-data="{
+        open: false,
+        openDrawer() {
+            this.open = true;
+            this.$nextTick(() => this.$refs.drawerClose?.focus());
+        },
+        closeDrawer() {
+            if (! this.open) {
+                return;
+            }
+
+            this.open = false;
+            this.$nextTick(() => this.$refs.menuTrigger?.focus());
+        },
+    }"
+    x-bind:class="{ 'ws-drawer-open': open }"
+    x-effect="$refs.mobileHeader.inert = open; $refs.contentRegion.inert = open"
+    x-on:keydown.escape.window="closeDrawer()"
+    x-on:resize.window="if (window.innerWidth >= 768) open = false"
+>
+    <header class="ws-mobile-header" x-ref="mobileHeader">
+        <button
+            type="button"
+            class="ws-mobile-menu-trigger"
+            x-ref="menuTrigger"
+            aria-controls="ws-sidebar"
+            aria-expanded="false"
+            x-bind:aria-expanded="open ? 'true' : 'false'"
+            x-on:click="openDrawer()"
+        >
+            <svg aria-hidden="true" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5M3.75 17.25h16.5"/>
+            </svg>
+            Μενού
+        </button>
+
+        <a href="{{ route('workshop.dashboard') }}" class="ws-mobile-brand">Συνεργείο</a>
+    </header>
+
     <div class="ws-shell">
+        <div
+            class="ws-drawer-backdrop"
+            x-cloak
+            x-show="open"
+            x-transition.opacity.duration.200ms
+            x-on:click="closeDrawer()"
+            aria-hidden="true"
+        ></div>
+
         <x-workshop.shell.sidebar />
 
-        <div class="ws-content">
+        <div class="ws-content" x-ref="contentRegion">
             <main class="ws-main">
                 @yield('content')
             </main>

@@ -36,7 +36,13 @@ class WorkshopSidebarTest extends TestCase
             $this->assertCount(1, $links, $label);
         }
 
-        $this->assertCount(0, $xpath->query('.//form | .//input | .//button', $sidebar));
+        $this->assertCount(0, $xpath->query('.//form | .//input', $sidebar));
+
+        // The mobile drawer dismiss control is the only button the sidebar may hold.
+        $buttons = $xpath->query('.//button', $sidebar);
+        $this->assertCount(1, $buttons);
+        $this->assertSame('ws-drawer-close', $buttons->item(0)->getAttribute('class'));
+
         $this->assertCount(0, $xpath->query('.//*[contains(@class, "ws-search") or contains(@class, "ws-stat") or contains(@class, "ws-primary-action")]', $sidebar));
     }
 

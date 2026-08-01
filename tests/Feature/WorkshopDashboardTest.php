@@ -55,12 +55,32 @@ class WorkshopDashboardTest extends TestCase
         $response->assertOk()
             ->assertSee('Πέμπτη, 30 Ιουλίου 2026')
             ->assertSee('Στο συνεργείο')
-            ->assertSee('Ανοιχτές εντολές')
+            ->assertSee('Πρόσφατες Εντολές Εργασίας')
             ->assertSee('Ραντεβού σήμερα')
             ->assertSee('ΚΤΕΟ έληξαν')
             ->assertSee('Αναμονή ανταλλακτικών')
             ->assertSee('Νέα εντολή')
+            ->assertSee('Σύστημα ενεργό')
+            ->assertSee('Γρήγορες Ενέργειες')
             ->assertSee('Αναμονή ανταλλακτικού');
+    }
+
+    public function test_quick_actions_use_existing_workshop_routes(): void
+    {
+        $user = User::factory()->create();
+        $response = $this->actingAs($user)->get(route('workshop.dashboard'))->assertOk();
+        $xpath = $this->xpath($response->getContent());
+
+        $actions = $xpath->query('//*[contains(concat(" ", normalize-space(@class), " "), " ws-quick-action ")]');
+        $this->assertCount(3, $actions);
+
+        foreach ([
+            route('workshop.customers.create'),
+            route('workshop.vehicles.create'),
+            route('workshop.work-orders.create'),
+        ] as $href) {
+            $this->assertCount(1, $xpath->query('//a[contains(concat(" ", normalize-space(@class), " "), " ws-quick-action ") and @href="'.$href.'"]'));
+        }
     }
 
     public function test_metric_labels_do_not_repeat_section_headers(): void
@@ -148,7 +168,7 @@ class WorkshopDashboardTest extends TestCase
 
         $this->assertCount(1, $xpath->query('//input[@type="search"]'));
 
-        $rows = $xpath->query('//*[contains(concat(" ", normalize-space(@class), " "), " ws-work-order-row ")]');
+        $rows = $xpath->query('//*[contains(concat(" ", normalize-space(@class), " "), " ws-recent-order ")]');
         $this->assertCount(3, $rows);
 
         foreach ($rows as $row) {
@@ -157,7 +177,7 @@ class WorkshopDashboardTest extends TestCase
         }
     }
 
-    public function test_open_work_orders_render_as_clickable_dashboard_cards(): void
+    public function test_open_work_orders_render_as_clickable_responsive_dashboard_rows(): void
     {
         $user = User::factory()->create();
         [$customer, $vehicle] = $this->makeCustomerAndVehicle('ΚΑΡ-2048');
@@ -171,28 +191,27 @@ class WorkshopDashboardTest extends TestCase
         $response = $this->actingAs($user)->get(route('workshop.dashboard'))->assertOk();
         $xpath = $this->xpath($response->getContent());
 
-        $sections = $xpath->query('//section[@aria-label="Ανοιχτές εντολές"]');
+        $sections = $xpath->query('//section[@aria-label="Πρόσφατες ανοιχτές εντολές"]');
         $this->assertCount(1, $sections);
 
-        $grids = $xpath->query(
-            './/*[contains(concat(" ", normalize-space(@class), " "), " ws-work-order-grid ")]',
+        $panels = $xpath->query(
+            './/*[contains(concat(" ", normalize-space(@class), " "), " ws-panel ")]',
             $sections->item(0),
         );
-        $this->assertCount(1, $grids);
+        $this->assertCount(1, $panels);
 
-        $cards = $xpath->query(
-            './/a[contains(concat(" ", normalize-space(@class), " "), " ws-work-order-row ")]',
-            $grids->item(0),
+        $rows = $xpath->query(
+            './/a[contains(concat(" ", normalize-space(@class), " "), " ws-recent-order ")]',
+            $panels->item(0),
         );
-        $this->assertCount(1, $cards);
-        $this->assertSame(route('workshop.work-orders.show', $order), $cards->item(0)->getAttribute('href'));
-        $this->assertCount(1, $xpath->query('.//*[contains(concat(" ", normalize-space(@class), " "), " ws-plate ")]', $cards->item(0)));
-        $this->assertCount(1, $xpath->query('.//*[contains(concat(" ", normalize-space(@class), " "), " ws-row-title ")]', $cards->item(0)));
-        $this->assertCount(1, $xpath->query('.//*[contains(concat(" ", normalize-space(@class), " "), " ws-row-meta ")]', $cards->item(0)));
-        $this->assertCount(1, $xpath->query('.//*[contains(concat(" ", normalize-space(@class), " "), " ws-status-badge ")]', $cards->item(0)));
-        $this->assertCount(1, $xpath->query('.//time[contains(concat(" ", normalize-space(@class), " "), " ws-row-time ")]', $cards->item(0)));
-        $this->assertCount(1, $xpath->query('.//svg[contains(concat(" ", normalize-space(@class), " "), " ws-work-order-chevron ")]', $cards->item(0)));
-        $this->assertCount(1, $xpath->query('.//svg', $cards->item(0)));
+        $this->assertCount(1, $rows);
+        $this->assertSame(route('workshop.work-orders.show', $order), $rows->item(0)->getAttribute('href'));
+        $this->assertCount(1, $xpath->query('.//*[contains(concat(" ", normalize-space(@class), " "), " ws-recent-order-number ")]', $rows->item(0)));
+        $this->assertCount(1, $xpath->query('.//*[contains(concat(" ", normalize-space(@class), " "), " ws-recent-order-customer ")]', $rows->item(0)));
+        $this->assertCount(1, $xpath->query('.//*[contains(concat(" ", normalize-space(@class), " "), " ws-recent-order-meta ")]', $rows->item(0)));
+        $this->assertCount(1, $xpath->query('.//*[contains(concat(" ", normalize-space(@class), " "), " ws-status-badge ")]', $rows->item(0)));
+        $this->assertCount(1, $xpath->query('.//time[contains(concat(" ", normalize-space(@class), " "), " ws-recent-order-time ")]', $rows->item(0)));
+        $this->assertCount(1, $xpath->query('.//svg[contains(concat(" ", normalize-space(@class), " "), " ws-recent-order-chevron ")]', $rows->item(0)));
     }
 
     public function test_open_work_order_grid_has_only_one_and_two_column_states(): void
@@ -297,38 +316,62 @@ class WorkshopDashboardTest extends TestCase
         }
     }
 
-    public function test_dashboard_v21_sidebar_accent_palette_and_truncation_contract(): void
+    public function test_dashboard_next_port_palette_typography_and_truncation_contract(): void
     {
         $layout = file_get_contents(resource_path('views/layouts/workshop.blade.php'));
 
-        $this->assertStringContainsString('--ws-nav: #1C2733;', $layout);
-        $this->assertStringContainsString('--ws-nav-active: #2B3A4A;', $layout);
-        $this->assertStringNotContainsString('--ws-status-new-bg:', $layout);
-        $this->assertStringNotContainsString('--ws-status-new-fg:', $layout);
-        $this->assertSame(2, preg_match_all('/var\(--ws-primary\)/', $layout));
+        $this->assertStringContainsString('--ws-page: #F9FAFB;', $layout);
+        $this->assertStringContainsString('--ws-nav: #FFFFFF;', $layout);
+        $this->assertStringContainsString('--ws-nav-active: #111827;', $layout);
+        $this->assertStringContainsString('--ws-primary: #155DFC;', $layout);
+        $this->assertStringContainsString('--ws-font-sans:', $layout);
+        $this->assertStringContainsString('--ws-font-serif:', $layout);
+        $this->assertStringNotContainsString('fonts.googleapis.com', $layout);
 
         $this->assertMatchesRegularExpression(
-            '/\.ws-page-date\s*\{[^}]*color:\s*var\(--ws-text-muted\);[^}]*\}/s',
+            '/\.ws-dashboard-title\s*\{[^}]*font-family:\s*var\(--ws-font-serif\);[^}]*font-size:\s*32px;[^}]*\}/s',
             $layout,
         );
         $this->assertMatchesRegularExpression(
-            '/\.ws-sidebar-item\[aria-current="page"\]\s*\{[^}]*color:\s*var\(--ws-nav-text-hi\);[^}]*background:\s*var\(--ws-nav-active\);[^}]*\}/s',
+            '/\.ws-sidebar-item\[aria-current="page"\]\s*\{[^}]*color:\s*var\(--ws-primary-fg\);[^}]*background:\s*var\(--ws-nav-active\);[^}]*\}/s',
             $layout,
         );
         $this->assertMatchesRegularExpression(
-            '/\.ws-status-badge\s*\{[^}]*padding:\s*3px 9px;[^}]*border-radius:\s*8px;[^}]*\}/s',
+            '/\.ws-dashboard \.ws-stat-card\s*\{[^}]*border:\s*1px solid var\(--ws-border\);[^}]*border-radius:\s*16px;[^}]*background:\s*var\(--ws-card\);[^}]*box-shadow:\s*var\(--shadow-sm\);[^}]*\}/s',
             $layout,
         );
         $this->assertMatchesRegularExpression(
-            '/\.ws-status-badge--new\s*\{[^}]*border:\s*1px solid var\(--ws-border\);[^}]*background:\s*transparent;[^}]*color:\s*var\(--ws-text-muted\);[^}]*\}/s',
+            '/\.ws-recent-order-body\s*\{[^}]*min-width:\s*0;[^}]*\}/s',
             $layout,
         );
         $this->assertMatchesRegularExpression(
-            '/\.ws-row-body\s*\{[^}]*flex:\s*1;[^}]*min-width:\s*0;[^}]*\}/s',
+            '/\.ws-recent-order-customer,\s*\.ws-recent-order-meta\s*\{[^}]*overflow:\s*hidden;[^}]*text-overflow:\s*ellipsis;[^}]*white-space:\s*nowrap;[^}]*\}/s',
+            $layout,
+        );
+    }
+
+    public function test_dashboard_responsive_layout_has_mobile_tablet_and_desktop_states(): void
+    {
+        $layout = file_get_contents(resource_path('views/layouts/workshop.blade.php'));
+
+        $this->assertMatchesRegularExpression(
+            '/\.ws-dashboard \.ws-stat-grid\s*\{[^}]*grid-template-columns:\s*repeat\(2, minmax\(0, 1fr\)\);[^}]*\}/s',
             $layout,
         );
         $this->assertMatchesRegularExpression(
-            '/\.ws-row-title,\s*\.ws-row-meta,\s*\.ws-kteo-deadline\s*\{[^}]*overflow:\s*hidden;[^}]*text-overflow:\s*ellipsis;[^}]*white-space:\s*nowrap;[^}]*\}/s',
+            '/@media\s*\(min-width:\s*1024px\).*?\.ws-dashboard \.ws-stat-grid\s*\{[^}]*repeat\(4, minmax\(0, 1fr\)\)/s',
+            $layout,
+        );
+        $this->assertMatchesRegularExpression(
+            '/\.ws-dashboard-body\s*\{[^}]*grid-template-columns:\s*minmax\(0, 1fr\);[^}]*\}/s',
+            $layout,
+        );
+        $this->assertMatchesRegularExpression(
+            '/@media\s*\(min-width:\s*1200px\).*?\.ws-dashboard-body\s*\{[^}]*grid-template-columns:\s*minmax\(0, 2fr\) minmax\(280px, 1fr\);[^}]*\}/s',
+            $layout,
+        );
+        $this->assertMatchesRegularExpression(
+            '/@media\s*\(max-width:\s*767px\).*?\.ws-dashboard \.ws-dashboard-controls\s*\{[^}]*grid-template-columns:\s*minmax\(0, 1fr\);[^}]*\}/s',
             $layout,
         );
     }

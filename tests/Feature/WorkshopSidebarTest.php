@@ -12,7 +12,7 @@ class WorkshopSidebarTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_sidebar_preserves_navigation_without_actions_or_dashboard_content(): void
+    public function test_sidebar_preserves_real_navigation_without_actions_or_dashboard_content(): void
     {
         $user = User::factory()->create();
         $response = $this->actingAs($user)->get(route('workshop.dashboard'))->assertOk();
@@ -23,10 +23,10 @@ class WorkshopSidebarTest extends TestCase
         $sidebar = $sidebars->item(0);
 
         $expectedLinks = [
-            'Αρχική' => route('workshop.dashboard'),
-            'Εργασίες' => route('workshop.work-orders.index'),
+            'Πίνακας Ελέγχου' => route('workshop.dashboard'),
             'Πελάτες' => route('workshop.customers.index'),
             'Οχήματα' => route('workshop.search'),
+            'Εντολές Εργασίας' => route('workshop.work-orders.index'),
             'Ραντεβού' => route('workshop.appointments.index'),
             'Admin' => url('/admin'),
         ];
@@ -52,11 +52,11 @@ class WorkshopSidebarTest extends TestCase
 
         $this->assertCurrentItem(
             $this->actingAs($user)->get(route('workshop.dashboard'))->getContent(),
-            'Αρχική',
+            'Πίνακας Ελέγχου',
         );
         $this->assertCurrentItem(
             $this->actingAs($user)->get(route('workshop.work-orders.index'))->getContent(),
-            'Εργασίες',
+            'Εντολές Εργασίας',
         );
         $this->assertCurrentItem(
             $this->actingAs($user)->get(route('workshop.search'))->getContent(),
@@ -68,27 +68,27 @@ class WorkshopSidebarTest extends TestCase
         );
     }
 
-    public function test_sidebar_css_uses_the_approved_full_and_rail_shell(): void
+    public function test_sidebar_css_uses_the_approved_white_224px_shell(): void
     {
         $layout = file_get_contents(resource_path('views/layouts/workshop.blade.php'));
 
         $this->assertStringNotContainsString('.ws-header', $layout);
+        $this->assertStringContainsString('--ws-nav: #FFFFFF;', $layout);
+        $this->assertStringContainsString('--ws-nav-active: #111827;', $layout);
+
         $this->assertMatchesRegularExpression(
-            '/\.ws-sidebar\s*\{[^}]*position:\s*sticky;[^}]*top:\s*0;[^}]*width:\s*80px;[^}]*height:\s*100vh;[^}]*background:\s*var\(--ws-nav\);[^}]*\}/s',
+            '/\.ws-sidebar\s*\{[^}]*position:\s*sticky;[^}]*width:\s*224px;[^}]*flex:\s*0 0 224px;[^}]*background:\s*var\(--ws-nav\);[^}]*border-right:\s*1px solid var\(--ws-border\);[^}]*\}/s',
             $layout,
         );
         $this->assertMatchesRegularExpression(
-            '/\.ws-sidebar-item\s*\{[^}]*min-height:\s*56px;[^}]*flex-direction:\s*column;[^}]*font-size:\s*12px;[^}]*\}/s',
+            '/\.ws-sidebar-item\s*\{[^}]*min-height:\s*44px;[^}]*flex-direction:\s*row;[^}]*font-size:\s*14px;[^}]*\}/s',
             $layout,
         );
         $this->assertMatchesRegularExpression(
-            '/@media\s*\(min-width:\s*1280px\)\s*\{.*?\.ws-sidebar\s*\{[^}]*width:\s*240px;[^}]*flex-basis:\s*240px;[^}]*\}/s',
+            '/\.ws-sidebar-item\[aria-current="page"\]\s*\{[^}]*color:\s*var\(--ws-primary-fg\);[^}]*background:\s*var\(--ws-nav-active\);[^}]*\}/s',
             $layout,
         );
-        $this->assertMatchesRegularExpression(
-            '/\.ws-sidebar-item\[aria-current="page"\]\s*\{[^}]*color:\s*var\(--ws-nav-text-hi\);[^}]*background:\s*var\(--ws-nav-active\);[^}]*\}/s',
-            $layout,
-        );
+        $this->assertDoesNotMatchRegularExpression('/width:\s*(80|240)px;/', $layout);
         $this->assertDoesNotMatchRegularExpression(
             '/\.ws-sidebar(?:-item)?[^{]*\{[^}]*var\(--ws-primary\)/s',
             $layout,

@@ -25,7 +25,9 @@ class WorkshopMobileDrawerTest extends TestCase
 
     private const TABLET = 768;
 
-    private const DESKTOP = 1280;
+    private const DESKTOP = 1024;
+
+    private const WIDE = 1440;
 
     public function test_mobile_hides_the_sidebar_and_shows_the_menu_trigger(): void
     {
@@ -45,7 +47,7 @@ class WorkshopMobileDrawerTest extends TestCase
     {
         $css = $this->stylesheet();
 
-        foreach ([self::TABLET, self::DESKTOP] as $viewport) {
+        foreach ([self::TABLET, self::DESKTOP, self::WIDE] as $viewport) {
             $sidebar = $this->styles($css, '.ws-sidebar', $viewport);
             $this->assertSame('sticky', $sidebar['position'] ?? null, "sidebar @ {$viewport}px");
             $this->assertArrayNotHasKey('visibility', $sidebar, "sidebar @ {$viewport}px");
@@ -60,9 +62,12 @@ class WorkshopMobileDrawerTest extends TestCase
             }
         }
 
-        // The rail/full-width desktop sizing is unchanged.
-        $this->assertSame('80px', $this->styles($css, '.ws-sidebar', self::TABLET)['width'] ?? null);
-        $this->assertSame('240px', $this->styles($css, '.ws-sidebar', self::DESKTOP)['width'] ?? null);
+        // The approved Next-inspired desktop sidebar is stable at every
+        // desktop/tablet breakpoint.
+        foreach ([self::TABLET, self::DESKTOP, self::WIDE] as $viewport) {
+            $this->assertSame('224px', $this->styles($css, '.ws-sidebar', $viewport)['width'] ?? null);
+            $this->assertSame('0 0 224px', $this->styles($css, '.ws-sidebar', $viewport)['flex'] ?? null);
+        }
     }
 
     public function test_mobile_content_uses_the_full_width_with_no_space_reserved_for_the_sidebar(): void

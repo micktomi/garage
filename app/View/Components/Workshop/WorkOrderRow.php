@@ -19,6 +19,8 @@ class WorkOrderRow extends Component
 
     public readonly ?string $createdDateTime;
 
+    public readonly string $dashboardDateLabel;
+
     public function __construct(public readonly WorkOrder $order)
     {
         $vehicleName = Str::squish(trim(($order->vehicle?->make ?? '').' '.($order->vehicle?->model ?? '')));
@@ -32,6 +34,7 @@ class WorkOrderRow extends Component
         ]));
         $this->createdLabel = $order->created_at?->locale('el')->diffForHumans() ?: 'Χωρίς ημερομηνία';
         $this->createdDateTime = $order->created_at?->toIso8601String();
+        $this->dashboardDateLabel = $order->created_at?->format('d/m/Y') ?: '—';
     }
 
     public function render(): View

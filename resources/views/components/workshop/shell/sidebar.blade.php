@@ -3,7 +3,6 @@
     class="ws-sidebar"
     x-bind:class="{ 'ws-sidebar--open': open }"
 >
-    {{-- Mobile only: the drawer dismiss control. Hidden on desktop. --}}
     <button
         type="button"
         class="ws-drawer-close"
@@ -19,34 +18,22 @@
     <a
         href="{{ route('workshop.dashboard') }}"
         class="ws-sidebar-brand"
-        aria-label="Συνεργείο — Αρχική"
+        aria-label="Garage Manager — Πίνακας Ελέγχου"
     >
-        <span class="ws-sidebar-brand-full">Συνεργείο</span>
-        <span class="ws-sidebar-brand-compact" aria-hidden="true">Σ</span>
+        <span class="ws-sidebar-brand-full">Garage Manager</span>
+        <span class="ws-sidebar-brand-compact" aria-hidden="true">GM</span>
     </a>
 
     <nav class="ws-sidebar-nav" aria-label="Κύρια πλοήγηση" x-on:click="open = false">
         <div class="ws-sidebar-primary">
             <x-workshop.shell.nav-item
                 :href="route('workshop.dashboard')"
-                label="Αρχική"
+                label="Πίνακας Ελέγχου"
                 :active="request()->routeIs('workshop.dashboard')"
             >
                 <x-slot:icon>
                     <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="m3 11.25 9-7.5 9 7.5v8.25a.75.75 0 0 1-.75.75h-5.25v-6h-6v6H3.75A.75.75 0 0 1 3 19.5v-8.25Z"/>
-                    </svg>
-                </x-slot:icon>
-            </x-workshop.shell.nav-item>
-
-            <x-workshop.shell.nav-item
-                :href="route('workshop.work-orders.index')"
-                label="Εργασίες"
-                :active="request()->routeIs('workshop.work-orders.*')"
-            >
-                <x-slot:icon>
-                    <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 5.25h6m-6 4.5h6m-6 4.5h3m-6.75 6h13.5A1.5 1.5 0 0 0 20.25 18.75v-15a1.5 1.5 0 0 0-1.5-1.5H5.25a1.5 1.5 0 0 0-1.5 1.5v15a1.5 1.5 0 0 0 1.5 1.5Z"/>
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 4.5h6v6h-6v-6Zm9 0h6v6h-6v-6Zm-9 9h6v6h-6v-6Zm9 0h6v6h-6v-6Z"/>
                     </svg>
                 </x-slot:icon>
             </x-workshop.shell.nav-item>
@@ -71,6 +58,18 @@
                 <x-slot:icon>
                     <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" d="m5.25 17.25.75-6 1.5-3h9l1.5 3 .75 6M3.75 14.25h16.5M6.75 17.25v1.5m10.5-1.5v1.5M7.5 14.25h.008v.008H7.5v-.008Zm9 0h.008v.008H16.5v-.008Z"/>
+                    </svg>
+                </x-slot:icon>
+            </x-workshop.shell.nav-item>
+
+            <x-workshop.shell.nav-item
+                :href="route('workshop.work-orders.index')"
+                label="Εντολές Εργασίας"
+                :active="request()->routeIs('workshop.work-orders.*')"
+            >
+                <x-slot:icon>
+                    <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 5.25h6m-6 4.5h6m-6 4.5h3m-6.75 6h13.5A1.5 1.5 0 0 0 20.25 18.75v-15a1.5 1.5 0 0 0-1.5-1.5H5.25a1.5 1.5 0 0 0-1.5 1.5v15a1.5 1.5 0 0 0 1.5 1.5Z"/>
                     </svg>
                 </x-slot:icon>
             </x-workshop.shell.nav-item>

@@ -1,6 +1,7 @@
 @extends('layouts.workshop')
 
 @section('title', 'Εργασίες — Συνεργείο')
+@section('header-title', 'Εργασίες')
 
 @push('styles')
 <style>

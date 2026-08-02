@@ -2,6 +2,7 @@
 
 @section('title', 'Νέος Πελάτης — Συνεργείο')
 @section('header-title', 'Νέος Πελάτης')
+@section('header-back', route('workshop.dashboard'))
 
 @push('styles')
 <style>

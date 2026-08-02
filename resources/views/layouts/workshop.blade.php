@@ -124,7 +124,7 @@
 
         /* Mobile-only shell pieces. Hidden on desktop, so the desktop layout is untouched. */
         .ws-mobile-header,
-        .ws-mobile-menu-trigger,
+        .ws-mobile-bottom-nav,
         .ws-drawer-backdrop,
         .ws-drawer-close {
             display: none;
@@ -434,6 +434,10 @@
             align-items: center;
             justify-content: space-between;
             gap: 16px;
+        }
+
+        .ws-section-label-mobile {
+            display: none;
         }
 
         .ws-section-header h2 {
@@ -1849,31 +1853,6 @@
                 color: var(--ws-nav-text-hi);
             }
 
-            .ws-mobile-menu-trigger {
-                min-height: 44px;
-                padding: 8px 12px;
-                display: inline-flex;
-                align-items: center;
-                gap: 8px;
-                border: 0;
-                border-radius: 8px;
-                background: transparent;
-                color: var(--ws-nav-text-hi);
-                font-size: 14px;
-                font-weight: 500;
-                cursor: pointer;
-            }
-
-            .ws-mobile-menu-trigger:hover {
-                background: var(--ws-nav-hover);
-            }
-
-            .ws-mobile-menu-trigger svg {
-                width: 22px;
-                height: 22px;
-                stroke-width: 1.8;
-            }
-
             .ws-mobile-brand {
                 margin-left: auto;
                 padding-right: 8px;
@@ -2050,6 +2029,377 @@
             .ws-quick-action {
                 min-height: 68px;
             }
+            body {
+                --nav-h: 68px;
+            }
+
+            :root {
+                --ws-page: #F5F4F1;
+            }
+
+            .ws-mobile-header {
+                height: calc(56px + env(safe-area-inset-top, 0px));
+                padding: env(safe-area-inset-top, 0px) 10px 0;
+                gap: 8px;
+            }
+
+            .ws-mobile-context {
+                min-width: 0;
+                padding-left: 6px;
+                flex: 1;
+                display: flex;
+                flex-direction: column;
+                justify-content: center;
+                gap: 1px;
+            }
+
+            .ws-mobile-context-kicker,
+            .ws-mobile-context-title {
+                display: block;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+            }
+
+            .ws-mobile-context-kicker {
+                color: var(--ws-nav-text);
+                font-size: 10px;
+                font-weight: 700;
+                line-height: 14px;
+                letter-spacing: .08em;
+                text-transform: uppercase;
+            }
+
+            .ws-mobile-context-title {
+                color: var(--ws-nav-text-hi);
+                font-size: 17px;
+                font-weight: 700;
+                line-height: 22px;
+            }
+
+            .ws-mobile-header-action {
+                width: 44px;
+                height: 44px;
+                padding: 0;
+                flex: 0 0 44px;
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                border: 0;
+                border-radius: 12px;
+                background: transparent;
+                color: var(--ws-text-muted);
+                transition: color 120ms ease, background-color 120ms ease;
+            }
+
+            .ws-mobile-back-action {
+                color: var(--ws-nav-text-hi);
+            }
+
+            .ws-mobile-header-action:hover {
+                background: var(--ws-nav-hover);
+                color: var(--ws-nav-text-hi);
+            }
+
+            .ws-mobile-header-action svg {
+                width: 21px;
+                height: 21px;
+                stroke-width: 1.9;
+            }
+
+            .ws-mobile-bottom-nav {
+                position: fixed;
+                z-index: 35;
+                right: 0;
+                bottom: 0;
+                left: 0;
+                min-height: calc(var(--nav-h) + env(safe-area-inset-bottom, 0px));
+                padding: 6px max(6px, env(safe-area-inset-right, 0px)) env(safe-area-inset-bottom, 0px) max(6px, env(safe-area-inset-left, 0px));
+                display: grid;
+                grid-template-columns: repeat(5, minmax(0, 1fr));
+                align-items: end;
+                border-top: 1px solid var(--ws-border);
+                background: var(--ws-card);
+                box-shadow: 0 -8px 24px rgb(17 24 39 / 8%);
+            }
+
+            .ws-mobile-bottom-item {
+                min-width: 0;
+                min-height: 56px;
+                padding: 5px 2px 4px;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                gap: 3px;
+                border: 0;
+                border-radius: 12px;
+                background: transparent;
+                color: var(--ws-text-muted);
+                font-family: var(--ws-font-sans);
+                font-size: 9px;
+                font-weight: 600;
+                line-height: 12px;
+                text-align: center;
+                cursor: pointer;
+            }
+
+            .ws-mobile-bottom-item:hover,
+            .ws-mobile-bottom-item[aria-current="page"] {
+                background: #EFF6FF;
+                color: var(--ws-primary);
+            }
+
+            .ws-mobile-bottom-icon {
+                width: 24px;
+                height: 24px;
+                flex: 0 0 24px;
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+            }
+
+            .ws-mobile-bottom-icon svg {
+                width: 22px;
+                height: 22px;
+                stroke-width: 1.8;
+            }
+
+            .ws-mobile-bottom-label {
+                max-width: 100%;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+            }
+
+            .ws-mobile-bottom-item--create {
+                color: var(--ws-primary);
+            }
+
+            .ws-mobile-bottom-item--create:hover,
+            .ws-mobile-bottom-item--create[aria-current="page"] {
+                background: transparent;
+            }
+
+            .ws-mobile-bottom-item--create .ws-mobile-bottom-icon {
+                width: 48px;
+                height: 48px;
+                margin-top: -22px;
+                flex-basis: 48px;
+                border: 4px solid var(--ws-card);
+                border-radius: 999px;
+                background: var(--ws-primary);
+                color: var(--ws-primary-fg);
+                box-shadow: 0 6px 16px rgb(21 93 252 / 24%);
+            }
+
+            .ws-mobile-bottom-item--create .ws-mobile-bottom-icon svg {
+                width: 22px;
+                height: 22px;
+                stroke-width: 2.2;
+            }
+
+            .ws-main {
+                padding: 8px 16px 32px;
+                padding-bottom: calc(32px + var(--nav-h) + env(safe-area-inset-bottom, 0px));
+            }
+
+            .ws-dashboard-header {
+                margin-bottom: 10px;
+                align-items: center;
+                flex-direction: row;
+                gap: 10px;
+            }
+
+            .ws-dashboard-title {
+                display: none;
+            }
+
+            .ws-dashboard-header > div {
+                min-width: 0;
+                flex: 1;
+            }
+
+            .ws-dashboard-subtitle {
+                margin: 0;
+                font-family: var(--ws-font-sans);
+                font-size: 12px;
+                line-height: 18px;
+            }
+
+            .ws-dashboard-subtitle-prefix {
+                display: none;
+            }
+
+            .ws-dashboard-date {
+                display: block;
+            }
+
+            .ws-system-status {
+                display: none;
+            }
+
+            .ws-dashboard .ws-dashboard-controls {
+                margin-bottom: 14px;
+            }
+
+            .ws-dashboard .ws-dashboard-controls > .ws-primary-action {
+                display: none;
+            }
+
+            .ws-dashboard .ws-search-input {
+                height: 52px;
+                padding-left: 52px;
+                border-radius: 14px;
+                font-size: 14px;
+            }
+
+            .ws-dashboard .ws-search-submit {
+                top: 4px;
+                left: 4px;
+                width: 44px;
+                height: 44px;
+                border-radius: 10px;
+            }
+
+            .ws-dashboard .ws-stat-grid {
+                margin-bottom: 28px;
+                gap: 12px;
+            }
+
+            .ws-dashboard .ws-stat-card {
+                min-height: 104px;
+                padding: 13px;
+                gap: 9px;
+                border-radius: 14px;
+            }
+
+            .ws-stat-icon {
+                width: 34px;
+                height: 34px;
+                flex-basis: 34px;
+                border-radius: 9px;
+            }
+
+            .ws-stat-icon svg {
+                width: 18px;
+                height: 18px;
+            }
+
+            .ws-dashboard .ws-stat-label {
+                font-size: 9px;
+                line-height: 12px;
+                letter-spacing: 0;
+                text-transform: none;
+            }
+
+            .ws-dashboard .ws-stat-value {
+                font-size: 26px;
+                line-height: 28px;
+            }
+
+            .ws-dashboard-body {
+                gap: 24px;
+            }
+
+            .ws-dashboard .ws-section-header {
+                min-height: 44px;
+                margin-bottom: 8px;
+                gap: 12px;
+                flex-wrap: nowrap;
+            }
+
+            .ws-dashboard-primary .ws-section-header h2 {
+                min-width: 0;
+                white-space: nowrap;
+            }
+
+            .ws-dashboard-primary .ws-section-header a {
+                flex: 0 0 auto;
+                white-space: nowrap;
+            }
+
+            .ws-dashboard-primary .ws-section-label-desktop {
+                display: none;
+            }
+
+            .ws-dashboard-primary .ws-section-label-mobile {
+                display: inline;
+            }
+
+            .ws-dashboard .ws-section-header h2,
+            .ws-dashboard-section-title {
+                font-size: 18px;
+                line-height: 24px;
+            }
+
+            .ws-recent-order {
+                min-height: 72px;
+                padding: 10px 12px;
+                grid-template-columns: auto minmax(0, 1fr) auto;
+                grid-template-areas:
+                    "number body status"
+                    ". time chevron";
+                gap: 2px 9px;
+            }
+
+            .ws-recent-order-number {
+                align-self: center;
+                font-size: 12px;
+            }
+
+            .ws-recent-order-customer {
+                font-size: 14px;
+                line-height: 19px;
+            }
+
+            .ws-recent-order-meta {
+                margin-top: 0;
+                font-size: 11px;
+                line-height: 16px;
+            }
+
+            .ws-recent-order-status {
+                max-width: 104px;
+                align-self: center;
+                justify-self: end;
+            }
+
+            .ws-dashboard .ws-status-badge {
+                padding: 2px 6px;
+                font-size: 9px;
+                line-height: 14px;
+                letter-spacing: 0;
+                text-transform: none;
+            }
+
+            .ws-recent-order-time {
+                font-family: var(--ws-font-sans);
+                font-size: 10px;
+                line-height: 14px;
+            }
+
+            .ws-recent-order-chevron {
+                align-self: center;
+            }
+
+            .ws-main > .woc-toolbar,
+            .ws-main .wos-page > .ws-back-link {
+                display: none;
+            }
+
+            .ws-section-header a,
+            .ws-empty-action a,
+            .ws-back-link,
+            .ws-secondary-action {
+                min-height: 44px;
+            }
+
+            .ws-icon-action {
+                width: 44px;
+                height: 44px;
+            }
+
 
             body.ws-drawer-open {
                 overflow: hidden;
@@ -2072,7 +2422,9 @@
 <body
     x-data="{
         open: false,
-        openDrawer() {
+        drawerTrigger: null,
+        openDrawer(trigger = null) {
+            this.drawerTrigger = trigger;
             this.open = true;
             this.$nextTick(() => this.$refs.drawerClose?.focus());
         },
@@ -2082,31 +2434,35 @@
             }
 
             this.open = false;
-            this.$nextTick(() => this.$refs.menuTrigger?.focus());
+            const returnTarget = this.drawerTrigger;
+            this.drawerTrigger = null;
+            this.$nextTick(() => returnTarget?.focus());
         },
     }"
     x-bind:class="{ 'ws-drawer-open': open }"
-    x-effect="$refs.mobileHeader.inert = open; $refs.contentRegion.inert = open"
+    x-effect="$refs.mobileHeader.inert = open; $refs.contentRegion.inert = open; $refs.mobileBottomNav.inert = open"
     x-on:keydown.escape.window="closeDrawer()"
     x-on:resize.window="if (window.innerWidth >= 768) open = false"
 >
     <header class="ws-mobile-header" x-ref="mobileHeader">
-        <button
-            type="button"
-            class="ws-mobile-menu-trigger"
-            x-ref="menuTrigger"
-            aria-controls="ws-sidebar"
-            aria-expanded="false"
-            x-bind:aria-expanded="open ? 'true' : 'false'"
-            x-on:click="openDrawer()"
-        >
-            <svg aria-hidden="true" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5M3.75 17.25h16.5"/>
-            </svg>
-            Μενού
-        </button>
+        @hasSection('header-back')
+            <a href="@yield('header-back')" class="ws-mobile-header-action ws-mobile-back-action" aria-label="Πίσω" title="Πίσω">
+                <svg aria-hidden="true" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="m15.75 19.5-7.5-7.5 7.5-7.5"/>
+                </svg>
+            </a>
+        @endif
 
-        <a href="{{ route('workshop.dashboard') }}" class="ws-mobile-brand">Garage Manager</a>
+        <div class="ws-mobile-context">
+            <span class="ws-mobile-context-title">@yield('header-title', 'Πίνακας Ελέγχου')</span>
+        </div>
+
+        <a href="{{ route('workshop.search') }}" class="ws-mobile-header-action" aria-label="Αναζήτηση οχήματος" title="Αναζήτηση οχήματος">
+            <svg aria-hidden="true" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <circle cx="10.75" cy="10.75" r="6.75" />
+                <path stroke-linecap="round" d="m15.75 15.75 4.5 4.5" />
+            </svg>
+        </a>
     </header>
 
     <div class="ws-shell">
@@ -2127,6 +2483,8 @@
             </main>
         </div>
     </div>
+
+    <x-workshop.shell.mobile-bottom-nav />
 
     @stack('scripts')
 </body>

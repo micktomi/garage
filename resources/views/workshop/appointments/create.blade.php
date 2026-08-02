@@ -2,6 +2,7 @@
 
 @section('title', 'Νέο Ραντεβού — Συνεργείο')
 @section('header-title', 'Νέο Ραντεβού')
+@section('header-back', route('workshop.appointments.index'))
 
 @push('styles')
 <style>

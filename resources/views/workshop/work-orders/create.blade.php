@@ -2,6 +2,7 @@
 
 @section('title', 'Νέα εντολή εργασίας — Συνεργείο')
 @section('header-title', 'Νέα εντολή')
+@section('header-back', route('workshop.work-orders.index'))
 
 @push('styles')
 <style>

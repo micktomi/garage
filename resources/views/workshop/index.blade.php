@@ -1,13 +1,14 @@
 @extends('layouts.workshop')
 
 @section('title', 'Πίνακας Ελέγχου — Συνεργείο')
+@section('header-title', 'Πίνακας Ελέγχου')
 
 @section('content')
     <div class="ws-dashboard">
         <header class="ws-dashboard-header">
             <div>
                 <h1 class="ws-dashboard-title">Πίνακας Ελέγχου</h1>
-                <p class="ws-dashboard-subtitle">Επισκόπηση λειτουργίας συνεργείου · {{ $todayLabel }}</p>
+                <p class="ws-dashboard-subtitle"><span class="ws-dashboard-subtitle-prefix">Επισκόπηση λειτουργίας συνεργείου · </span><span class="ws-dashboard-date">{{ $todayLabel }}</span></p>
             </div>
 
             <span class="ws-system-status" role="status">
@@ -58,6 +59,8 @@
                     title="Πρόσφατες Εντολές Εργασίας"
                     :href="route('workshop.work-orders.index')"
                     link="Προβολή όλων"
+                    mobile-title="Πρόσφατες εντολές"
+                    mobile-link="Όλες"
                 />
 
                 <div class="ws-panel">

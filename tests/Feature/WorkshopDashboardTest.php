@@ -297,7 +297,7 @@ class WorkshopDashboardTest extends TestCase
             // No redirect script and no minimum page width forcing a desktop layout.
             $response->assertDontSee('window.location.replace', false);
             $response->assertDontSee('min-width: 768px;', false);
-            $response->assertSee('ws-mobile-menu-trigger', false);
+            $response->assertSee('ws-mobile-bottom-nav', false);
         }
     }
 

@@ -2,6 +2,7 @@
 
 @section('title', 'Εντολή #' . str_pad($workOrder->id, 4, '0', STR_PAD_LEFT) . ' — Συνεργείο')
 @section('header-title', 'Εντολή #' . str_pad($workOrder->id, 4, '0', STR_PAD_LEFT))
+@section('header-back', route('workshop.work-orders.index'))
 
 @push('styles')
 <style>

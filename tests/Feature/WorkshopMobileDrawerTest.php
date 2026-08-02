@@ -29,7 +29,7 @@ class WorkshopMobileDrawerTest extends TestCase
 
     private const WIDE = 1440;
 
-    public function test_mobile_hides_the_sidebar_and_shows_the_menu_trigger(): void
+    public function test_mobile_hides_the_sidebar_and_uses_the_bottom_navigation(): void
     {
         $css = $this->stylesheet();
 
@@ -39,8 +39,27 @@ class WorkshopMobileDrawerTest extends TestCase
         $this->assertSame('fixed', $sidebar['position'] ?? null);
 
         $this->assertSame('flex', $this->styles($css, '.ws-mobile-header', self::MOBILE)['display'] ?? null);
-        $this->assertSame('inline-flex', $this->styles($css, '.ws-mobile-menu-trigger', self::MOBILE)['display'] ?? null);
         $this->assertSame('inline-flex', $this->styles($css, '.ws-drawer-close', self::MOBILE)['display'] ?? null);
+        $bottomNav = $this->styles($css, '.ws-mobile-bottom-nav', self::MOBILE);
+        $this->assertSame('grid', $bottomNav['display'] ?? null);
+        $this->assertSame('fixed', $bottomNav['position'] ?? null);
+        $this->assertSame('0', $bottomNav['bottom'] ?? null);
+        $this->assertSame('repeat(5, minmax(0, 1fr))', $bottomNav['grid-template-columns'] ?? null);
+        $tokens = $this->styles($css, ':root', self::MOBILE);
+        $this->assertSame('#F5F4F1', $tokens['--ws-page'] ?? null);
+        $this->assertSame('#FFFFFF', $tokens['--ws-card'] ?? null);
+        $this->assertSame('var(--ws-card)', $this->styles($css, '.ws-dashboard .ws-stat-card', self::MOBILE)['background'] ?? null);
+        $this->assertSame('none', $this->styles($css, '.ws-system-status', self::MOBILE)['display'] ?? null);
+        $this->assertSame('none', $this->styles($css, '.ws-dashboard-subtitle-prefix', self::MOBILE)['display'] ?? null);
+
+        $metricLabel = $this->styles($css, '.ws-dashboard .ws-stat-label', self::MOBILE);
+        $this->assertSame('none', $metricLabel['text-transform'] ?? null);
+        $this->assertSame('0', $metricLabel['letter-spacing'] ?? null);
+
+        $statusBadge = $this->styles($css, '.ws-dashboard .ws-status-badge', self::MOBILE);
+        $this->assertSame('none', $statusBadge['text-transform'] ?? null);
+        $this->assertSame('0', $statusBadge['letter-spacing'] ?? null);
+        $this->assertSame('104px', $this->styles($css, '.ws-recent-order-status', self::MOBILE)['max-width'] ?? null);
     }
 
     public function test_desktop_keeps_the_sidebar_and_hides_the_mobile_menu(): void
@@ -53,13 +72,21 @@ class WorkshopMobileDrawerTest extends TestCase
             $this->assertArrayNotHasKey('visibility', $sidebar, "sidebar @ {$viewport}px");
             $this->assertArrayNotHasKey('transform', $sidebar, "sidebar @ {$viewport}px");
 
-            foreach (['.ws-mobile-header', '.ws-mobile-menu-trigger', '.ws-drawer-close', '.ws-drawer-backdrop'] as $selector) {
+            foreach (['.ws-mobile-header', '.ws-mobile-bottom-nav', '.ws-drawer-close', '.ws-drawer-backdrop'] as $selector) {
                 $this->assertSame(
                     'none',
                     $this->styles($css, $selector, $viewport)['display'] ?? null,
                     "{$selector} @ {$viewport}px",
                 );
             }
+
+            $this->assertSame('inline-flex', $this->styles($css, '.ws-system-status', $viewport)['display'] ?? null);
+            $this->assertArrayNotHasKey('display', $this->styles($css, '.ws-dashboard-subtitle-prefix', $viewport));
+            $this->assertSame('#F9FAFB', $this->styles($css, ':root', $viewport)['--ws-page'] ?? null);
+            $this->assertSame('#FFFFFF', $this->styles($css, ':root', $viewport)['--ws-card'] ?? null);
+            $this->assertSame('uppercase', $this->styles($css, '.ws-dashboard .ws-stat-label', $viewport)['text-transform'] ?? null);
+            $this->assertSame('uppercase', $this->styles($css, '.ws-dashboard .ws-status-badge', $viewport)['text-transform'] ?? null);
+            $this->assertSame('none', $this->styles($css, '.ws-section-label-mobile', $viewport)['display'] ?? null);
         }
 
         // The approved Next-inspired desktop sidebar is stable at every
@@ -88,6 +115,7 @@ class WorkshopMobileDrawerTest extends TestCase
         $main = $this->styles($css, '.ws-main', self::MOBILE);
         $this->assertSame('none', $main['max-width'] ?? null);
         $this->assertSame('0', $main['margin'] ?? null);
+        $this->assertStringContainsString('env(safe-area-inset-bottom, 0px)', $main['padding-bottom'] ?? '');
 
         // The drawer sits above the backdrop, which covers the whole viewport.
         $backdrop = $this->styles($css, '.ws-drawer-backdrop', self::MOBILE);
@@ -107,19 +135,20 @@ class WorkshopMobileDrawerTest extends TestCase
         $this->assertSame([], $this->styles($css, '.ws-sidebar--open', self::DESKTOP));
     }
 
-    public function test_menu_trigger_toggles_the_sidebar_and_every_dismissal_path_is_wired(): void
+    public function test_more_tab_is_the_only_drawer_trigger_and_every_dismissal_path_is_wired(): void
     {
         $xpath = $this->xpath($this->page());
 
         $sidebar = $this->element($xpath, '//aside[@id="ws-sidebar"]');
         $this->assertSame("{ 'ws-sidebar--open': open }", $sidebar->getAttribute('x-bind:class'));
 
-        $trigger = $this->element($xpath, '//button[contains(@class, "ws-mobile-menu-trigger")]');
-        $this->assertSame('Μενού', trim($trigger->textContent));
+        $this->assertCount(0, $xpath->query('//header[contains(@class, "ws-mobile-header")]//*[contains(@class, "ws-mobile-menu-trigger")]'));
+        $trigger = $this->element($xpath, '//nav[contains(@class, "ws-mobile-bottom-nav")]/button[@aria-label="Περισσότερα"]');
+        $this->assertSame('Περισσότερα', trim($trigger->textContent));
         $this->assertSame('ws-sidebar', $trigger->getAttribute('aria-controls'));
         $this->assertSame('false', $trigger->getAttribute('aria-expanded'));
         $this->assertSame("open ? 'true' : 'false'", $trigger->getAttribute('x-bind:aria-expanded'));
-        $this->assertSame('openDrawer()', $trigger->getAttribute('x-on:click'));
+        $this->assertSame('openDrawer($el)', $trigger->getAttribute('x-on:click'));
 
         // Close: the X, the backdrop, Escape, and picking a navigation link.
         $close = $this->element($xpath, '//aside[@id="ws-sidebar"]//button[contains(@class, "ws-drawer-close")]');
@@ -134,9 +163,65 @@ class WorkshopMobileDrawerTest extends TestCase
         $this->assertSame('closeDrawer()', $body->getAttribute('x-on:keydown.escape.window'));
         $this->assertStringContainsString('open: false', $body->getAttribute('x-data'));
 
+        $this->assertStringContainsString('drawerTrigger: null', $body->getAttribute('x-data'));
+        $this->assertStringContainsString('$refs.mobileBottomNav.inert = open', $body->getAttribute('x-effect'));
         $nav = $this->element($xpath, '//aside[@id="ws-sidebar"]//nav[contains(@class, "ws-sidebar-nav")]');
         $this->assertSame('open = false', $nav->getAttribute('x-on:click'));
         $this->assertGreaterThan(0, $xpath->query('.//a[contains(@class, "ws-sidebar-item")]', $nav)->length);
+    }
+
+    public function test_mobile_navigation_uses_only_existing_routes_and_actions(): void
+    {
+        $xpath = $this->xpath($this->page());
+        $nav = $this->element($xpath, '//nav[contains(@class, "ws-mobile-bottom-nav")]');
+
+        $this->assertSame('mobileBottomNav', $nav->getAttribute('x-ref'));
+        $this->assertCount(4, $xpath->query('./a', $nav));
+        $this->assertCount(1, $xpath->query('./button', $nav));
+        $this->assertCount(0, $xpath->query('.//form | .//input', $nav));
+
+        foreach ([
+            route('workshop.dashboard'),
+            route('workshop.work-orders.index'),
+            route('workshop.work-orders.create'),
+            route('workshop.appointments.index'),
+        ] as $href) {
+            $this->assertCount(1, $xpath->query('./a[@href="'.$href.'"]', $nav));
+        }
+
+        $more = $this->element($xpath, '//nav[contains(@class, "ws-mobile-bottom-nav")]/button[@aria-label="Περισσότερα"]');
+        $this->assertSame('ws-sidebar', $more->getAttribute('aria-controls'));
+        $this->assertSame('openDrawer($el)', $more->getAttribute('x-on:click'));
+
+        $create = $this->element($xpath, '//nav[contains(@class, "ws-mobile-bottom-nav")]/a[@href="'.route('workshop.work-orders.create').'"]');
+        $this->assertSame('Νέα εντολή', $create->getAttribute('aria-label'));
+        $this->assertSame('Νέα εντολή', $create->getAttribute('title'));
+        $this->assertCount(0, $xpath->query('.//span[contains(@class, "ws-mobile-bottom-label")]', $create));
+
+        $this->assertCount(1, $xpath->query('./a[@aria-current="page" and @href="'.route('workshop.dashboard').'"]', $nav));
+        $this->assertSame(
+            'Πίνακας Ελέγχου',
+            trim($this->element($xpath, '//span[contains(@class, "ws-mobile-context-title")]')->textContent),
+        );
+        $this->assertSame('Πρόσφατες εντολές', trim($this->element($xpath, '//section[contains(@class, "ws-dashboard-primary")]//h2/span[contains(@class, "ws-section-label-mobile")]')->textContent));
+        $this->assertSame('Όλες', trim($this->element($xpath, '//section[contains(@class, "ws-dashboard-primary")]//a/span[contains(@class, "ws-section-label-mobile")]')->textContent));
+        $search = $this->element($xpath, '//a[contains(@class, "ws-mobile-header-action") and @href="'.route('workshop.search').'"]');
+        $this->assertCount(1, $xpath->query('.//circle[@cx="10.75" and @cy="10.75" and @r="6.75"]', $search));
+        $this->assertCount(1, $xpath->query('.//path[@d="m15.75 15.75 4.5 4.5"]', $search));
+        $this->assertCount(0, $xpath->query('.//path[contains(@d, "m21 21-5.197-5.197")]', $search));
+    }
+
+    public function test_nested_mobile_page_uses_its_existing_parent_route_as_the_top_bar_back_action(): void
+    {
+        $user = User::factory()->create();
+        $response = $this->actingAs($user)->get(route('workshop.work-orders.create'))->assertOk();
+        $xpath = $this->xpath($response->getContent());
+
+        $header = $this->element($xpath, '//header[contains(@class, "ws-mobile-header")]');
+        $back = $this->element($xpath, './/a[contains(@class, "ws-mobile-back-action")]', $header);
+        $this->assertSame(route('workshop.work-orders.index'), $back->getAttribute('href'));
+        $this->assertSame('Πίσω', $back->getAttribute('aria-label'));
+        $this->assertSame('Πίσω', $back->getAttribute('title'));
     }
 
     private function page(): string

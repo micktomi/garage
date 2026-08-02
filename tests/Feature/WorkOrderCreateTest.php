@@ -87,15 +87,27 @@ class WorkOrderCreateTest extends TestCase
         $this->assertCount(1, $xpath->query('.//a[normalize-space(.)="Ακύρωση"]', $actionBars->item(0)));
     }
 
-    public function test_create_form_starts_with_collapsed_parts_and_uses_two_row_autogrow_textarea(): void
+    public function test_create_form_starts_with_collapsed_parts_and_uses_responsive_autogrow_workflow_textareas(): void
     {
         $user = User::factory()->create();
         $response = $this->actingAs($user)->get(route('workshop.work-orders.create'))->assertOk();
         $xpath = $this->xpath($response->getContent());
 
-        $textareas = $xpath->query('//textarea[@id="problem_description" and @rows="2" and @data-autogrow]');
-        $this->assertCount(1, $textareas);
-        $this->assertSame('Τριγμός από εμπρός δεξιά κατά την οδήγηση', $textareas->item(0)->getAttribute('placeholder'));
+        $textareas = $xpath->query('//textarea[@rows="2" and @data-autogrow]');
+        $this->assertCount(3, $textareas);
+
+        foreach ([
+            'problem_description' => 'Πρόβλημα ή εργασία',
+            'diagnosis' => 'Διάγνωση συνεργείου',
+            'work_performed' => 'Εργασίες που πραγματοποιήθηκαν',
+        ] as $field => $label) {
+            $this->assertCount(1, $xpath->query('//textarea[@id="'.$field.'" and @name="'.$field.'" and @rows="2" and @data-autogrow]'));
+            $this->assertCount(1, $xpath->query('//label[@for="'.$field.'" and contains(normalize-space(), "'.$label.'")]'));
+            $this->assertCount(1, $xpath->query('//textarea[@id="'.$field.'"]/ancestor::div[contains(concat(" ", normalize-space(@class), " "), " woc-card-body--grid ")]'));
+        }
+
+        $problem = $xpath->query('//textarea[@id="problem_description"]')->item(0);
+        $this->assertSame('Τριγμός από εμπρός δεξιά κατά την οδήγηση', $problem->getAttribute('placeholder'));
 
         $response->assertSee("x-data='workOrderForm([],", false);
         $response->assertSee('Προσθήκη ανταλλακτικού');
@@ -138,6 +150,79 @@ class WorkOrderCreateTest extends TestCase
         $response->assertRedirect(route('workshop.work-orders.show', $workOrder));
         $this->assertEquals($customer->id, $workOrder->customer_id);
         $this->assertEquals($vehicle->id, $workOrder->vehicle_id);
+    }
+
+    public function test_work_order_stores_diagnosis_and_work_performed_and_renders_them_on_detail(): void
+    {
+        $user = User::factory()->create();
+        [$customer, $vehicle] = $this->makeCustomerAndVehicle('ΔΙΑ-5000');
+
+        $response = $this->actingAs($user)->post(route('workshop.work-orders.store'), [
+            'customer_id' => $customer->id,
+            'vehicle_id' => $vehicle->id,
+            'problem_description' => 'Θόρυβος κατά την πέδηση.',
+            'diagnosis' => 'Φθαρμένα εμπρός τακάκια.',
+            'work_performed' => 'Αντικατάσταση εμπρός τακακίων και δοκιμή δρόμου.',
+        ]);
+
+        $workOrder = WorkOrder::firstOrFail();
+
+        $response->assertRedirect(route('workshop.work-orders.show', $workOrder));
+        $this->assertSame('Φθαρμένα εμπρός τακάκια.', $workOrder->diagnosis);
+        $this->assertSame('Αντικατάσταση εμπρός τακακίων και δοκιμή δρόμου.', $workOrder->work_performed);
+
+        $this->actingAs($user)
+            ->get(route('workshop.work-orders.show', $workOrder))
+            ->assertOk()
+            ->assertSee('Φθαρμένα εμπρός τακάκια.')
+            ->assertSee('Αντικατάσταση εμπρός τακακίων και δοκιμή δρόμου.');
+    }
+
+    public function test_diagnosis_and_work_performed_are_nullable(): void
+    {
+        $user = User::factory()->create();
+        [$customer, $vehicle] = $this->makeCustomerAndVehicle('ΚΕΝ-5000');
+
+        $this->actingAs($user)->post(route('workshop.work-orders.store'), [
+            'customer_id' => $customer->id,
+            'vehicle_id' => $vehicle->id,
+            'problem_description' => 'Προγραμματισμένος έλεγχος.',
+        ])->assertRedirect();
+
+        $workOrder = WorkOrder::firstOrFail();
+        $this->assertNull($workOrder->diagnosis);
+        $this->assertNull($workOrder->work_performed);
+    }
+
+    public function test_workflow_notes_enforce_max_length_restore_old_input_and_show_inline_errors(): void
+    {
+        $user = User::factory()->create();
+        [$customer, $vehicle] = $this->makeCustomerAndVehicle('ΜΑΧ-5001');
+        $tooLongDiagnosis = str_repeat('δ', 5001);
+        $tooLongWork = str_repeat('ε', 5001);
+
+        $this->actingAs($user)->post(route('workshop.work-orders.store'), [
+            'customer_id' => $customer->id,
+            'vehicle_id' => $vehicle->id,
+            'problem_description' => 'Έλεγχος ορίου κειμένου.',
+            'diagnosis' => $tooLongDiagnosis,
+            'work_performed' => $tooLongWork,
+        ])->assertSessionHasErrors(['diagnosis', 'work_performed']);
+
+        $response = $this->actingAs($user)
+            ->get(route('workshop.work-orders.create'))
+            ->assertOk();
+        $xpath = $this->xpath($response->getContent());
+
+        foreach (['diagnosis' => $tooLongDiagnosis, 'work_performed' => $tooLongWork] as $field => $oldValue) {
+            $textarea = $xpath->query('//textarea[@id="'.$field.'"]')->item(0);
+            $this->assertNotNull($textarea);
+            $this->assertSame($oldValue, $textarea->textContent);
+            $this->assertStringContainsString('is-invalid', $textarea->getAttribute('class'));
+            $this->assertCount(1, $xpath->query('./following-sibling::span[contains(concat(" ", normalize-space(@class), " "), " woc-error ")]', $textarea));
+        }
+
+        $this->assertDatabaseCount('work_orders', 0);
     }
 
     public function test_work_order_rejects_vehicle_belonging_to_different_customer(): void

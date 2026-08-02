@@ -5,229 +5,86 @@
 
 @push('styles')
 <style>
-    /* ── Page header ─────────────────────────────────────────── */
-    .cu-page-header {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 0.75rem;
-        padding: 0.25rem 0 1.25rem;
-        flex-wrap: wrap;
-    }
-    .cu-page-title {
-        font-size: 1.375rem;
-        font-weight: 700;
-        letter-spacing: -0.03em;
-        line-height: 1.2;
-    }
-    .cu-new-btn {
-        display: inline-flex;
-        align-items: center;
-        gap: 0.4rem;
-        font-size: 0.8125rem;
-        font-weight: 500;
-        color: var(--ws-primary-fg);
-        background: var(--ws-primary);
-        border: 1px solid transparent;
-        border-radius: 8px;
-        padding: 0.5rem 1rem;
-        transition: opacity 120ms ease;
-        white-space: nowrap;
-    }
-    .cu-new-btn:hover { opacity: .92; }
-
-    /* ── Search ──────────────────────────────────────────────── */
     .cu-search-form {
         display: flex;
-        gap: 0.5rem;
-        margin-bottom: 1.25rem;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-bottom: 20px;
     }
     .cu-search-input {
-        flex: 1;
-        background: var(--surface-3);
-        border: 1px solid var(--border);
-        border-radius: var(--radius-sm);
-        padding: 0.65rem 0.875rem;
-        font-size: 0.9375rem;
-        color: var(--text);
-        outline: none;
-        transition: border-color 0.15s, box-shadow 0.15s;
+        min-width: 0;
+        height: 44px;
+        padding: 0 14px;
+        flex: 1 1 220px;
+        border: 1px solid var(--ws-border);
+        border-radius: 8px;
+        background: var(--ws-card);
+        color: var(--ws-text);
+        font-size: 14px;
+        transition: border-color 120ms ease;
     }
-    .cu-search-input::placeholder { color: var(--text-faint); }
-    .cu-search-input:focus {
-        border-color: var(--accent);
-        box-shadow: 0 0 0 3px var(--accent-dim);
-    }
-    .cu-search-btn {
-        display: inline-flex;
-        align-items: center;
-        font-size: 0.875rem;
-        font-weight: 600;
-        color: var(--text-muted);
-        background: var(--surface-2);
-        border: 1px solid var(--border);
-        border-radius: var(--radius-sm);
-        padding: 0 1rem;
-        transition: color 0.15s, border-color 0.15s, background 0.15s;
-    }
-    .cu-search-btn:hover { color: var(--text); border-color: var(--text-faint); }
+    .cu-search-input::placeholder { color: var(--ws-text-muted); }
+    .cu-search-input:hover { border-color: var(--ws-border-hover); }
     .cu-search-clear {
         display: inline-flex;
         align-items: center;
-        font-size: 0.8125rem;
-        color: var(--text-faint);
-        padding: 0 0.25rem;
-    }
-    .cu-search-clear:hover { color: var(--text-muted); }
-
-    /* ── Customer card ───────────────────────────────────────── */
-    .cu-list {
-        display: grid;
-        grid-template-columns: minmax(0, 1fr);
-        align-items: stretch;
-        gap: 12px;
-    }
-    .cu-card {
-        min-width: 0;
-        min-height: 84px;
-        height: 100%;
-        padding: 14px;
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        border: 1px solid var(--ws-border);
-        border-radius: 12px;
-        background: var(--ws-card);
-        box-shadow: var(--shadow-sm);
-        transition: border-color 120ms ease, background-color 120ms ease;
-    }
-    .cu-card:hover {
-        border-color: var(--ws-border-hover);
-        background: var(--ws-sunken);
-    }
-    .cu-card-main {
-        min-width: 0;
-        flex: 1;
-        display: flex;
-        flex-direction: column;
-        gap: 2px;
-    }
-    .cu-card-name {
-        overflow: hidden;
-        color: var(--ws-text);
-        font-size: 15px;
-        font-weight: 500;
-        line-height: 20px;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-    }
-    .cu-card-contact {
-        min-width: 0;
-        display: flex;
-        flex-wrap: wrap;
-        gap: 2px 10px;
+        min-height: 44px;
+        padding: 0 8px;
         color: var(--ws-text-muted);
         font-size: 13px;
-        line-height: 18px;
     }
-    .cu-card-contact a { color: var(--ws-text-muted); }
-    .cu-card-contact a:hover { color: var(--ws-text); text-decoration: underline; }
+    .cu-search-clear:hover { color: var(--ws-text); }
+
     .cu-card-email {
+        flex: 1 1 180px;
         min-width: 0;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-    }
-    .cu-card-divider {
-        display: none;
-    }
-    .cu-card-vehicles {
-        min-width: 0;
-        flex: 0 1 45%;
-        display: flex;
-        flex-direction: column;
-        align-items: flex-end;
-        gap: 6px;
-    }
-    .cu-vehicle-count {
-        color: var(--ws-text-muted);
-        font-size: 12px;
-        font-weight: 500;
-        line-height: 16px;
-        white-space: nowrap;
-    }
-    .cu-plate-list {
-        display: flex;
-        flex-wrap: wrap;
-        justify-content: flex-end;
-        gap: 4px;
-    }
-    .cu-plate {
-        display: inline-block;
-        padding: 3px 7px;
-        border: 1px solid var(--ws-border);
-        border-radius: 8px;
-        background: var(--ws-sunken);
-        color: var(--ws-text);
-        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
-        font-size: 12px;
-        font-weight: 400;
-        line-height: 18px;
-        white-space: nowrap;
     }
 
-    /* Empty state */
     .cu-empty {
         text-align: center;
         padding: 4rem 1rem;
-        color: var(--text-muted);
+        color: var(--ws-text-muted);
     }
     .cu-empty-icon {
         width: 48px;
         height: 48px;
         margin: 0 auto 1rem;
-        color: var(--text-faint);
+        color: var(--ws-text-muted);
     }
     .cu-empty-title {
         font-size: 1rem;
         font-weight: 600;
-        color: var(--text);
+        color: var(--ws-text);
         margin-bottom: 0.25rem;
     }
     .cu-empty-sub {
         font-size: 0.875rem;
-        color: var(--text-muted);
-    }
-
-    /* Desktop enhancements */
-    @media (min-width: 768px) {
-        .cu-page-title { font-size: 2rem; }
-    }
-
-    @media (min-width: 1120px) {
-        .cu-list {
-            grid-template-columns: repeat(2, minmax(0, 1fr));
-        }
+        color: var(--ws-text-muted);
     }
 </style>
 @endpush
 
 @section('content')
 
-<div class="cu-page-header">
-    <h1 class="cu-page-title">Πελάτες</h1>
-    <a href="{{ route('workshop.customers.create') }}" class="cu-new-btn">
-        <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/>
-        </svg>
-        Νέος πελάτης
-    </a>
-</div>
+<header class="ws-page-hero">
+    <div class="ws-page-hero-copy">
+        <h1 class="ws-page-display-title">Πελάτες</h1>
+        <p class="ws-page-subtitle">Στοιχεία επικοινωνίας και οχήματα πελατών.</p>
+    </div>
+    <div class="ws-page-actions">
+        <a href="{{ route('workshop.customers.create') }}" class="ws-primary-action">
+            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/>
+            </svg>
+            Νέος πελάτης
+        </a>
+    </div>
+</header>
 
 <form method="GET" action="{{ route('workshop.customers.index') }}" class="cu-search-form">
     <input type="text" name="q" value="{{ $q }}" class="cu-search-input"
         placeholder="Όνομα, τηλέφωνο ή πινακίδα…" autocomplete="off">
-    <button type="submit" class="cu-search-btn">Αναζήτηση</button>
+    <button type="submit" class="ws-secondary-action">Αναζήτηση</button>
     @if($q !== '')
         <a href="{{ route('workshop.customers.index') }}" class="cu-search-clear">Καθαρισμός</a>
     @endif
@@ -248,36 +105,61 @@
         @endif
     </div>
 @else
-    <div class="cu-list">
+    <div class="ws-card-grid ws-card-grid--two-up cu-list">
         @foreach($customers as $customer)
-            <div class="cu-card">
-                <div class="cu-card-main">
-                    <div class="cu-card-name">{{ $customer->full_name }}</div>
-                    <div class="cu-card-contact">
+            <article class="ws-panel ws-operational-card cu-card">
+                <a
+                    href="{{ route('filament.admin.resources.customers.edit', ['record' => $customer]) }}"
+                    class="ws-operational-card__overlay"
+                    aria-label="Επεξεργασία πελάτη {{ $customer->full_name }}"
+                ></a>
+
+                <header class="ws-operational-card__head">
+                    <div class="ws-operational-card__identity">
+                        <h2 class="ws-operational-card__title" title="{{ $customer->full_name }}">{{ $customer->full_name }}</h2>
+                        <div class="ws-operational-card__meta">
                         @if($customer->phone)
-                            <a href="tel:{{ $customer->phone }}" aria-label="Κλήση {{ $customer->full_name }}">{{ $customer->phone }}</a>
+                                <a
+                                    href="tel:{{ $customer->phone }}"
+                                    class="ws-operational-card__interactive ws-operational-card__inline-action"
+                                    aria-label="Κλήση {{ $customer->full_name }}"
+                                >{{ $customer->phone }}</a>
                         @endif
                         @if($customer->email)
-                            <span class="cu-card-email" title="{{ $customer->email }}">{{ $customer->email }}</span>
+                                <span class="ws-operational-card__truncate cu-card-email" title="{{ $customer->email }}">{{ $customer->email }}</span>
                         @endif
+                        </div>
                     </div>
-                </div>
-
-                <div class="cu-card-divider"></div>
-
-                <div class="cu-card-vehicles">
-                    <span class="cu-vehicle-count">
+                    <span class="ws-operational-card__count">
                         {{ $customer->vehicles_count }} {{ $customer->vehicles_count === 1 ? 'όχημα' : 'οχήματα' }}
                     </span>
+                </header>
+
+                <div class="ws-operational-card__body">
                     @if($customer->vehicles->isNotEmpty())
-                        <div class="cu-plate-list">
+                        <div class="ws-operational-card__plate-list">
                             @foreach($customer->vehicles as $vehicle)
-                                <span class="cu-plate">{{ $vehicle->plate_number ?? '—' }}</span>
+                                <x-workshop.plate :value="$vehicle->plate_number ?? '—'" />
                             @endforeach
                         </div>
+                    @else
+                        <span class="ws-operational-card__subtitle">Χωρίς καταχωρημένο όχημα</span>
                     @endif
                 </div>
-            </div>
+
+                <footer class="ws-operational-card__footer">
+                    <a
+                        href="{{ route('filament.admin.resources.customers.edit', ['record' => $customer]) }}"
+                        class="ws-card-action ws-operational-card__interactive"
+                    >Επεξεργασία</a>
+                    @if($customer->vehicles->isNotEmpty())
+                        <a
+                            href="{{ route('workshop.work-orders.create', ['customer_id' => $customer->id]) }}"
+                            class="ws-card-action ws-card-action--primary ws-operational-card__interactive"
+                        >Νέα εντολή</a>
+                    @endif
+                </footer>
+            </article>
         @endforeach
     </div>
 @endif

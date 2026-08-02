@@ -13,6 +13,10 @@ class WorkOrderRow extends Component
 
     public readonly string $plate;
 
+    public readonly string $vehicleName;
+
+    public readonly string $problem;
+
     public readonly string $meta;
 
     public readonly string $createdLabel;
@@ -28,9 +32,11 @@ class WorkOrderRow extends Component
 
         $this->customerName = $order->customer?->full_name ?: 'Χωρίς πελάτη';
         $this->plate = $order->vehicle?->plate_number ?: '—';
+        $this->vehicleName = $vehicleName ?: 'Όχημα χωρίς στοιχεία';
+        $this->problem = $description ?: 'Χωρίς περιγραφή εργασίας';
         $this->meta = implode(' · ', array_filter([
-            $vehicleName ?: 'Όχημα χωρίς στοιχεία',
-            $description ?: 'Χωρίς περιγραφή εργασίας',
+            $this->vehicleName,
+            $this->problem,
         ]));
         $this->createdLabel = $order->created_at?->locale('el')->diffForHumans() ?: 'Χωρίς ημερομηνία';
         $this->createdDateTime = $order->created_at?->toIso8601String();

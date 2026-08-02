@@ -126,6 +126,8 @@ class WorkshopController extends Controller
                 }),
             ],
             'problem_description' => ['required', 'string', 'max:5000'],
+            'diagnosis' => ['nullable', 'string', 'max:5000'],
+            'work_performed' => ['nullable', 'string', 'max:5000'],
             'labor_cost' => ['nullable', 'numeric', 'min:0'],
             'current_mileage' => ['nullable', 'integer', 'min:0'],
             'next_service_date' => ['nullable', 'date'],

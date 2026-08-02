@@ -522,8 +522,8 @@
         </div>
         </x-workshop.form.section>
         <x-workshop.form.section title="Τι δηλώνει ο πελάτης">
-        <div class="woc-card-body">
-            <div class="woc-field">
+        <div class="woc-card-body woc-card-body--grid">
+            <div class="woc-field span2">
                 <label for="problem_description" class="woc-label">
                     Πρόβλημα ή εργασία <span class="woc-req">*</span>
                 </label>
@@ -531,6 +531,22 @@
                     class="woc-textarea {{ $errors->has('problem_description') ? 'is-invalid' : '' }}"
                     placeholder="Τριγμός από εμπρός δεξιά κατά την οδήγηση">{{ old('problem_description') }}</textarea>
                 @error('problem_description') <span class="woc-error">{{ $message }}</span> @enderror
+            </div>
+
+            <div class="woc-field">
+                <label for="diagnosis" class="woc-label">Διάγνωση συνεργείου</label>
+                <textarea id="diagnosis" name="diagnosis" rows="2" data-autogrow
+                    class="woc-textarea {{ $errors->has('diagnosis') ? 'is-invalid' : '' }}"
+                    placeholder="Καταγράψτε τα ευρήματα του ελέγχου">{{ old('diagnosis') }}</textarea>
+                @error('diagnosis') <span class="woc-error">{{ $message }}</span> @enderror
+            </div>
+
+            <div class="woc-field">
+                <label for="work_performed" class="woc-label">Εργασίες που πραγματοποιήθηκαν</label>
+                <textarea id="work_performed" name="work_performed" rows="2" data-autogrow
+                    class="woc-textarea {{ $errors->has('work_performed') ? 'is-invalid' : '' }}"
+                    placeholder="Καταγράψτε τις εργασίες που ολοκληρώθηκαν">{{ old('work_performed') }}</textarea>
+                @error('work_performed') <span class="woc-error">{{ $message }}</span> @enderror
             </div>
         </div>
         </x-workshop.form.section>
@@ -577,7 +593,7 @@
                                     <path stroke-linecap="round" stroke-linejoin="round"
                                           d="M20.25 7.5l-.625 10.632a2.25 2.25 0 0 1-2.247 2.118H6.622a2.25 2.25 0 0 1-2.247-2.118L3.75 7.5M10 11.25h4M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125Z"/>
                                 </svg>
-                                Από απόθεμα
+                                <x-workshop.part-source-label source="from_stock" />
                             </label>
 
                             <input type="radio" class="woc-source-pill" value="customer_supplied"
@@ -588,7 +604,7 @@
                                     <path stroke-linecap="round" stroke-linejoin="round"
                                           d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z"/>
                                 </svg>
-                                Το έφερε ο πελάτης
+                                <x-workshop.part-source-label source="customer_supplied" />
                             </label>
 
                             <input type="radio" class="woc-source-pill" value="purchased_for_job"
@@ -599,7 +615,7 @@
                                     <path stroke-linecap="round" stroke-linejoin="round"
                                           d="M2.25 3h1.386c.51 0 .955.343 1.087.835l.383 1.437M7.5 14.25a3 3 0 0 0-3 3h15.75m-12.75-3h11.218c1.121-2.3 2.1-4.684 2.924-7.138a60.114 60.114 0 0 0-16.536-1.84M7.5 14.25 5.106 5.272M6 20.25a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0Zm12.75 0a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0Z"/>
                                 </svg>
-                                Αγοράστηκε για εργασία
+                                <x-workshop.part-source-label source="purchased_for_job" />
                             </label>
 
                         </div>

@@ -17,6 +17,38 @@
             <path stroke-linecap="round" stroke-linejoin="round" d="m9 18 6-6-6-6" />
         </svg>
     </a>
+@elseif($attributes->get('variant') === 'index')
+    <a
+        href="{{ route('workshop.work-orders.show', $order) }}"
+        class="ws-panel ws-clickable-card wol-card"
+        aria-label="Εντολή #{{ str_pad($order->id, 4, '0', STR_PAD_LEFT) }}, κατάσταση {{ $order->status->label() }}, πελάτης {{ $customerName }}, όχημα {{ $vehicleName }}, πινακίδα {{ $plate }}, πρόβλημα {{ $problem }}, άνοιγμα {{ $dashboardDateLabel }}"
+    >
+        <span class="wol-card-top">
+            <span class="ws-recent-order-number">#{{ str_pad($order->id, 4, '0', STR_PAD_LEFT) }}</span>
+            <x-workshop.status-badge :status="$order->status" />
+        </span>
+
+        <span class="wol-card-person">
+            <span class="ws-recent-order-customer">{{ $customerName }}</span>
+            <span class="ws-recent-order-meta">{{ $vehicleName }}</span>
+        </span>
+
+        <span class="wol-card-meta">
+            <x-workshop.plate :value="$plate" />
+        </span>
+
+        <span class="wol-card-problem">
+            <span class="ws-field-label">Πρόβλημα</span>
+            <span class="ws-recent-order-meta">{{ $problem }}</span>
+        </span>
+
+        <span class="wol-card-footer">
+            <time class="ws-row-time" @if($createdDateTime) datetime="{{ $createdDateTime }}" @endif>{{ $dashboardDateLabel }}</time>
+            <svg class="wol-card-chevron" aria-hidden="true" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" d="m9 18 6-6-6-6" />
+            </svg>
+        </span>
+    </a>
 @else
     <a href="{{ route('workshop.work-orders.show', $order) }}" class="ws-work-order-row">
         <x-workshop.plate :value="$plate" />
@@ -30,11 +62,5 @@
             <x-workshop.status-badge :status="$order->status" />
             <time class="ws-row-time" @if($createdDateTime) datetime="{{ $createdDateTime }}" @endif>{{ $createdLabel }}</time>
         </span>
-
-        @if($attributes->get('variant') === 'index')
-            <svg class="ws-work-order-chevron" aria-hidden="true" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" d="m9 18 6-6-6-6" />
-            </svg>
-        @endif
     </a>
 @endif

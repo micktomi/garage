@@ -68,13 +68,13 @@ class WorkshopSidebarTest extends TestCase
         );
     }
 
-    public function test_sidebar_css_uses_the_approved_white_224px_shell(): void
+    public function test_sidebar_css_uses_the_approved_dark_slate_224px_shell(): void
     {
         $layout = file_get_contents(resource_path('views/layouts/workshop.blade.php'));
 
         $this->assertStringNotContainsString('.ws-header', $layout);
-        $this->assertStringContainsString('--ws-nav: #FFFFFF;', $layout);
-        $this->assertStringContainsString('--ws-nav-active: #111827;', $layout);
+        $this->assertStringContainsString('--ws-nav: #172033;', $layout);
+        $this->assertStringContainsString('--ws-nav-active: #2A3A57;', $layout);
 
         $this->assertMatchesRegularExpression(
             '/\.ws-sidebar\s*\{[^}]*position:\s*sticky;[^}]*width:\s*224px;[^}]*flex:\s*0 0 224px;[^}]*background:\s*var\(--ws-nav\);[^}]*border-right:\s*1px solid var\(--ws-border\);[^}]*\}/s',

@@ -8,7 +8,7 @@
     <style>
         :root {
             /* Surfaces */
-            --ws-page: #F1F5F9;
+            --ws-page: #E9EEF5;
             --ws-card: #FFFFFF;
             --ws-sunken: #F8FAFC;
 
@@ -2041,7 +2041,7 @@
             }
 
             :root {
-                --ws-page: #F1F5F9;
+                --ws-page: #E9EEF5;
             }
 
             .ws-mobile-header {

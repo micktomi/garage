@@ -320,7 +320,7 @@ class WorkshopDashboardTest extends TestCase
     {
         $layout = file_get_contents(resource_path('views/layouts/workshop.blade.php'));
 
-        $this->assertStringContainsString('--ws-page: #F1F5F9;', $layout);
+        $this->assertStringContainsString('--ws-page: #E9EEF5;', $layout);
         $this->assertStringContainsString('--ws-nav: #172033;', $layout);
         $this->assertStringContainsString('--ws-nav-active: #2A3A57;', $layout);
         $this->assertStringContainsString('--ws-primary: #155DFC;', $layout);

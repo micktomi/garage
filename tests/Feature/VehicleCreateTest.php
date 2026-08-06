@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\Customer;
 use App\Models\User;
 use App\Models\Vehicle;
+use App\Models\VehicleModel;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -56,6 +57,35 @@ class VehicleCreateTest extends TestCase
             ->assertSee($customer->full_name);
     }
 
+    public function test_vehicle_forms_expose_the_shared_dependent_model_catalog(): void
+    {
+        $user = User::factory()->create();
+        $customer = Customer::create(['full_name' => 'Μαρία Ιωάννου']);
+        VehicleModel::create(['make' => 'Toyota', 'model' => 'Corolla']);
+        VehicleModel::create(['make' => 'Toyota', 'model' => 'Yaris']);
+        VehicleModel::create(['make' => 'Honda', 'model' => 'Civic']);
+        $vehicle = Vehicle::create([
+            'customer_id' => $customer->id,
+            'plate_number' => 'ΜΟΝ-1234',
+            'make' => 'Toyota',
+            'model' => 'Custom Conversion',
+        ]);
+
+        $create = $this->actingAs($user)->get(route('workshop.vehicles.create'))->assertOk();
+        $create->assertSee('id="models-list"', false)
+            ->assertSee('id="model" name="model" list="models-list"', false);
+
+        preg_match('/const modelsByMake = (.*?);/', $create->getContent(), $matches);
+        $catalog = json_decode($matches[1] ?? '', true);
+
+        $this->assertSame(['Corolla', 'Yaris'], $catalog['Toyota'] ?? null);
+        $this->assertSame(['Civic'], $catalog['Honda'] ?? null);
+
+        $this->actingAs($user)->get(route('workshop.vehicles.edit', $vehicle))
+            ->assertOk()
+            ->assertSee('value="Custom Conversion"', false);
+    }
+
     public function test_vehicle_can_be_created_with_vin_and_mileage(): void
     {
         $user = User::factory()->create();
@@ -77,6 +107,32 @@ class VehicleCreateTest extends TestCase
         $this->assertEquals('WVWZZZ1JZXW000001', $vehicle->vin);
         $this->assertEquals(85000, $vehicle->mileage);
         $this->assertTrue($vehicle->customer->is($customer));
+    }
+
+    public function test_vehicle_store_and_update_accept_models_outside_the_catalog(): void
+    {
+        $user = User::factory()->create();
+        $customer = Customer::create(['full_name' => 'Γιώργος Παπαδόπουλος']);
+        VehicleModel::create(['make' => 'Toyota', 'model' => 'Yaris']);
+
+        $this->actingAs($user)->post(route('workshop.vehicles.store'), [
+            'customer_id' => $customer->id,
+            'license_plate' => 'ΕΛΕ-1234',
+            'make' => 'Toyota',
+            'model' => 'Custom Conversion',
+        ])->assertRedirect(route('workshop.vehicles.create'));
+
+        $vehicle = Vehicle::where('plate_number', 'ΕΛΕ-1234')->firstOrFail();
+        $this->assertSame('Custom Conversion', $vehicle->model);
+
+        $this->actingAs($user)->put(route('workshop.vehicles.update', $vehicle), [
+            'customer_id' => $customer->id,
+            'license_plate' => 'ΕΛΕ-1234',
+            'make' => 'Toyota',
+            'model' => 'Workshop Edition',
+        ])->assertRedirect(route('workshop.vehicles.edit', $vehicle));
+
+        $this->assertSame('Workshop Edition', $vehicle->fresh()->model);
     }
 
     public function test_vehicle_edit_form_loads_with_existing_data(): void

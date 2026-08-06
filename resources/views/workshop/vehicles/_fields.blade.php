@@ -45,10 +45,11 @@
 
         <div class="woc-field">
             <label for="model" class="woc-label">Μοντέλο</label>
-            <input type="text" id="model" name="model"
+            <input type="text" id="model" name="model" list="models-list" autocomplete="off"
                 class="woc-input {{ $errors->has('model') ? 'is-invalid' : '' }}"
                 value="{{ old('model', $vehicle?->model) }}"
                 placeholder="π.χ. Yaris">
+            <datalist id="models-list"></datalist>
             @error('model') <span class="woc-error">{{ $message }}</span> @enderror
         </div>
 
@@ -89,3 +90,40 @@
 
     </div>
 </div>
+@once
+    @push('scripts')
+        <script>
+            (() => {
+                const makeInput = document.getElementById('make');
+                const modelsList = document.getElementById('models-list');
+                const modelsByMake = @json($modelsByMake);
+
+                if (!makeInput || !modelsList) {
+                    return;
+                }
+
+                const normalizedModelsByMake = Object.entries(modelsByMake).reduce((catalog, [make, models]) => {
+                    catalog[make.trim().toLocaleLowerCase()] = models;
+
+                    return catalog;
+                }, {});
+
+                const updateModels = () => {
+                    const make = makeInput.value.trim().toLocaleLowerCase();
+                    const models = normalizedModelsByMake[make] ?? [];
+
+                    modelsList.replaceChildren(...models.map((model) => {
+                        const option = document.createElement('option');
+                        option.value = model;
+
+                        return option;
+                    }));
+                };
+
+                makeInput.addEventListener('input', updateModels);
+                makeInput.addEventListener('change', updateModels);
+                updateModels();
+            })();
+        </script>
+    @endpush
+@endonce

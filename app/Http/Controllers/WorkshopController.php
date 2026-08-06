@@ -102,16 +102,37 @@ class WorkshopController extends Controller
     }
 
     /**
-     * Distinct vehicle makes — same source Filament's VehicleResource uses
-     * for its searchable brand select, so both UIs suggest the same brands.
+     * Curated vehicle models grouped by make for the workshop vehicle forms.
+     * The same vehicle_models source powers Filament's dependent model datalist.
+     *
+     * @return array<string, array<int, string>>
      */
-    private function vehicleMakes()
+    private function vehicleModelsByMake(): array
     {
         return VehicleModel::query()
+            ->select(['make', 'model'])
             ->whereNotNull('make')
+            ->where('make', '!=', '')
+            ->whereNotNull('model')
+            ->where('model', '!=', '')
             ->distinct()
             ->orderBy('make')
-            ->pluck('make');
+            ->orderBy('model')
+            ->get()
+            ->map(fn (VehicleModel $vehicleModel): array => [
+                'make' => trim($vehicleModel->make),
+                'model' => trim($vehicleModel->model),
+            ])
+            ->filter(fn (array $vehicleModel): bool => $vehicleModel['make'] !== '' && $vehicleModel['model'] !== '')
+            ->groupBy('make')
+            ->sortKeys(SORT_NATURAL | SORT_FLAG_CASE)
+            ->map(fn ($models): array => $models
+                ->pluck('model')
+                ->unique(fn (string $model): string => Str::lower($model))
+                ->sort(SORT_NATURAL | SORT_FLAG_CASE)
+                ->values()
+                ->all())
+            ->all();
     }
 
     public function workOrdersStore(Request $request, CreateWorkOrderAction $createWorkOrder)
@@ -263,9 +284,10 @@ class WorkshopController extends Controller
     public function vehiclesCreate()
     {
         $customers = Customer::orderBy('full_name')->get(['id', 'full_name']);
-        $makes = $this->vehicleMakes();
+        $modelsByMake = $this->vehicleModelsByMake();
+        $makes = array_keys($modelsByMake);
 
-        return view('workshop.vehicles.create', compact('customers', 'makes'));
+        return view('workshop.vehicles.create', compact('customers', 'makes', 'modelsByMake'));
     }
 
     private function vehicleValidationRules(?Vehicle $vehicle = null): array
@@ -331,9 +353,10 @@ class WorkshopController extends Controller
     public function vehiclesEdit(Vehicle $vehicle)
     {
         $customers = Customer::orderBy('full_name')->get(['id', 'full_name']);
-        $makes = $this->vehicleMakes();
+        $modelsByMake = $this->vehicleModelsByMake();
+        $makes = array_keys($modelsByMake);
 
-        return view('workshop.vehicles.edit', compact('vehicle', 'customers', 'makes'));
+        return view('workshop.vehicles.edit', compact('vehicle', 'customers', 'makes', 'modelsByMake'));
     }
 
     public function vehiclesUpdate(Request $request, Vehicle $vehicle)

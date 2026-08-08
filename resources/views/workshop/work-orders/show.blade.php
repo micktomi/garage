@@ -14,88 +14,87 @@
         min-width: 0;
     }
 
-    .wos-layout {
+    /* ── Header ──────────────────────────────────────────────── */
+    .wos-head {
+        margin-bottom: 6px;
         display: flex;
-        flex-direction: column;
-        gap: 16px;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 14px 18px;
     }
 
-    .wos-overview { order: 1; }
-    .wos-customer { order: 2; }
-    .wos-status { order: 3; }
-    .wos-service { order: 4; }
-    .wos-parts { order: 5; }
-    .wos-costs { order: 6; }
-
-    .wos-summary-grid {
-        display: grid;
-        grid-template-columns: minmax(0, 1fr);
-        border-bottom: 1px solid var(--ws-border);
-    }
-
-    .wos-summary-item {
-        min-width: 0;
-        padding: 15px 18px;
-        border-bottom: 1px solid var(--ws-border);
-    }
-
-    .wos-summary-item:last-child {
-        border-bottom: 0;
-    }
-
-    .wos-value {
-        display: block;
+    .wos-title {
         color: var(--ws-text);
-        font-family: var(--ws-font-serif);
-        font-size: 14px;
+        font-family: var(--ws-font-display);
+        font-size: 34px;
         font-weight: 700;
-        line-height: 20px;
+        line-height: 1;
+    }
+
+    .wos-actions {
+        margin-left: auto;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 9px;
+    }
+
+    .wos-sub {
+        margin: 6px 0 22px;
+        color: var(--ws-text-muted);
+        font-size: 14px;
+        line-height: 1.5;
         overflow-wrap: anywhere;
     }
 
-    .wos-order-number {
-        color: var(--ws-primary);
-        font-family: var(--ws-font-sans);
+    /* ── Layout ──────────────────────────────────────────────────
+       Two independent stacks, like the donor, so a tall side panel
+       never pushes the parts table down the page. */
+    .wos-layout {
+        display: flex;
+        flex-direction: column;
+        gap: 22px;
+    }
+
+    .wos-stack {
+        min-width: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 22px;
     }
 
     .wos-copy-list {
-        padding: 18px;
+        padding: 18px 20px 20px;
         display: grid;
         grid-template-columns: minmax(0, 1fr);
-        gap: 16px;
+        gap: 14px;
     }
 
     .wos-copy {
         margin: 0;
         color: var(--ws-text);
-        font-family: var(--ws-font-serif);
+        font-family: var(--ws-font-sans);
         font-size: 14px;
-        line-height: 1.65;
+        line-height: 1.6;
         white-space: pre-line;
         overflow-wrap: anywhere;
     }
 
     .wos-copy--empty {
-        color: var(--ws-text-muted);
+        color: var(--ws-text-faint);
     }
 
     .wos-info-link {
-        color: var(--ws-primary);
+        color: var(--ws-text);
+        border-bottom: 1px solid var(--ws-border-hover);
     }
 
     .wos-info-link:hover {
-        text-decoration: underline;
-        text-underline-offset: 3px;
+        border-bottom-color: var(--ws-text);
     }
 
-    .wos-panel .ws-info-row .ws-plate {
-        max-width: 100%;
-        overflow: hidden;
-        text-overflow: ellipsis;
-    }
-
+    /* ── Status switcher ─────────────────────────────────────── */
     .wos-status-body {
-        padding: 16px 18px 18px;
+        padding: 14px 20px 18px;
         display: grid;
         grid-template-columns: minmax(0, 1fr);
         gap: 8px;
@@ -114,12 +113,12 @@
         justify-content: flex-start;
         gap: 9px;
         border: 1px solid var(--ws-border);
-        border-radius: 10px;
+        border-radius: 8px;
         background: var(--ws-card);
         color: var(--ws-text-muted);
         font-family: var(--ws-font-sans);
-        font-size: 13px;
-        font-weight: 600;
+        font-size: 13.5px;
+        font-weight: 500;
         text-align: left;
         cursor: pointer;
         transition: border-color 140ms ease, background-color 140ms ease, color 140ms ease;
@@ -132,7 +131,7 @@
         flex: 0 0 7px;
         border-radius: 999px;
         background: currentColor;
-        opacity: .55;
+        opacity: .5;
     }
 
     .wos-status-btn:hover:not(.is-current) {
@@ -142,10 +141,17 @@
     }
 
     .wos-status-btn.is-current {
-        border-color: var(--ws-primary);
+        border-color: var(--ws-status-progress-fg);
         background: var(--ws-status-progress-bg);
         color: var(--ws-status-progress-fg);
+        font-weight: 600;
         cursor: default;
+    }
+
+    .wos-status-btn--new.is-current {
+        border-color: var(--ws-status-new-fg);
+        background: var(--ws-status-new-bg);
+        color: var(--ws-status-new-fg);
     }
 
     .wos-status-btn--awaiting_parts.is-current {
@@ -171,6 +177,7 @@
         opacity: 1;
     }
 
+    /* ── Parts ───────────────────────────────────────────────── */
     .wos-parts-table,
     .wos-parts-table tbody,
     .wos-parts-table tr,
@@ -198,7 +205,7 @@
     .wos-parts-table tr {
         overflow: hidden;
         border: 1px solid var(--ws-border);
-        border-radius: 12px;
+        border-radius: 10px;
         background: var(--ws-card);
     }
 
@@ -210,7 +217,7 @@
         gap: 14px;
         border-bottom: 1px solid var(--ws-border);
         color: var(--ws-text);
-        font-size: 12px;
+        font-size: 13px;
         line-height: 18px;
         text-align: right;
     }
@@ -227,10 +234,10 @@
 
     .wos-part-cell-label {
         flex: 0 0 auto;
-        color: var(--ws-text-muted);
-        font-size: 10px;
-        font-weight: 700;
-        letter-spacing: .06em;
+        color: var(--ws-text-faint);
+        font-size: 10.5px;
+        font-weight: 500;
+        letter-spacing: .13em;
         text-transform: uppercase;
     }
 
@@ -252,30 +259,31 @@
     }
 
     .wos-part-name {
-        font-family: var(--ws-font-serif);
-        font-size: 14px;
-        font-weight: 700;
+        font-family: var(--ws-font-sans);
+        font-size: 14.5px;
+        font-weight: 500;
         line-height: 20px;
     }
 
     .wos-part-description,
     .wos-part-note {
-        margin-top: 3px;
-        color: var(--ws-text-muted);
-        font-size: 11px;
-        line-height: 16px;
+        margin-top: 2px;
+        color: var(--ws-text-faint);
+        font-size: 12.5px;
+        line-height: 17px;
     }
 
     .wos-part-source {
         display: inline-flex;
         align-items: center;
-        border-radius: 8px;
-        padding: 3px 8px;
-        background: var(--ws-sunken);
-        color: var(--ws-text-muted);
-        font-size: 10px;
-        font-weight: 700;
-        line-height: 16px;
+        border-radius: 5px;
+        padding: 4px 8px;
+        background: var(--ws-status-completed-bg);
+        color: var(--ws-status-completed-fg);
+        font-size: 10.5px;
+        font-weight: 600;
+        line-height: 14px;
+        letter-spacing: .06em;
         text-align: left;
     }
 
@@ -285,8 +293,8 @@
     }
 
     .wos-part-source--customer_supplied {
-        background: var(--ws-status-ready-bg);
-        color: var(--ws-status-ready-fg);
+        background: var(--ws-status-new-bg);
+        color: var(--ws-status-new-fg);
     }
 
     .wos-part-source--purchased_for_job {
@@ -295,74 +303,56 @@
     }
 
     .wos-parts-empty {
-        min-height: 120px;
-        padding: 24px 18px;
+        min-height: 110px;
+        padding: 24px 20px;
         display: flex;
         align-items: center;
         justify-content: center;
-        color: var(--ws-text-muted);
+        color: var(--ws-text-faint);
         font-family: var(--ws-font-sans);
-        font-size: 13px;
+        font-size: 13.5px;
         text-align: center;
     }
 
-    .wos-cost-list {
-        padding: 2px 18px;
+    /* ── Totals ──────────────────────────────────────────────── */
+    .wos-totals {
+        padding: 14px 20px 18px;
+        border-top: 1px solid var(--ws-border);
+        background: var(--ws-sunken);
     }
 
-    .wos-cost-row {
-        min-height: 48px;
+    .wos-tot {
         display: flex;
-        align-items: center;
+        align-items: baseline;
         justify-content: space-between;
         gap: 16px;
-        border-bottom: 1px solid var(--ws-border);
+        padding: 5px 0;
+        color: var(--ws-text-muted);
         font-size: 14px;
     }
 
-    .wos-cost-row:last-child {
-        border-bottom: 0;
-    }
-
-    .wos-cost-label {
-        color: var(--ws-text-muted);
-    }
-
-    .wos-cost-value {
-        font-family: var(--ws-font-sans);
-        font-weight: 700;
+    .wos-tot-value {
+        font-family: var(--ws-font-mono);
         font-variant-numeric: tabular-nums;
         white-space: nowrap;
     }
 
-    .wos-cost-row--total {
-        min-height: 58px;
-    }
-
-    .wos-cost-row--total .wos-cost-label {
+    .wos-tot--grand {
+        margin-top: 8px;
+        padding-top: 12px;
+        border-top: 1px solid var(--ws-border-hover);
         color: var(--ws-text);
+        font-family: var(--ws-font-display);
+        font-size: 20px;
         font-weight: 700;
     }
 
-    .wos-cost-row--total .wos-cost-value {
-        color: var(--ws-primary);
-        font-size: 18px;
+    .wos-tot--grand .wos-tot-value {
+        font-size: 20px;
+        font-weight: 700;
     }
 
     @media (min-width: 600px) {
-        .wos-summary-grid {
-            grid-template-columns: repeat(3, minmax(0, 1fr));
-        }
-
-        .wos-summary-item {
-            border-right: 1px solid var(--ws-border);
-            border-bottom: 0;
-        }
-
-        .wos-summary-item:last-child {
-            border-right: 0;
-        }
-
         .wos-copy-list {
             grid-template-columns: repeat(2, minmax(0, 1fr));
         }
@@ -396,31 +386,31 @@
 
         .wos-parts-table th,
         .wos-parts-table td {
-            padding: 12px;
+            padding: 12px 20px;
             border-bottom: 1px solid var(--ws-border);
             text-align: left;
             vertical-align: top;
         }
 
         .wos-parts-table th {
-            background: var(--ws-page);
-            color: var(--ws-text-muted);
-            font-size: 10px;
-            font-weight: 700;
+            background: var(--ws-card);
+            color: var(--ws-text-faint);
+            font-size: 10.5px;
+            font-weight: 500;
             line-height: 14px;
-            letter-spacing: .07em;
+            letter-spacing: .13em;
             text-transform: uppercase;
         }
 
         .wos-parts-table td {
             display: table-cell;
             width: auto;
-            font-size: 12px;
-            line-height: 18px;
+            font-size: 14px;
+            line-height: 20px;
         }
 
         .wos-parts-table td:first-child {
-            padding: 12px;
+            padding: 12px 20px;
             display: table-cell;
         }
 
@@ -434,43 +424,54 @@
 
         .wos-parts-table th:nth-child(n + 3),
         .wos-parts-table td:nth-child(n + 3) {
+            font-family: var(--ws-font-mono);
+            font-variant-numeric: tabular-nums;
             text-align: right;
+            white-space: nowrap;
+        }
+
+        .wos-parts-table th:nth-child(n + 3) {
+            font-family: var(--ws-font-sans);
         }
 
         .wos-part-cell-label {
             display: none !important;
         }
 
-        .wos-parts-table col:nth-child(1) { width: 28%; }
-        .wos-parts-table col:nth-child(2) { width: 22%; }
-        .wos-parts-table col:nth-child(3) { width: 9%; }
-        .wos-parts-table col:nth-child(4) { width: 13%; }
-        .wos-parts-table col:nth-child(5) { width: 13%; }
-        .wos-parts-table col:nth-child(6) { width: 15%; }
+        .wos-parts-table col:nth-child(1) { width: 30%; }
+        .wos-parts-table col:nth-child(2) { width: 20%; }
+        .wos-parts-table col:nth-child(3) { width: 8%; }
+        .wos-parts-table col:nth-child(4) { width: 14%; }
+        .wos-parts-table col:nth-child(5) { width: 14%; }
+        .wos-parts-table col:nth-child(6) { width: 14%; }
     }
 
-    @media (min-width: 1280px) {
+    @media (min-width: 1180px) {
         .wos-layout {
             display: grid;
-            grid-template-columns: minmax(0, 1fr) 336px;
-            grid-template-areas:
-                "overview customer"
-                "parts status"
-                "parts service"
-                "parts costs";
+            grid-template-columns: minmax(0, 1.55fr) minmax(340px, .85fr);
             align-items: start;
-            gap: 18px;
+            gap: 22px;
+        }
+    }
+
+    @media (max-width: 767px) {
+        .wos-title {
+            font-size: 26px;
         }
 
-        .wos-overview { grid-area: overview; }
-        .wos-customer { grid-area: customer; }
-        .wos-status { grid-area: status; }
-        .wos-service { grid-area: service; }
-        .wos-parts { grid-area: parts; }
-        .wos-costs { grid-area: costs; }
+        .wos-actions {
+            margin-left: 0;
+            width: 100%;
+        }
+
+        .wos-actions .ws-secondary-action {
+            flex: 1;
+        }
     }
 </style>
 @endpush
+
 
 @section('content')
     <div class="wos-page">
@@ -490,247 +491,241 @@
             Όλες οι εντολές
         </a>
 
-        <header class="ws-page-hero">
-            <div class="ws-page-hero-copy">
-                <p class="ws-page-eyebrow">Εντολή #{{ str_pad($workOrder->id, 4, '0', STR_PAD_LEFT) }}</p>
-                <h1 class="ws-page-display-title">{{ $workOrder->customer?->full_name ?? 'Χωρίς πελάτη' }}</h1>
-                <p class="ws-page-subtitle">
-                    {{ trim(($workOrder->vehicle?->make ?? '') . ' ' . ($workOrder->vehicle?->model ?? '')) ?: 'Όχημα χωρίς στοιχεία' }}
-                    @if($workOrder->vehicle?->plate_number)
-                        · {{ $workOrder->vehicle->plate_number }}
-                    @endif
-                </p>
-            </div>
+        <header class="wos-head">
+            @if($workOrder->vehicle?->plate_number)
+                <x-workshop.plate :value="$workOrder->vehicle->plate_number" size="lg" />
+            @endif
 
-            <div class="ws-page-actions">
-                <x-workshop.status-badge :status="$workOrder->status" />
+            <h1 class="wos-title">Εντολή #{{ str_pad($workOrder->id, 4, '0', STR_PAD_LEFT) }}</h1>
+
+            <x-workshop.status-badge :status="$workOrder->status" />
+
+            <div class="wos-actions">
                 <a href="{{ route('work-orders.print', $workOrder) }}" target="_blank" rel="noopener" class="ws-secondary-action">
                     <svg aria-hidden="true" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M6.72 13.829c-.24.03-.48.062-.72.096m.72-.096a42.415 42.415 0 0 1 10.56 0m-10.56 0L6.34 18m10.94-4.171c.24.03.48.062.72.096m-.72-.096L17.66 18m0 0 .229 2.523a1.125 1.125 0 0 1-1.12 1.227H7.231c-.662 0-1.18-.568-1.12-1.227L6.34 18m11.318 0h1.091A2.25 2.25 0 0 0 21 15.75V9.456c0-1.081-.768-2.015-1.837-2.175a48.055 48.055 0 0 0-1.913-.247M6.34 18H5.25A2.25 2.25 0 0 1 3 15.75V9.456c0-1.081.768-2.015 1.837-2.175a48.041 48.041 0 0 1 1.913-.247m10.5 0a48.536 48.536 0 0 0-10.5 0m10.5 0V3.375c0-.621-.504-1.125-1.125-1.125h-8.25c-.621 0-1.125.504-1.125 1.125v3.659M18 10.5h.008v.008H18V10.5Zm-3 0h.008v.008H15V10.5Z"/>
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M7 9V4h10v5M7 18H5a2 2 0 0 1-2-2v-4a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v4a2 2 0 0 1-2 2h-2M7 15h10v6H7z"/>
                     </svg>
                     Εκτύπωση
                 </a>
             </div>
         </header>
 
+        <p class="wos-sub">
+            {{ $workOrder->customer?->full_name ?? 'Χωρίς πελάτη' }}
+            · {{ trim(($workOrder->vehicle?->make ?? '') . ' ' . ($workOrder->vehicle?->model ?? '')) ?: 'Όχημα χωρίς στοιχεία' }}
+            @if($workOrder->vehicle?->year)
+                · {{ $workOrder->vehicle->year }}
+            @endif
+            @if(filled($workOrder->current_mileage))
+                · {{ number_format($workOrder->current_mileage, 0, ',', '.') }} χλμ
+            @endif
+            · Άνοιγμα {{ $workOrder->created_at?->translatedFormat('d/m/Y H:i') ?? '—' }}
+        </p>
+
         <div class="wos-layout">
-            <section class="ws-panel wos-panel wos-overview" aria-labelledby="wos-overview-title">
-                <div class="ws-panel-head">
-                    <h2 id="wos-overview-title" class="ws-panel-title">Στοιχεία εντολής</h2>
-                </div>
+            <div class="wos-stack">
+                <section class="ws-panel wos-panel wos-overview" aria-labelledby="wos-overview-title">
+                    <div class="ws-panel-head">
+                        <h2 id="wos-overview-title" class="ws-panel-title">Εργασία</h2>
+                    </div>
 
-                <div class="wos-summary-grid">
-                    <div class="wos-summary-item">
-                        <span class="ws-field-label">Αριθμός</span>
-                        <span class="wos-value wos-order-number">#{{ str_pad($workOrder->id, 4, '0', STR_PAD_LEFT) }}</span>
+                    <div class="wos-copy-list">
+                        <div class="ws-sunken-card wos-copy-block">
+                            <span class="ws-field-label">Πρόβλημα</span>
+                            <p class="wos-copy">{{ $workOrder->problem_description ?: 'Δεν έχει καταχωρηθεί περιγραφή προβλήματος.' }}</p>
+                        </div>
+                        <div class="ws-sunken-card wos-copy-block">
+                            <span class="ws-field-label">Διάγνωση</span>
+                            <p class="wos-copy @if(!$workOrder->diagnosis) wos-copy--empty @endif">{{ $workOrder->diagnosis ?: 'Δεν έχει καταχωρηθεί διάγνωση.' }}</p>
+                        </div>
+                        <div class="ws-sunken-card wos-copy-block">
+                            <span class="ws-field-label">Εργασίες που έγιναν</span>
+                            <p class="wos-copy @if(!$workOrder->work_performed) wos-copy--empty @endif">{{ $workOrder->work_performed ?: 'Δεν έχουν καταχωρηθεί εργασίες.' }}</p>
+                        </div>
                     </div>
-                    <div class="wos-summary-item">
-                        <span class="ws-field-label">Κατάσταση</span>
-                        <span class="wos-value"><x-workshop.status-badge :status="$workOrder->status" /></span>
-                    </div>
-                    <div class="wos-summary-item">
-                        <span class="ws-field-label">Άνοιγμα</span>
-                        <time class="wos-value" @if($workOrder->created_at) datetime="{{ $workOrder->created_at->toIso8601String() }}" @endif>
-                            {{ $workOrder->created_at?->translatedFormat('d F Y, H:i') ?? '—' }}
-                        </time>
-                    </div>
-                </div>
+                </section>
 
-                <div class="wos-copy-list">
-                    <div class="ws-sunken-card wos-copy-block">
-                        <span class="ws-field-label">Πρόβλημα</span>
-                        <p class="wos-copy">{{ $workOrder->problem_description ?: 'Δεν έχει καταχωρηθεί περιγραφή προβλήματος.' }}</p>
+                <section class="ws-panel wos-panel wos-parts" aria-labelledby="wos-parts-title">
+                    <div class="ws-panel-head">
+                        <h2 id="wos-parts-title" class="ws-panel-title">Ανταλλακτικά</h2>
+                        <span class="ws-panel-meta">
+                            {{ $workOrder->workOrderParts->count() }} {{ $workOrder->workOrderParts->count() === 1 ? 'γραμμή' : 'γραμμές' }}
+                        </span>
                     </div>
-                    <div class="ws-sunken-card wos-copy-block">
-                        <span class="ws-field-label">Διάγνωση</span>
-                        <p class="wos-copy @if(!$workOrder->diagnosis) wos-copy--empty @endif">{{ $workOrder->diagnosis ?: 'Δεν έχει καταχωρηθεί διάγνωση.' }}</p>
-                    </div>
-                    <div class="ws-sunken-card wos-copy-block">
-                        <span class="ws-field-label">Εργασίες που έγιναν</span>
-                        <p class="wos-copy @if(!$workOrder->work_performed) wos-copy--empty @endif">{{ $workOrder->work_performed ?: 'Δεν έχουν καταχωρηθεί εργασίες.' }}</p>
-                    </div>
-                </div>
-            </section>
 
-            <section class="ws-panel wos-panel wos-customer" aria-labelledby="wos-customer-title">
-                <div class="ws-panel-head">
-                    <h2 id="wos-customer-title" class="ws-panel-title">Πελάτης &amp; όχημα</h2>
-                </div>
-                <dl class="ws-info-list">
-                    <div class="ws-info-row">
-                        <dt>Πελάτης</dt>
-                        <dd>{{ $workOrder->customer?->full_name ?? '—' }}</dd>
-                    </div>
-                    <div class="ws-info-row">
-                        <dt>Τηλέφωνο</dt>
-                        <dd>
-                            @if($workOrder->customer?->phone)
-                                <a href="tel:{{ $workOrder->customer->phone }}" class="wos-info-link">{{ $workOrder->customer->phone }}</a>
-                            @else
-                                —
-                            @endif
-                        </dd>
-                    </div>
-                    <div class="ws-info-row">
-                        <dt>Όχημα</dt>
-                        <dd>{{ trim(($workOrder->vehicle?->make ?? '') . ' ' . ($workOrder->vehicle?->model ?? '')) ?: '—' }}</dd>
-                    </div>
-                    <div class="ws-info-row">
-                        <dt>Πινακίδα</dt>
-                        <dd>
-                            @if($workOrder->vehicle?->plate_number)
-                                <x-workshop.plate :value="$workOrder->vehicle->plate_number" />
-                            @else
-                                —
-                            @endif
-                        </dd>
-                    </div>
-                </dl>
-            </section>
-
-            <section class="ws-panel wos-panel wos-status" aria-labelledby="wos-status-title">
-                <div class="ws-panel-head">
-                    <h2 id="wos-status-title" class="ws-panel-title">Αλλαγή κατάστασης</h2>
-                </div>
-                <div class="wos-status-body">
-                    @foreach($statusOptions as $status)
-                        @if($status === $workOrder->status)
-                            <span
-                                class="wos-status-btn wos-status-btn--{{ $status->value }} is-current"
-                                aria-current="true"
-                                aria-label="Τρέχουσα κατάσταση: {{ $status->label() }}"
-                            >
-                                {{ $status->label() }}
-                            </span>
-                        @else
-                            <form method="POST" action="{{ route('workshop.work-orders.status', $workOrder) }}" class="wos-status-form">
-                                @csrf
-                                @method('PATCH')
-                                <input type="hidden" name="status" value="{{ $status->value }}">
-                                <button type="submit" class="wos-status-btn wos-status-btn--{{ $status->value }}">
-                                    {{ $status->label() }}
-                                </button>
-                            </form>
-                        @endif
-                    @endforeach
-                </div>
-            </section>
-
-            <section class="ws-panel wos-panel wos-service" aria-labelledby="wos-service-title">
-                <div class="ws-panel-head">
-                    <h2 id="wos-service-title" class="ws-panel-title">Παρακολούθηση service</h2>
-                </div>
-                <dl class="ws-info-list">
-                    <div class="ws-info-row">
-                        <dt>Τρέχοντα χλμ.</dt>
-                        <dd>{{ filled($workOrder->current_mileage) ? number_format($workOrder->current_mileage, 0, ',', '.') . ' km' : '—' }}</dd>
-                    </div>
-                    <div class="ws-info-row">
-                        <dt>Επόμενο service</dt>
-                        <dd>{{ $workOrder->next_service_date?->translatedFormat('d F Y') ?? '—' }}</dd>
-                    </div>
-                    <div class="ws-info-row">
-                        <dt>Service στα χλμ.</dt>
-                        <dd>{{ filled($workOrder->next_service_mileage) ? number_format($workOrder->next_service_mileage, 0, ',', '.') . ' km' : '—' }}</dd>
-                    </div>
-                </dl>
-            </section>
-
-            <section class="ws-panel wos-panel wos-parts" aria-labelledby="wos-parts-title">
-                <div class="ws-panel-head">
-                    <h2 id="wos-parts-title" class="ws-panel-title">Ανταλλακτικά</h2>
-                    <span class="ws-panel-meta">
-                        {{ $workOrder->workOrderParts->count() }} {{ $workOrder->workOrderParts->count() === 1 ? 'γραμμή' : 'γραμμές' }}
-                    </span>
-                </div>
-
-                @if($workOrder->workOrderParts->isEmpty())
-                    <div class="wos-parts-empty">Δεν έχουν καταχωρηθεί ανταλλακτικά.</div>
-                @else
-                    <table class="wos-parts-table">
-                        <colgroup>
-                            <col><col><col><col><col><col>
-                        </colgroup>
-                        <thead>
-                            <tr>
-                                <th scope="col">Ανταλλακτικό</th>
-                                <th scope="col">Πηγή</th>
-                                <th scope="col">Ποσ.</th>
-                                <th scope="col">Κόστος</th>
-                                <th scope="col">Τιμή</th>
-                                <th scope="col">Σύνολο</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach($workOrder->workOrderParts as $wop)
-                                @php
-                                    $lineTotal = $wop->line_total ?? ($wop->quantity * $wop->unit_price);
-                                    $quantity = rtrim(rtrim(number_format((float) $wop->quantity, 1, ',', '.'), '0'), ',');
-                                @endphp
+                    @if($workOrder->workOrderParts->isEmpty())
+                        <div class="wos-parts-empty">Δεν έχουν καταχωρηθεί ανταλλακτικά.</div>
+                    @else
+                        <table class="wos-parts-table">
+                            <colgroup>
+                                <col><col><col><col><col><col>
+                            </colgroup>
+                            <thead>
                                 <tr>
-                                    <td>
-                                        <span class="wos-part-cell-label">Ανταλλακτικό</span>
-                                        <span class="wos-part-cell-content">
-                                            <span class="wos-part-name">{{ $wop->displayName() }}</span>
-                                            @if($wop->description && $wop->description !== $wop->displayName())
-                                                <span class="wos-part-description">Περιγραφή: {{ $wop->description }}</span>
-                                            @endif
-                                            @if($wop->part?->code)
-                                                <span class="wos-part-description">Κωδικός: {{ $wop->part->code }}</span>
-                                            @endif
-                                            <span class="wos-part-note">Σημείωση: {{ $wop->note ?: '—' }}</span>
-                                        </span>
-                                    </td>
-                                    <td>
-                                        <span class="wos-part-cell-label">Πηγή</span>
-                                        <span class="wos-part-cell-content">
-                                            <span class="wos-part-source wos-part-source--{{ $wop->source }}">
-                                                <x-workshop.part-source-label :source="$wop->source" />
-                                            </span>
-                                        </span>
-                                    </td>
-                                    <td>
-                                        <span class="wos-part-cell-label">Ποσότητα</span>
-                                        <span class="wos-part-cell-content">{{ $quantity }}</span>
-                                    </td>
-                                    <td>
-                                        <span class="wos-part-cell-label">Κόστος</span>
-                                        <span class="wos-part-cell-content">{{ is_null($wop->unit_cost) ? '—' : number_format($wop->unit_cost, 2, ',', '.') . ' €' }}</span>
-                                    </td>
-                                    <td>
-                                        <span class="wos-part-cell-label">Τιμή</span>
-                                        <span class="wos-part-cell-content">{{ number_format($wop->unit_price ?? 0, 2, ',', '.') }} €</span>
-                                    </td>
-                                    <td>
-                                        <span class="wos-part-cell-label">Σύνολο</span>
-                                        <span class="wos-part-cell-content">{{ number_format($lineTotal, 2, ',', '.') }} €</span>
-                                    </td>
+                                    <th scope="col">Ανταλλακτικό</th>
+                                    <th scope="col">Πηγή</th>
+                                    <th scope="col">Ποσ.</th>
+                                    <th scope="col">Κόστος</th>
+                                    <th scope="col">Τιμή</th>
+                                    <th scope="col">Σύνολο</th>
                                 </tr>
-                            @endforeach
-                        </tbody>
-                    </table>
-                @endif
-            </section>
+                            </thead>
+                            <tbody>
+                                @foreach($workOrder->workOrderParts as $wop)
+                                    @php
+                                        $lineTotal = $wop->line_total ?? ($wop->quantity * $wop->unit_price);
+                                        $quantity = rtrim(rtrim(number_format((float) $wop->quantity, 1, ',', '.'), '0'), ',');
+                                    @endphp
+                                    <tr>
+                                        <td>
+                                            <span class="wos-part-cell-label">Ανταλλακτικό</span>
+                                            <span class="wos-part-cell-content">
+                                                <span class="wos-part-name">{{ $wop->displayName() }}</span>
+                                                @if($wop->description && $wop->description !== $wop->displayName())
+                                                    <span class="wos-part-description">Περιγραφή: {{ $wop->description }}</span>
+                                                @endif
+                                                @if($wop->part?->code)
+                                                    <span class="wos-part-description">Κωδικός: {{ $wop->part->code }}</span>
+                                                @endif
+                                                <span class="wos-part-note">Σημείωση: {{ $wop->note ?: '—' }}</span>
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <span class="wos-part-cell-label">Πηγή</span>
+                                            <span class="wos-part-cell-content">
+                                                <span class="wos-part-source wos-part-source--{{ $wop->source }}">
+                                                    <x-workshop.part-source-label :source="$wop->source" />
+                                                </span>
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <span class="wos-part-cell-label">Ποσότητα</span>
+                                            <span class="wos-part-cell-content">{{ $quantity }}</span>
+                                        </td>
+                                        <td>
+                                            <span class="wos-part-cell-label">Κόστος</span>
+                                            <span class="wos-part-cell-content">{{ is_null($wop->unit_cost) ? '—' : number_format($wop->unit_cost, 2, ',', '.') . ' €' }}</span>
+                                        </td>
+                                        <td>
+                                            <span class="wos-part-cell-label">Τιμή</span>
+                                            <span class="wos-part-cell-content">{{ number_format($wop->unit_price ?? 0, 2, ',', '.') }} €</span>
+                                        </td>
+                                        <td>
+                                            <span class="wos-part-cell-label">Σύνολο</span>
+                                            <span class="wos-part-cell-content">{{ number_format($lineTotal, 2, ',', '.') }} €</span>
+                                        </td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    @endif
 
-            <section class="ws-panel wos-panel wos-costs" aria-labelledby="wos-costs-title">
-                <div class="ws-panel-head">
-                    <h2 id="wos-costs-title" class="ws-panel-title">Κόστος</h2>
-                </div>
-                <div class="wos-cost-list">
-                    <div class="wos-cost-row">
-                        <span class="wos-cost-label">Εργασία</span>
-                        <span class="wos-cost-value">{{ number_format($workOrder->labor_cost ?? 0, 2, ',', '.') }} €</span>
+                    <div class="wos-totals">
+                        <div class="wos-tot">
+                            <span>Εργασία</span>
+                            <span class="wos-tot-value">{{ number_format($workOrder->labor_cost ?? 0, 2, ',', '.') }} €</span>
+                        </div>
+                        <div class="wos-tot">
+                            <span>Ανταλλακτικά</span>
+                            <span class="wos-tot-value">{{ number_format($workOrder->parts_cost ?? 0, 2, ',', '.') }} €</span>
+                        </div>
+                        <div class="wos-tot wos-tot--grand">
+                            <span>Σύνολο</span>
+                            <span class="wos-tot-value">{{ number_format($workOrder->total_cost ?? 0, 2, ',', '.') }} €</span>
+                        </div>
                     </div>
-                    <div class="wos-cost-row">
-                        <span class="wos-cost-label">Ανταλλακτικά</span>
-                        <span class="wos-cost-value">{{ number_format($workOrder->parts_cost ?? 0, 2, ',', '.') }} €</span>
+                </section>
+            </div>
+
+            <div class="wos-stack">
+                <section class="ws-panel wos-panel wos-customer" aria-labelledby="wos-customer-title">
+                    <div class="ws-panel-head">
+                        <h2 id="wos-customer-title" class="ws-panel-title">Πελάτης &amp; όχημα</h2>
                     </div>
-                    <div class="wos-cost-row wos-cost-row--total">
-                        <span class="wos-cost-label">Σύνολο</span>
-                        <span class="wos-cost-value">{{ number_format($workOrder->total_cost ?? 0, 2, ',', '.') }} €</span>
+                    <dl class="ws-info-list">
+                        <div class="ws-info-row">
+                            <dt>Πελάτης</dt>
+                            <dd>{{ $workOrder->customer?->full_name ?? '—' }}</dd>
+                        </div>
+                        <div class="ws-info-row">
+                            <dt>Τηλέφωνο</dt>
+                            <dd>
+                                @if($workOrder->customer?->phone)
+                                    <a href="tel:{{ $workOrder->customer->phone }}" class="wos-info-link">{{ $workOrder->customer->phone }}</a>
+                                @else
+                                    —
+                                @endif
+                            </dd>
+                        </div>
+                        <div class="ws-info-row">
+                            <dt>Όχημα</dt>
+                            <dd>{{ trim(($workOrder->vehicle?->make ?? '') . ' ' . ($workOrder->vehicle?->model ?? '')) ?: '—' }}</dd>
+                        </div>
+                        <div class="ws-info-row">
+                            <dt>Πινακίδα</dt>
+                            <dd>
+                                @if($workOrder->vehicle?->plate_number)
+                                    <x-workshop.plate :value="$workOrder->vehicle->plate_number" size="sm" />
+                                @else
+                                    —
+                                @endif
+                            </dd>
+                        </div>
+                        <div class="ws-info-row">
+                            <dt>ΚΤΕΟ</dt>
+                            <dd>{{ $workOrder->vehicle?->kteo_expires_at?->format('d/m/Y') ?? '—' }}</dd>
+                        </div>
+                    </dl>
+                </section>
+
+                <section class="ws-panel wos-panel wos-status" aria-labelledby="wos-status-title">
+                    <div class="ws-panel-head">
+                        <h2 id="wos-status-title" class="ws-panel-title">Αλλαγή κατάστασης</h2>
                     </div>
-                </div>
-            </section>
+                    <div class="wos-status-body">
+                        @foreach($statusOptions as $status)
+                            @if($status === $workOrder->status)
+                                <span
+                                    class="wos-status-btn wos-status-btn--{{ $status->value }} is-current"
+                                    aria-current="true"
+                                    aria-label="Τρέχουσα κατάσταση: {{ $status->label() }}"
+                                >
+                                    {{ $status->label() }}
+                                </span>
+                            @else
+                                <form method="POST" action="{{ route('workshop.work-orders.status', $workOrder) }}" class="wos-status-form">
+                                    @csrf
+                                    @method('PATCH')
+                                    <input type="hidden" name="status" value="{{ $status->value }}">
+                                    <button type="submit" class="wos-status-btn wos-status-btn--{{ $status->value }}">
+                                        {{ $status->label() }}
+                                    </button>
+                                </form>
+                            @endif
+                        @endforeach
+                    </div>
+                </section>
+
+                <section class="ws-panel wos-panel wos-service" aria-labelledby="wos-service-title">
+                    <div class="ws-panel-head">
+                        <h2 id="wos-service-title" class="ws-panel-title">Παρακολούθηση service</h2>
+                    </div>
+                    <dl class="ws-info-list">
+                        <div class="ws-info-row">
+                            <dt>Τρέχοντα χλμ.</dt>
+                            <dd>{{ filled($workOrder->current_mileage) ? number_format($workOrder->current_mileage, 0, ',', '.') . ' km' : '—' }}</dd>
+                        </div>
+                        <div class="ws-info-row">
+                            <dt>Επόμενο service</dt>
+                            <dd>{{ $workOrder->next_service_date?->translatedFormat('d F Y') ?? '—' }}</dd>
+                        </div>
+                        <div class="ws-info-row">
+                            <dt>Service στα χλμ.</dt>
+                            <dd>{{ filled($workOrder->next_service_mileage) ? number_format($workOrder->next_service_mileage, 0, ',', '.') . ' km' : '—' }}</dd>
+                        </div>
+                    </dl>
+                </section>
+            </div>
         </div>
     </div>
 @endsection

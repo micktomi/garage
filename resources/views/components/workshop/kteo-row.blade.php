@@ -2,7 +2,7 @@
     <x-workshop.plate :value="$plate" />
 
     <span class="ws-row-body">
-        <span class="ws-row-title" title="{{ $customerName }}">{{ $customerName }}</span>
+        <span class="ws-row-title" @if($customerTooltip) title="{{ $customerTooltip }}" @endif>{{ $customerName }}</span>
         <time
             class="ws-kteo-deadline {{ $expired ? 'ws-kteo-deadline--expired' : '' }}"
             @if($deadlineDateTime) datetime="{{ $deadlineDateTime }}" @endif

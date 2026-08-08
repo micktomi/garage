@@ -3,53 +3,64 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="theme-color" content="#F9FAFB">
+    <meta name="theme-color" content="#E9EDE8">
     <title>@yield('title', 'Συνεργείο')</title>
     <style>
         :root {
             /* Surfaces */
-            --ws-page: #E9EEF5;
+            --ws-page: #E9EDE8;
             --ws-card: #FFFFFF;
-            --ws-sunken: #F8FAFC;
+            --ws-sunken: #F6F9F5;
 
             /* Text */
-            --ws-text: #0F172A;
-            --ws-text-muted: #64748B;
-            --ws-text-faint: #94A3B8;
+            --ws-text: #0D2A2F;
+            --ws-text-muted: #4A6360;
+            --ws-text-faint: #7B918D;
 
             /* Lines */
-            --ws-border: #E2E8F0;
-            --ws-border-hover: #CBD5E1;
+            --ws-border: #DBE1DA;
+            --ws-border-hover: #C4CFC5;
 
             /* Sidebar */
-            --ws-nav: #172033;
-            --ws-nav-hover: #202C42;
-            --ws-nav-active: #2A3A57;
-            --ws-nav-accent: #3B82F6;
-            --ws-nav-text: #AAB7CB;
-            --ws-nav-text-hi: #F8FAFC;
-            --ws-nav-divider: #31415E;
+            --ws-nav: #0D2A2F;
+            --ws-nav-hover: #17383D;
+            --ws-nav-active: #1D4046;
+            --ws-nav-accent: #FF5A1F;
+            --ws-nav-text: #B9CBC7;
+            --ws-nav-text-hi: #FFFFFF;
+            --ws-nav-divider: #244A4F;
 
-            /* Screenshot-matched primary action. */
-            --ws-primary: #155DFC;
-            --ws-primary-hover: #1447E6;
+            /* Donor primary action: the deep ink button, not a coloured accent. */
+            --ws-primary: #0D2A2F;
+            --ws-primary-hover: #14383E;
             --ws-primary-fg: #FFFFFF;
 
-            /* Explicit Greek-capable system stacks. */
+            /* Signal is reserved for attention, never for ordinary actions. */
+            --ws-signal: #FF5A1F;
+
+            /* Greek registration plate band. */
+            --ws-plate-band: #0B3AA8;
+            --ws-plate-band-fg: #FFD200;
+
+            /* Explicit Greek-capable system stacks — no webfont requests. */
             --ws-font-sans: ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Noto Sans", Arial, sans-serif;
+            --ws-font-display: "Roboto Condensed", "Liberation Sans Narrow", "Arial Narrow", "Noto Sans", ui-sans-serif, system-ui, sans-serif;
+            --ws-font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Noto Sans Mono", monospace;
             --ws-font-serif: Georgia, "Times New Roman", "Noto Serif", serif;
 
             /* Work-order statuses */
-            --ws-status-progress-bg: #E7F0FB;
-            --ws-status-progress-fg: #1B5296;
-            --ws-status-awaiting-bg: #FBF0DC;
+            --ws-status-new-bg: #E4F2EC;
+            --ws-status-new-fg: #1E7A5C;
+            --ws-status-progress-bg: #E6EDFB;
+            --ws-status-progress-fg: #2C5CC5;
+            --ws-status-awaiting-bg: #FBF0DA;
             --ws-status-awaiting-fg: #7A4A08;
-            --ws-status-ready-bg: #E8F3E4;
-            --ws-status-ready-fg: #33660F;
-            --ws-status-completed-bg: #F1F1EF;
-            --ws-status-completed-fg: #54534F;
-            --ws-status-expired-bg: #FBEBEB;
-            --ws-status-expired-fg: #992B2B;
+            --ws-status-ready-bg: #D9EDE2;
+            --ws-status-ready-fg: #135C44;
+            --ws-status-completed-bg: #EDF0EC;
+            --ws-status-completed-fg: #4A6360;
+            --ws-status-expired-bg: #FFF1EA;
+            --ws-status-expired-fg: #B23A0F;
 
             /* Compatibility aliases for the existing workshop detail forms. */
             --bg: var(--ws-page);
@@ -70,13 +81,13 @@
             --danger-dim: var(--ws-status-expired-bg);
             --info: var(--ws-status-progress-fg);
             --info-dim: var(--ws-status-progress-bg);
-            --radius: 12px;
+            --radius: 10px;
             --radius-sm: 8px;
             --radius-xs: 8px;
             --header-h: 56px;
             --nav-h: 0px;
-            --shadow-sm: 0 1px 2px rgb(15 23 42 / 6%);
-            --shadow-md: 0 4px 12px rgb(15 23 42 / 7%);
+            --shadow-sm: 0 1px 2px rgb(13 42 47 / 5%), 0 10px 28px -18px rgb(13 42 47 / 30%);
+            --shadow-md: 0 2px 4px rgb(13 42 47 / 6%), 0 18px 40px -22px rgb(13 42 47 / 40%);
             --highlight: none;
         }
 
@@ -92,10 +103,15 @@
         body {
             min-height: 100vh;
             margin: 0;
-            background: var(--ws-page);
+            /* Donor workshop paper: fine diagonal hatch plus a soft top-right lift. */
+            background-color: var(--ws-page);
+            background-image:
+                repeating-linear-gradient(135deg, rgb(13 42 47 / 2.2%) 0 1px, transparent 1px 9px),
+                radial-gradient(1100px 520px at 78% -8%, rgb(255 255 255 / 90%), transparent 70%);
+            background-attachment: fixed;
             color: var(--ws-text);
             font-family: var(--ws-font-sans);
-            font-size: 14px;
+            font-size: 15px;
             font-weight: 400;
             line-height: 1.5;
             -webkit-font-smoothing: antialiased;
@@ -154,7 +170,7 @@
             top: 0;
             width: 224px;
             height: 100vh;
-            padding: 16px 12px;
+            padding: 18px 12px;
             flex: 0 0 224px;
             display: flex;
             flex-direction: column;
@@ -166,11 +182,12 @@
         .ws-sidebar-brand {
             width: 100%;
             min-height: 48px;
-            margin-bottom: 12px;
-            padding: 0 12px;
+            margin-bottom: 22px;
+            padding: 0 8px;
             display: flex;
             align-items: center;
             justify-content: flex-start;
+            gap: 11px;
             border-radius: 8px;
             color: var(--ws-nav-text-hi);
             font-family: var(--ws-font-sans);
@@ -184,8 +201,40 @@
             background: var(--ws-nav-hover);
         }
 
+        .ws-sidebar-brand-mark {
+            width: 34px;
+            height: 34px;
+            flex: 0 0 34px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 8px;
+            background: var(--ws-nav-accent);
+            color: #FFFFFF;
+            font-family: var(--ws-font-display);
+            font-size: 17px;
+            font-weight: 700;
+            line-height: 1;
+        }
+
         .ws-sidebar-brand-full {
             display: block;
+            font-family: var(--ws-font-display);
+            font-size: 17px;
+            font-weight: 700;
+            line-height: 1.15;
+        }
+
+        .ws-sidebar-brand-sub {
+            display: block;
+            color: var(--ws-nav-text);
+            font-family: var(--ws-font-sans);
+            font-size: 11px;
+            font-weight: 500;
+            line-height: 15px;
+            letter-spacing: .14em;
+            text-transform: uppercase;
+            opacity: .72;
         }
 
         .ws-sidebar-brand-compact {
@@ -196,7 +245,24 @@
         .ws-sidebar-primary {
             display: flex;
             flex-direction: column;
-            gap: 4px;
+            gap: 2px;
+        }
+
+        .ws-sidebar-group-label {
+            padding: 0 10px 8px;
+            color: var(--ws-nav-text);
+            font-family: var(--ws-font-sans);
+            font-size: 10px;
+            font-weight: 600;
+            line-height: 14px;
+            letter-spacing: .16em;
+            text-transform: uppercase;
+            opacity: .62;
+        }
+
+        .ws-sidebar-group-label + .ws-sidebar-group-label,
+        .ws-sidebar-primary > .ws-sidebar-item + .ws-sidebar-group-label {
+            padding-top: 18px;
         }
 
         .ws-sidebar-nav {
@@ -207,12 +273,12 @@
         .ws-sidebar-item {
             width: 100%;
             min-height: 44px;
-            padding: 10px 12px;
+            padding: 10px 10px;
             display: flex;
             flex-direction: row;
             align-items: center;
             justify-content: flex-start;
-            gap: 12px;
+            gap: 11px;
             border-radius: 8px;
             color: var(--ws-nav-text);
             font-family: var(--ws-font-sans);
@@ -235,17 +301,29 @@
         }
 
         .ws-sidebar-icon {
-            width: 20px;
-            height: 20px;
+            width: 18px;
+            height: 18px;
             flex: 0 0 auto;
             display: inline-flex;
             align-items: center;
             justify-content: center;
+            color: var(--ws-nav-text);
+            opacity: .85;
+        }
+
+        .ws-sidebar-item:hover .ws-sidebar-icon {
+            color: var(--ws-nav-text-hi);
+            opacity: 1;
+        }
+
+        .ws-sidebar-item[aria-current="page"] .ws-sidebar-icon {
+            color: var(--ws-nav-accent);
+            opacity: 1;
         }
 
         .ws-sidebar-icon svg {
-            width: 20px;
-            height: 20px;
+            width: 18px;
+            height: 18px;
             stroke-width: 1.8;
         }
 
@@ -255,8 +333,41 @@
 
         .ws-sidebar-footer {
             margin-top: auto;
-            padding-top: 12px;
+            padding-top: 14px;
             border-top: 1px solid var(--ws-nav-divider);
+        }
+
+        .ws-sidebar-identity {
+            margin-top: 6px;
+            padding: 10px 10px 2px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: var(--ws-nav-text);
+            font-family: var(--ws-font-sans);
+            font-size: 13px;
+            line-height: 18px;
+        }
+
+        .ws-sidebar-identity-avatar {
+            width: 28px;
+            height: 28px;
+            flex: 0 0 28px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 999px;
+            background: var(--ws-nav-active);
+            color: var(--ws-nav-text-hi);
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .ws-sidebar-identity-name {
+            min-width: 0;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
         }
 
         .ws-content {
@@ -266,9 +377,9 @@
 
         .ws-main {
             width: 100%;
-            max-width: 1216px;
-            margin: 0 auto;
-            padding: 40px 32px 48px;
+            max-width: 1560px;
+            margin: 0;
+            padding: 26px 30px 60px;
         }
 
         .ws-page-heading {
@@ -341,18 +452,18 @@
 
         .ws-search-input {
             width: 100%;
-            height: 48px;
+            height: 52px;
             padding: 0 16px 0 44px;
             border: 1px solid var(--ws-border);
-            border-radius: 8px;
+            border-radius: 10px;
             background: var(--ws-card);
             color: var(--ws-text);
             font-size: 15px;
-            transition: border-color 120ms ease;
+            transition: border-color 150ms ease, box-shadow 150ms ease;
         }
 
         .ws-search-input::placeholder {
-            color: var(--ws-text-muted);
+            color: var(--ws-text-faint);
             opacity: 1;
         }
 
@@ -360,25 +471,35 @@
             border-color: var(--ws-border-hover);
         }
 
+        .ws-search-input:focus {
+            border-color: var(--ws-text);
+            outline: none;
+            box-shadow: 0 0 0 3px rgb(13 42 47 / 10%);
+        }
+
         .ws-primary-action {
             min-width: 160px;
-            min-height: 48px;
-            padding: 8px 16px;
+            min-height: 52px;
+            padding: 8px 22px;
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            gap: 8px;
+            gap: 9px;
             border: 1px solid transparent;
-            border-radius: 8px;
+            border-radius: 10px;
             background: var(--ws-primary);
             color: var(--ws-primary-fg);
-            font-size: 14px;
+            font-size: 15px;
             font-weight: 500;
-            transition: opacity 120ms ease;
+            transition: background-color 150ms ease, transform 100ms ease;
         }
 
         .ws-primary-action:hover {
-            opacity: .92;
+            background: var(--ws-primary-hover);
+        }
+
+        .ws-primary-action:active {
+            transform: translateY(1px);
         }
 
         .ws-primary-action svg {
@@ -557,18 +678,71 @@
             background: var(--ws-card);
         }
 
+        /* Greek registration plate — the donor's EU band plus the number field. */
         .ws-plate {
+            max-width: 100%;
             flex-shrink: 0;
-            padding: 5px 9px;
-            border: 1px solid var(--ws-border);
-            border-radius: 8px;
-            background: var(--ws-sunken);
+            display: inline-flex;
+            align-items: stretch;
+            overflow: hidden;
+            border: 1.5px solid var(--ws-text);
+            border-radius: 5px;
+            background: var(--ws-card);
             color: var(--ws-text);
-            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
-            font-size: 13px;
-            font-weight: 400;
+            font-family: var(--ws-font-mono);
+            vertical-align: middle;
+        }
+
+        .ws-plate-band {
+            width: 15px;
+            flex: 0 0 15px;
+            padding-top: 4px;
+            display: flex;
+            align-items: flex-start;
+            justify-content: center;
+            background: var(--ws-plate-band);
+            color: var(--ws-plate-band-fg);
+            font-size: 8px;
+            font-weight: 600;
+            line-height: 1;
+        }
+
+        .ws-plate-number {
+            min-width: 0;
+            padding: 5px 9px;
+            overflow: hidden;
+            font-size: 14px;
+            font-weight: 600;
             line-height: 18px;
+            letter-spacing: .06em;
+            text-overflow: ellipsis;
             white-space: nowrap;
+        }
+
+        .ws-plate--sm .ws-plate-band {
+            width: 12px;
+            flex: 0 0 12px;
+            padding-top: 3px;
+            font-size: 7px;
+        }
+
+        .ws-plate--sm .ws-plate-number {
+            padding: 4px 7px;
+            font-size: 12.5px;
+            line-height: 16px;
+        }
+
+        .ws-plate--lg .ws-plate-band {
+            width: 19px;
+            flex: 0 0 19px;
+            padding-top: 6px;
+            font-size: 9px;
+        }
+
+        .ws-plate--lg .ws-plate-number {
+            padding: 8px 14px;
+            font-size: 20px;
+            line-height: 24px;
         }
 
         .ws-row-body {
@@ -611,22 +785,25 @@
             gap: 4px;
         }
 
-        .ws-status-badge {
+        .ws-status-badge,
+        .ws-shop-flag {
             max-width: 220px;
-            padding: 3px 9px;
+            padding: 5px 9px;
             display: inline-flex;
             align-items: center;
-            border-radius: 8px;
-            font-size: 12px;
-            font-weight: 500;
-            line-height: 18px;
+            border-radius: 5px;
+            font-family: var(--ws-font-sans);
+            font-size: 10.5px;
+            font-weight: 600;
+            line-height: 14px;
+            letter-spacing: .11em;
+            text-transform: uppercase;
             white-space: nowrap;
         }
 
         .ws-status-badge--new {
-            border: 1px solid var(--ws-border);
-            background: transparent;
-            color: var(--ws-text-muted);
+            background: var(--ws-status-new-bg);
+            color: var(--ws-status-new-fg);
         }
 
         .ws-status-badge--in-progress {
@@ -761,8 +938,7 @@
         /* Dashboard-only visual system port. */
         .ws-dashboard {
             min-width: 0;
-            --ws-text-muted: #52647A;
-            font-family: var(--ws-font-serif);
+            font-family: var(--ws-font-sans);
         }
 
         .ws-dashboard-header {
@@ -776,50 +952,51 @@
         .ws-dashboard-title {
             margin: 0;
             color: var(--ws-text);
-            font-family: var(--ws-font-serif);
-            font-size: 32px;
+            font-family: var(--ws-font-display);
+            font-size: 34px;
             font-weight: 700;
-            line-height: 1.15;
-            letter-spacing: -0.025em;
+            line-height: 1;
+            letter-spacing: -.2px;
         }
 
         .ws-dashboard-subtitle {
-            margin: 6px 0 0;
+            margin: 7px 0 0;
             color: var(--ws-text-muted);
-            font-family: var(--ws-font-serif);
-            font-size: 15px;
+            font-family: var(--ws-font-sans);
+            font-size: 13.5px;
             line-height: 1.5;
         }
 
         .ws-system-status {
             min-height: 32px;
-            padding: 7px 13px;
+            padding: 6px 13px 6px 10px;
             flex: 0 0 auto;
             display: inline-flex;
             align-items: center;
-            gap: 8px;
-            border: 1px solid #A7F3D0;
+            gap: 7px;
+            border: 1px solid var(--ws-border);
             border-radius: 999px;
-            background: #ECFDF5;
-            color: #047857;
+            background: var(--ws-card);
+            color: var(--ws-text-muted);
             font-family: var(--ws-font-sans);
-            font-size: 11px;
-            font-weight: 700;
+            font-size: 12px;
+            font-weight: 500;
             line-height: 16px;
-            letter-spacing: .08em;
-            text-transform: uppercase;
+            letter-spacing: 0;
+            text-transform: none;
         }
 
         .ws-system-status-dot {
-            width: 8px;
-            height: 8px;
-            flex: 0 0 8px;
+            width: 7px;
+            height: 7px;
+            flex: 0 0 7px;
             border-radius: 999px;
-            background: #10B981;
+            background: var(--ws-status-new-fg);
+            box-shadow: 0 0 0 3px rgb(30 122 92 / 15%);
         }
 
         .ws-dashboard .ws-dashboard-controls {
-            margin-bottom: 32px;
+            margin-bottom: 24px;
             grid-template-columns: minmax(0, 1fr) auto;
             gap: 12px;
         }
@@ -843,100 +1020,263 @@
             opacity: 1;
         }
 
+        /* Three metrics: the in-shop count moved to the strip's own heading,
+           where it is not a duplicate of the cards below it. */
         .ws-dashboard .ws-stat-grid {
-            margin-bottom: 36px;
-            grid-template-columns: repeat(2, minmax(0, 1fr));
-            gap: 16px;
+            margin-bottom: 26px;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 14px;
         }
 
+        /* Donor metric cell: a left status rail, a quiet label, a large figure. */
         .ws-dashboard .ws-stat-card {
+            position: relative;
             min-width: 0;
-            min-height: 152px;
-            padding: 20px;
+            min-height: 92px;
+            padding: 16px 18px 15px;
             justify-content: flex-start;
-            gap: 14px;
+            gap: 0;
+            overflow: hidden;
             border: 1px solid var(--ws-border);
-            border-radius: 16px;
+            border-radius: 10px;
             background: var(--ws-card);
             box-shadow: var(--shadow-sm);
-            transition: border-color 160ms ease, box-shadow 160ms ease, transform 160ms ease;
+            transition: border-color 160ms ease, box-shadow 160ms ease;
+        }
+
+        .ws-dashboard .ws-stat-card::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            left: 0;
+            width: 3px;
+            background: var(--ws-border-hover);
+        }
+
+        .ws-dashboard .ws-stat-card--alert::before {
+            background: var(--ws-signal);
         }
 
         .ws-dashboard .ws-stat-card:hover {
             border-color: var(--ws-border-hover);
             box-shadow: var(--shadow-md);
-            transform: translateY(-1px);
-        }
-
-        .ws-stat-icon {
-            width: 48px;
-            height: 48px;
-            flex: 0 0 48px;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: 12px;
-        }
-
-        .ws-stat-icon svg {
-            width: 24px;
-            height: 24px;
-            stroke-width: 1.8;
-        }
-
-        .ws-stat-card--blue .ws-stat-icon {
-            background: #EFF6FF;
-            color: #2563EB;
-        }
-
-        .ws-stat-card--violet .ws-stat-icon {
-            background: #F5F3FF;
-            color: #7C3AED;
-        }
-
-        .ws-stat-card--amber .ws-stat-icon {
-            background: #FFFBEB;
-            color: #D97706;
-        }
-
-        .ws-stat-card--rose .ws-stat-icon {
-            background: #FFF1F2;
-            color: #E11D48;
-        }
-
-        .ws-dashboard .ws-stat-copy {
-            display: flex;
-            flex-direction: column;
         }
 
         .ws-dashboard .ws-stat-label {
-            color: var(--ws-text-muted);
+            color: var(--ws-text-faint);
             font-family: var(--ws-font-sans);
-            font-size: 12px;
-            font-weight: 600;
-            line-height: 16px;
-            letter-spacing: .045em;
+            font-size: 10.5px;
+            font-weight: 500;
+            line-height: 15px;
+            letter-spacing: .15em;
             text-transform: uppercase;
         }
 
+        .ws-stat-row {
+            margin-top: 7px;
+            display: flex;
+            align-items: flex-end;
+            gap: 10px;
+        }
+
         .ws-dashboard .ws-stat-value {
-            margin-top: 3px;
             color: var(--ws-text);
-            font-family: var(--ws-font-serif);
-            font-size: 32px;
+            font-family: var(--ws-font-display);
+            font-size: 38px;
             font-weight: 700;
-            line-height: 36px;
+            line-height: .95;
+            font-variant-numeric: tabular-nums;
         }
 
         .ws-dashboard .ws-stat-value--danger {
-            color: var(--ws-status-expired-fg);
+            color: var(--ws-signal);
+        }
+
+        /* ── Workshop strip ───────────────────────────────────────────
+           A presentation view of the open work orders. The application
+           models no physical bays, so nothing here is persisted and no
+           free-position count is invented — each card is one open order. */
+        .ws-bays {
+            margin-bottom: 24px;
+        }
+
+        .ws-bays-head {
+            margin-bottom: 11px;
+            display: flex;
+            flex-wrap: wrap;
+            align-items: baseline;
+            justify-content: space-between;
+            gap: 4px 16px;
+        }
+
+        .ws-eyebrow {
+            color: var(--ws-text-muted);
+            font-family: var(--ws-font-display);
+            font-size: 13px;
+            font-weight: 700;
+            line-height: 18px;
+            letter-spacing: .18em;
+            text-transform: uppercase;
+        }
+
+        .ws-eyebrow b {
+            color: var(--ws-text);
+            font-weight: 700;
+        }
+
+        .ws-eyebrow--quiet {
+            flex: 0 0 auto;
+            color: var(--ws-text-faint);
+            font-weight: 400;
+            letter-spacing: .1em;
+            transition: color 120ms ease;
+        }
+
+        a.ws-eyebrow--quiet:hover {
+            color: var(--ws-text);
+        }
+
+        /* Cards sit in a fixed size band rather than stretching to fill the
+           row, so a strip of one and a strip of eight look like the same
+           object. Four per row on desktop is set explicitly below. */
+        .ws-bay-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(224px, 280px));
+            justify-content: start;
+            align-items: stretch;
+            gap: 14px;
+        }
+
+        .ws-bay {
+            position: relative;
+            min-width: 0;
+            height: 100%;
+            padding: 15px 16px 14px;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            overflow: hidden;
+            border: 1px solid var(--ws-border);
+            border-radius: 10px;
+            background: var(--ws-card);
+            box-shadow: var(--shadow-sm);
+            transition: transform 160ms ease, box-shadow 160ms ease;
+        }
+
+        .ws-bay:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .ws-bay:focus-visible {
+            outline: 2px solid var(--ws-text);
+            outline-offset: -2px;
+        }
+
+        .ws-bay-number {
+            position: absolute;
+            top: 8px;
+            right: 12px;
+            color: rgb(13 42 47 / 5.5%);
+            font-family: var(--ws-font-display);
+            font-size: 40px;
+            font-weight: 700;
+            line-height: 1;
+            letter-spacing: -1px;
+        }
+
+        .ws-bay-vehicle {
+            max-width: 100%;
+            margin: 11px 0 2px;
+            overflow: hidden;
+            color: var(--ws-text);
+            font-size: 14.5px;
+            font-weight: 500;
+            line-height: 20px;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        /* One line only: a two-line job description used to push the whole
+           card taller and break the row's baseline. */
+        .ws-bay-job {
+            max-width: 100%;
+            display: -webkit-box;
+            -webkit-box-orient: vertical;
+            -webkit-line-clamp: 1;
+            overflow: hidden;
+            color: var(--ws-text-muted);
+            font-size: 12.5px;
+            line-height: 17px;
+        }
+
+        /* Four equal stages — παραλαβή, διάγνωση, εργασία, έτοιμο. Equal
+           widths on every card, never a percentage of anything. */
+        .ws-bay-rail {
+            width: 100%;
+            margin-top: 11px;
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 3px;
+        }
+
+        .ws-bay-rail-step {
+            height: 4px;
+            border-radius: 99px;
+            background: #E7EBE6;
+        }
+
+        .ws-bay[data-status="new"] .ws-bay-rail-step.is-filled {
+            background: var(--ws-status-new-fg);
+        }
+
+        .ws-bay[data-status="in_progress"] .ws-bay-rail-step.is-filled {
+            background: var(--ws-status-progress-fg);
+        }
+
+        .ws-bay[data-status="awaiting_parts"] .ws-bay-rail-step.is-filled {
+            background: var(--ws-status-awaiting-fg);
+        }
+
+        .ws-bay[data-status="ready"] .ws-bay-rail-step.is-filled {
+            background: var(--ws-status-ready-fg);
+        }
+
+        /* Long Greek status labels wrap onto their own line rather than
+           squeezing the elapsed time into an ellipsis. The auto top margin
+           pins the footer to the card's bottom edge whatever sits above it. */
+        .ws-bay-foot {
+            width: 100%;
+            margin-top: auto;
+            padding-top: 13px;
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px 10px;
+        }
+
+        .ws-bay-elapsed {
+            flex: 0 0 auto;
+            color: var(--ws-text-faint);
+            font-family: var(--ws-font-mono);
+            font-size: 12px;
+            line-height: 16px;
+            white-space: nowrap;
+        }
+
+        .ws-bay-foot .ws-status-badge {
+            max-width: 100%;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
 
         .ws-dashboard-body {
             min-width: 0;
             display: grid;
             grid-template-columns: minmax(0, 1fr);
-            gap: 32px;
+            gap: 22px;
         }
 
         .ws-dashboard-primary,
@@ -947,37 +1287,57 @@
         .ws-dashboard-aside {
             display: flex;
             flex-direction: column;
-            gap: 30px;
+            gap: 22px;
         }
 
+        /* The donor keeps the section head inside the panel, above a hairline. */
         .ws-dashboard .ws-section-header {
             min-height: 32px;
-            margin-bottom: 16px;
+            margin-bottom: 0;
+            padding: 17px 20px 15px;
+            align-items: baseline;
+            border-bottom: 1px solid var(--ws-border);
         }
 
         .ws-dashboard .ws-section-header h2,
         .ws-dashboard-section-title {
             margin: 0;
             color: var(--ws-text);
-            font-family: var(--ws-font-serif);
-            font-size: 20px;
+            font-family: var(--ws-font-display);
+            font-size: 19px;
             font-weight: 700;
-            line-height: 28px;
-            letter-spacing: -0.015em;
+            line-height: 26px;
+            letter-spacing: 0;
         }
 
         .ws-dashboard .ws-section-header a {
-            color: var(--ws-primary);
+            min-height: 0;
+            padding: 0 0 1px;
+            color: var(--ws-text-muted);
+            border-bottom: 1px solid var(--ws-border-hover);
             font-family: var(--ws-font-sans);
             font-size: 13px;
-            font-weight: 600;
+            font-weight: 400;
+        }
+
+        .ws-dashboard .ws-section-header a:hover {
+            color: var(--ws-text);
+            border-bottom-color: var(--ws-text);
+        }
+
+        .ws-dashboard .ws-section-header a > [aria-hidden="true"] {
+            display: none;
+        }
+
+        .ws-dashboard-section-title {
+            margin-bottom: 11px;
         }
 
         .ws-panel {
             min-width: 0;
             overflow: hidden;
             border: 1px solid var(--ws-border);
-            border-radius: 16px;
+            border-radius: 10px;
             background: var(--ws-card);
             box-shadow: var(--shadow-sm);
         }
@@ -1566,18 +1926,17 @@
             display: none;
         }
 
+        /* Donor open-order row: plate, who/what, then the compact right rail.
+           The left edge carries the status colour. */
         .ws-recent-order {
             min-width: 0;
-            padding: 16px;
+            padding: 15px 20px 15px 17px;
             display: grid;
-            grid-template-columns: auto minmax(0, 1fr) auto;
-            grid-template-areas:
-                "number body chevron"
-                ". status chevron"
-                ". time chevron";
+            grid-template-columns: minmax(0, 1fr);
             align-items: center;
-            gap: 4px 12px;
+            gap: 9px;
             border-bottom: 1px solid var(--ws-border);
+            border-left: 3px solid transparent;
             transition: background-color 140ms ease;
         }
 
@@ -1589,18 +1948,35 @@
             background: var(--ws-sunken);
         }
 
+        .ws-recent-order[data-status="new"] {
+            border-left-color: var(--ws-status-new-fg);
+        }
+
+        .ws-recent-order[data-status="in_progress"] {
+            border-left-color: var(--ws-status-progress-fg);
+        }
+
+        .ws-recent-order[data-status="awaiting_parts"] {
+            border-left-color: var(--ws-status-awaiting-fg);
+        }
+
+        .ws-recent-order[data-status="ready"] {
+            border-left-color: var(--ws-status-ready-fg);
+        }
+
+        .ws-recent-order .ws-plate {
+            justify-self: start;
+        }
+
         .ws-recent-order-number {
-            grid-area: number;
-            align-self: start;
-            color: var(--ws-primary);
-            font-family: var(--ws-font-sans);
-            font-size: 13px;
-            font-weight: 700;
-            line-height: 20px;
+            color: var(--ws-text-faint);
+            font-family: var(--ws-font-mono);
+            font-size: 12.5px;
+            font-weight: 500;
+            line-height: 18px;
         }
 
         .ws-recent-order-body {
-            grid-area: body;
             min-width: 0;
         }
 
@@ -1614,84 +1990,94 @@
 
         .ws-recent-order-customer {
             color: var(--ws-text);
-            font-family: var(--ws-font-serif);
+            font-family: var(--ws-font-sans);
             font-size: 15px;
-            font-weight: 700;
+            font-weight: 500;
             line-height: 21px;
         }
 
         .ws-recent-order-meta {
             margin-top: 2px;
             color: var(--ws-text-muted);
-            font-family: var(--ws-font-serif);
+            font-family: var(--ws-font-sans);
             font-size: 13px;
             line-height: 18px;
         }
 
-        .ws-recent-order-status {
-            grid-area: status;
-            justify-self: start;
+        .ws-recent-order-aside {
             min-width: 0;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
         }
 
-        .ws-dashboard .ws-status-badge {
+        .ws-recent-order-status {
+            min-width: 0;
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 6px;
+        }
+
+        /* Same badge shape as a status, in the neutral grey pair — it explains
+           an absence from the strip above, it is not a state to act on. */
+        .ws-shop-flag {
+            background: var(--ws-status-completed-bg);
+            color: var(--ws-status-completed-fg);
+        }
+
+        .ws-dashboard .ws-status-badge,
+        .ws-dashboard .ws-shop-flag {
             max-width: 100%;
             overflow: hidden;
             font-family: var(--ws-font-sans);
-            font-size: 10px;
-            font-weight: 700;
-            letter-spacing: .05em;
             text-overflow: ellipsis;
             text-transform: uppercase;
         }
 
         .ws-recent-order-time {
-            grid-area: time;
             color: var(--ws-text-muted);
-            font-family: var(--ws-font-serif);
-            font-size: 12px;
+            font-family: var(--ws-font-mono);
+            font-size: 12.5px;
             line-height: 18px;
+            white-space: nowrap;
         }
 
         .ws-recent-order-chevron {
-            grid-area: chevron;
             width: 16px;
             height: 16px;
+            flex: 0 0 16px;
             color: var(--ws-text-faint);
             stroke-width: 1.8;
             transition: color 140ms ease, transform 140ms ease;
         }
 
         .ws-recent-order:hover .ws-recent-order-chevron {
-            color: var(--ws-primary);
+            color: var(--ws-text);
             transform: translateX(2px);
         }
 
+        /* Donor quick-entry tiles: a hairline-separated three-up strip. */
         .ws-quick-actions {
-            margin-top: 16px;
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-            border: 1px solid var(--ws-border);
-            border-radius: 16px;
-            background: var(--ws-card);
-            box-shadow: var(--shadow-sm);
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 1px;
+            background: var(--ws-border);
         }
 
         .ws-quick-action {
-            min-height: 72px;
-            padding: 14px 16px;
+            min-height: 92px;
+            padding: 18px 10px 16px;
             display: flex;
+            flex-direction: column;
             align-items: center;
-            justify-content: space-between;
-            gap: 16px;
-            background: transparent;
+            justify-content: center;
+            gap: 9px;
+            background: var(--ws-card);
             font-family: var(--ws-font-sans);
-            transition: background-color 160ms ease;
-        }
-
-        .ws-quick-action + .ws-quick-action {
-            border-top: 1px solid var(--ws-border);
+            text-align: center;
+            transition: background-color 120ms ease;
         }
 
         .ws-quick-action:hover {
@@ -1701,67 +2087,89 @@
         .ws-quick-action-main {
             min-width: 0;
             display: flex;
+            flex-direction: column;
             align-items: center;
-            gap: 14px;
+            gap: 9px;
         }
 
         .ws-quick-action-icon {
-            width: 40px;
-            height: 40px;
-            flex: 0 0 40px;
+            width: 38px;
+            height: 38px;
+            flex: 0 0 38px;
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            border-radius: 11px;
-            background: var(--ws-sunken);
-            color: var(--ws-text-faint);
-            transition: background-color 160ms ease, color 160ms ease;
+            border-radius: 9px;
+            background: #EEF3ED;
+            color: var(--ws-text);
         }
 
-        .ws-quick-action:hover .ws-quick-action-icon {
-            background: #EFF6FF;
-            color: var(--ws-primary);
-        }
-
-        .ws-quick-action-icon svg,
-        .ws-quick-action-plus {
-            width: 20px;
-            height: 20px;
+        .ws-quick-action-icon svg {
+            width: 19px;
+            height: 19px;
             stroke-width: 1.8;
         }
 
         .ws-quick-action-label {
+            max-width: 100%;
             overflow: hidden;
-            color: #374151;
-            font-size: 14px;
-            font-weight: 650;
-            line-height: 20px;
+            color: var(--ws-text);
+            font-size: 13px;
+            font-weight: 400;
+            line-height: 18px;
             text-overflow: ellipsis;
-            white-space: nowrap;
         }
 
         .ws-quick-action-plus {
-            flex: 0 0 auto;
-            color: #D1D5DB;
-        }
-
-        .ws-quick-action:hover .ws-quick-action-plus {
-            color: var(--ws-primary);
-        }
-
-        .ws-dashboard-kteo .ws-section-header {
-            margin-bottom: 12px;
+            display: none;
         }
 
         .ws-dashboard-kteo .ws-list {
             overflow: hidden;
-            border-radius: 16px;
-            box-shadow: var(--shadow-sm);
+            border: 0;
+            border-radius: 0;
+            box-shadow: none;
         }
 
         .ws-dashboard-kteo .ws-kteo-row {
             min-width: 0;
-            padding: 14px 16px;
+            min-height: 58px;
+            padding: 13px 18px;
+            gap: 13px;
+        }
+
+        /* Lapsed and upcoming ΚΤΕΟ are different jobs; the sticky sub-header
+           keeps which one you are reading visible while the list scrolls. */
+        .ws-kteo-subhead {
+            position: sticky;
+            z-index: 1;
+            top: 0;
+            margin: 0;
+            padding: 9px 18px 7px;
+            display: flex;
+            align-items: baseline;
+            gap: 6px;
+            border-top: 1px solid var(--ws-border);
+            background: var(--ws-card);
+            color: var(--ws-text-muted);
+            font-family: var(--ws-font-display);
+            font-size: 11.5px;
+            font-weight: 700;
+            line-height: 16px;
+            letter-spacing: .16em;
+            text-transform: uppercase;
+        }
+
+        .ws-kteo-subhead:first-of-type {
+            border-top: 0;
+        }
+
+        .ws-kteo-subhead--expired {
+            color: var(--ws-signal);
+        }
+
+        .ws-kteo-subhead span {
+            font-weight: 700;
         }
 
         .ws-dashboard .ws-empty-state {
@@ -1771,59 +2179,46 @@
 
         @media (min-width: 1024px) {
             .ws-dashboard .ws-stat-grid {
-                grid-template-columns: repeat(4, minmax(0, 1fr));
+                grid-template-columns: repeat(3, minmax(0, 1fr));
                 gap: 20px;
             }
 
             .ws-dashboard .ws-stat-card {
-                min-height: 174px;
-                padding: 24px;
-            }
-
-            .ws-recent-orders-head {
-                min-height: 48px;
-                padding: 0 20px;
-                display: grid;
-                grid-template-columns: 72px minmax(0, 1fr) 176px 80px 16px;
-                align-items: center;
-                gap: 16px;
-                border-bottom: 1px solid var(--ws-border);
-                background: var(--ws-page);
-                color: var(--ws-text-muted);
-                font-family: var(--ws-font-sans);
-                font-size: 10px;
-                font-weight: 700;
-                letter-spacing: .08em;
-                text-transform: uppercase;
+                min-height: 100px;
+                padding: 16px 18px 15px;
             }
 
             .ws-recent-order {
                 min-height: 72px;
-                padding: 13px 20px;
-                grid-template-columns: 72px minmax(0, 1fr) 176px 80px 16px;
-                grid-template-areas: "number body status time chevron";
+                padding: 15px 20px 15px 17px;
+                grid-template-columns: 124px minmax(0, 1fr) auto;
                 gap: 16px;
             }
 
-            .ws-recent-order-number {
-                align-self: center;
+            .ws-recent-order-aside {
+                justify-content: flex-end;
+                gap: 16px;
             }
 
             .ws-recent-order-status {
-                width: 100%;
                 overflow: hidden;
-                justify-self: stretch;
-            }
-
-            .ws-recent-order-time {
-                white-space: nowrap;
             }
         }
 
         @media (min-width: 1200px) {
             .ws-dashboard-body {
                 grid-template-columns: minmax(0, 2fr) minmax(280px, 1fr);
-                gap: 32px;
+                gap: 22px;
+                align-items: start;
+            }
+        }
+
+        /* Once four cards can hold their minimum width, pin the strip to four
+           per row so eight orders read as two tidy rows that line up with the
+           metrics and panels below instead of ending short of them. */
+        @media (min-width: 1280px) {
+            .ws-bay-grid {
+                grid-template-columns: repeat(4, minmax(0, 1fr));
             }
         }
 
@@ -1993,26 +2388,14 @@
             }
 
             .ws-dashboard .ws-stat-grid {
-                margin-bottom: 36px;
+                margin-bottom: 24px;
                 gap: 12px;
             }
 
             .ws-dashboard .ws-stat-card {
-                min-height: 136px;
-                padding: 16px;
-                gap: 12px;
-            }
-
-            .ws-stat-icon {
-                width: 40px;
-                height: 40px;
-                flex-basis: 40px;
-                border-radius: 10px;
-            }
-
-            .ws-stat-icon svg {
-                width: 21px;
-                height: 21px;
+                min-height: 84px;
+                padding: 14px 15px 13px;
+                gap: 0;
             }
 
             .ws-dashboard .ws-stat-label {
@@ -2021,27 +2404,45 @@
             }
 
             .ws-dashboard .ws-stat-value {
-                font-size: 28px;
-                line-height: 32px;
+                font-size: 30px;
             }
 
             .ws-dashboard-body {
-                gap: 28px;
+                gap: 20px;
             }
 
             .ws-recent-order {
-                padding: 14px;
+                padding: 14px 15px 14px 12px;
+            }
+
+            .ws-eyebrow {
+                font-size: 12px;
+                letter-spacing: .12em;
+            }
+
+            .ws-bay {
+                padding: 14px 15px 13px;
+            }
+
+            .ws-bay-number {
+                font-size: 34px;
             }
 
             .ws-quick-action {
-                min-height: 68px;
+                min-height: 84px;
+                padding: 15px 6px 13px;
+            }
+
+            .ws-quick-action-label {
+                font-size: 12px;
+                line-height: 16px;
             }
             body {
                 --nav-h: 68px;
             }
 
             :root {
-                --ws-page: #E9EEF5;
+                --ws-page: #E9EDE8;
             }
 
             .ws-mobile-header {
@@ -2142,7 +2543,7 @@
                 border: 0;
                 border-radius: 12px;
                 background: transparent;
-                color: #52647A;
+                color: #4A6360;
                 font-family: var(--ws-font-sans);
                 font-size: 9px;
                 font-weight: 600;
@@ -2153,7 +2554,7 @@
 
             .ws-mobile-bottom-item:hover,
             .ws-mobile-bottom-item[aria-current="page"] {
-                background: #E8F1FF;
+                background: #EEF3ED;
                 color: var(--ws-primary);
             }
 
@@ -2275,22 +2676,10 @@
             }
 
             .ws-dashboard .ws-stat-card {
-                min-height: 104px;
-                padding: 13px;
-                gap: 9px;
-                border-radius: 14px;
-            }
-
-            .ws-stat-icon {
-                width: 34px;
-                height: 34px;
-                flex-basis: 34px;
-                border-radius: 9px;
-            }
-
-            .ws-stat-icon svg {
-                width: 18px;
-                height: 18px;
+                min-height: 76px;
+                padding: 12px 13px 11px;
+                gap: 0;
+                border-radius: 10px;
             }
 
             .ws-dashboard .ws-stat-label {
@@ -2326,11 +2715,13 @@
                 white-space: nowrap;
             }
 
-            .ws-dashboard-primary .ws-section-label-desktop {
+            /* Only the trailing link shortens on a phone. The heading keeps
+               its one true name at every width. */
+            .ws-dashboard-primary .ws-section-header a .ws-section-label-desktop {
                 display: none;
             }
 
-            .ws-dashboard-primary .ws-section-label-mobile {
+            .ws-dashboard-primary .ws-section-header a .ws-section-label-mobile {
                 display: inline;
             }
 
@@ -2342,16 +2733,11 @@
 
             .ws-recent-order {
                 min-height: 72px;
-                padding: 10px 12px;
-                grid-template-columns: auto minmax(0, 1fr) auto;
-                grid-template-areas:
-                    "number body status"
-                    ". time chevron";
-                gap: 2px 9px;
+                padding: 12px 12px 12px 10px;
+                gap: 8px;
             }
 
             .ws-recent-order-number {
-                align-self: center;
                 font-size: 12px;
             }
 
@@ -2361,18 +2747,17 @@
             }
 
             .ws-recent-order-meta {
-                margin-top: 0;
-                font-size: 11px;
+                margin-top: 1px;
+                font-size: 12px;
                 line-height: 16px;
             }
 
             .ws-recent-order-status {
                 max-width: 104px;
-                align-self: center;
-                justify-self: end;
             }
 
-            .ws-dashboard .ws-status-badge {
+            .ws-dashboard .ws-status-badge,
+            .ws-dashboard .ws-shop-flag {
                 padding: 2px 6px;
                 font-size: 9px;
                 line-height: 14px;
@@ -2381,13 +2766,8 @@
             }
 
             .ws-recent-order-time {
-                font-family: var(--ws-font-sans);
-                font-size: 10px;
+                font-size: 11px;
                 line-height: 14px;
-            }
-
-            .ws-recent-order-chevron {
-                align-self: center;
             }
 
             .ws-main > .woc-toolbar,
@@ -2410,6 +2790,31 @@
 
             body.ws-drawer-open {
                 overflow: hidden;
+            }
+        }
+
+        /* On a phone, three columns squeeze the labels into broken stacks and
+           bury the expired-ΚΤΕΟ figure — the one number worth acting on. One
+           per row keeps every label on its line and the count legible. */
+        @media (max-width: 639px) {
+            .ws-dashboard .ws-stat-grid {
+                grid-template-columns: minmax(0, 1fr);
+            }
+
+            /* Drop the 280px cap: at phone widths only one or two columns fit,
+               and a capped card sits narrower than everything stacked below
+               it. Let the tracks take the width instead. */
+            .ws-bay-grid {
+                grid-template-columns: repeat(auto-fill, minmax(224px, 1fr));
+            }
+
+            /* A full-width cell has room for the label again, so it goes back
+               to the readable size the cramped three-up layout gave up. */
+            .ws-dashboard .ws-stat-label {
+                font-size: 11px;
+                line-height: 15px;
+                letter-spacing: .12em;
+                text-transform: uppercase;
             }
         }
 

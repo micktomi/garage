@@ -33,35 +33,75 @@
 
     /* ── Page title ──────────────────────────────────────────── */
     .woc-page-title {
-        margin: 0 0 1.375rem;
+        margin: 0;
         color: var(--ws-text);
-        font-size: 1.75rem;
-        font-weight: 500;
-        line-height: 2rem;
+        font-family: var(--ws-font-display);
+        font-size: 34px;
+        font-weight: 700;
+        line-height: 1;
+    }
+    .woc-page-sub {
+        margin: 7px 0 24px;
+        color: var(--ws-text-muted);
+        font-size: 13.5px;
+        line-height: 1.5;
+    }
+
+    /* ── Two-column composition: the form card and the summary rail ── */
+    .woc-layout {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr);
+        align-items: start;
+        gap: 18px;
     }
 
     /* ── Form card ───────────────────────────────────────────── */
     .woc-card {
-        margin-bottom: 1rem;
+        min-width: 0;
+        margin-bottom: 0;
         border: 1px solid var(--ws-border);
-        border-radius: 12px;
+        border-radius: 10px;
         background: var(--ws-card);
+        box-shadow: var(--shadow-sm);
         overflow: visible;
     }
     .woc-form-section {
-        padding: 1.25rem;
+        padding: 0 0 20px;
     }
     .woc-form-section + .woc-form-section {
         border-top: 1px solid var(--ws-border);
     }
-    .woc-form-section-title {
-        margin: 0 0 0.625rem;
+    .woc-form-section-head {
+        min-height: 52px;
+        padding: 15px 20px 13px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        border-bottom: 1px solid var(--ws-border);
+    }
+    .woc-step {
+        width: 22px;
+        height: 22px;
+        flex: 0 0 22px;
+        display: grid;
+        place-items: center;
+        border-radius: 6px;
+        background: var(--ws-sunken);
         color: var(--ws-text-muted);
-        font-size: 0.8125rem;
-        font-weight: 500;
-        line-height: 1rem;
+        font-family: var(--ws-font-mono);
+        font-size: 11px;
+        font-weight: 600;
+    }
+    .woc-form-section-title {
+        margin: 0;
+        color: var(--ws-text);
+        font-family: var(--ws-font-display);
+        font-size: 18px;
+        font-weight: 700;
+        line-height: 24px;
     }
     .woc-form-section-body {
+        padding: 18px 20px 0;
         display: flex;
         flex-direction: column;
         gap: 1rem;
@@ -76,45 +116,50 @@
     .woc-field {
         display: flex;
         flex-direction: column;
-        gap: 0.375rem;
+        gap: 6px;
     }
     .woc-label {
-        font-size: 0.8125rem;
+        color: var(--ws-text-faint);
+        font-family: var(--ws-font-sans);
+        font-size: 11px;
         font-weight: 500;
-        color: var(--ws-text);
+        line-height: 15px;
+        letter-spacing: .12em;
+        text-transform: uppercase;
     }
-    .woc-label .woc-req { color: var(--ws-text-faint); margin-left: 2px; }
+    .woc-label .woc-req { color: var(--ws-signal); margin-left: 2px; }
 
     .woc-input,
     .woc-select,
     .woc-textarea {
         width: 100%;
-        min-height: 36px;
-        padding: 0.45rem 0.75rem;
+        min-height: 44px;
+        padding: 0.6rem 0.8125rem;
         border: 1px solid var(--ws-border);
         border-radius: 8px;
         background: var(--ws-card);
         color: var(--ws-text);
-        font-size: 0.875rem;
+        font-size: 15px;
         transition: border-color 0.15s, box-shadow 0.15s;
         -webkit-appearance: none;
         font-family: inherit;
     }
     .woc-input,
     .woc-select {
-        height: 36px;
+        height: 44px;
     }
     .woc-select {
         cursor: pointer;
-        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%238b949e' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+        background-image: url("data:image/svg+xml;charset=utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%234A6360' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
         background-repeat: no-repeat;
-        background-position: right 0.75rem center;
-        padding-right: 2.5rem;
+        background-position: right 0.6875rem center;
+        background-size: 16px;
+        padding-right: 2.25rem;
     }
     .woc-textarea {
-        min-height: 0;
-        max-height: calc(8 * 1.25rem + 1rem);
-        resize: none;
+        min-height: 82px;
+        max-height: calc(8 * 1.25rem + 1.2rem);
+        resize: vertical;
         overflow-y: hidden;
         line-height: 1.25rem;
     }
@@ -123,10 +168,15 @@
     .woc-input:focus,
     .woc-select:focus,
     .woc-textarea:focus {
-        border-color: var(--ws-primary);
-        outline: 2px solid var(--ws-primary);
+        border-color: var(--ws-text);
+        outline: none;
+        box-shadow: 0 0 0 3px rgb(13 42 47 / 10%);
+    }
+    .woc-input:focus-visible,
+    .woc-select:focus-visible,
+    .woc-textarea:focus-visible {
+        outline: 2px solid var(--ws-text);
         outline-offset: 2px;
-        box-shadow: none;
     }
     .woc-input.is-invalid,
     .woc-select.is-invalid,
@@ -182,13 +232,13 @@
 
     /* ── Validation alert ────────────────────────────────────── */
     .woc-alert {
-        background: var(--danger-dim);
-        border: 1px solid rgba(248,81,73,0.3);
-        border-radius: var(--radius-sm);
+        background: var(--ws-status-expired-bg);
+        border: 1px solid var(--ws-status-expired-fg);
+        border-radius: 8px;
         padding: 0.75rem 1rem;
         margin-bottom: 1rem;
-        font-size: 0.8125rem;
-        color: var(--danger);
+        font-size: 13.5px;
+        color: var(--ws-status-expired-fg);
     }
     .woc-alert ul { margin: 0.375rem 0 0 1rem; }
     .woc-alert li { margin-bottom: 0.2rem; }
@@ -199,31 +249,46 @@
         flex-wrap: wrap;
         gap: 0.5rem;
     }
+    /* The real radio stays in the accessibility tree and the tab order —
+       it is only moved out of sight, never display:none. */
     .woc-source-pill {
-        display: none; /* hide the real radio */
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        margin: -1px;
+        padding: 0;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+        white-space: nowrap;
+        border: 0;
     }
     .woc-source-label {
+        min-height: 40px;
         display: inline-flex;
         align-items: center;
         gap: 0.4rem;
-        font-size: 0.8125rem;
-        font-weight: 500;
-        padding: 0.45rem 0.875rem;
-        border: 1px solid var(--border);
+        font-size: 14px;
+        padding: 0.5rem 0.9375rem;
+        border: 1px solid var(--ws-border);
         border-radius: 999px;
+        background: var(--ws-card);
         cursor: pointer;
-        color: var(--text-muted);
-        transition: color 0.12s, background 0.12s, border-color 0.12s;
+        color: var(--ws-text-muted);
+        transition: color 0.13s, background 0.13s, border-color 0.13s;
         user-select: none;
     }
     .woc-source-label:hover {
-        color: var(--text);
-        border-color: var(--text-faint);
+        border-color: var(--ws-border-hover);
+        background: var(--ws-sunken);
+    }
+    .woc-source-pill:focus-visible + .woc-source-label {
+        outline: 2px solid var(--ws-text);
+        outline-offset: 2px;
     }
     .woc-source-pill:checked + .woc-source-label {
-        background: var(--ws-sunken);
-        border-color: var(--ws-border-hover);
-        color: var(--ws-text);
+        background: var(--ws-primary);
+        border-color: var(--ws-primary);
+        color: var(--ws-primary-fg);
     }
 
     /* ── Repeater row ────────────────────────────────────────── */
@@ -344,29 +409,131 @@
 
     /* ── Summary ─────────────────────────────────────────────── */
     .woc-summary {
-        background: var(--surface-2);
-        border: 1px solid var(--border);
-        border-radius: var(--radius-sm);
+        background: var(--ws-sunken);
+        border: 1px solid var(--ws-border);
+        border-radius: 8px;
         overflow: hidden;
     }
     .woc-sum-row {
         display: flex;
         justify-content: space-between;
-        align-items: center;
+        align-items: baseline;
+        gap: 16px;
         padding: 0.55rem 1rem;
-        font-size: 0.875rem;
-        color: var(--text-muted);
-        border-bottom: 1px solid var(--border);
+        font-size: 14px;
+        color: var(--ws-text-muted);
+        border-bottom: 1px solid var(--ws-border);
     }
     .woc-sum-row:last-child { border-bottom: none; }
     .woc-sum-row--grand {
-        font-weight: 500;
-        font-size: 0.9375rem;
-        color: var(--text);
-        background: var(--surface);
+        color: var(--ws-text);
+        background: var(--ws-card);
+        font-family: var(--ws-font-display);
+        font-size: 20px;
+        font-weight: 700;
     }
-    .woc-sum-val { font-weight: 500; font-variant-numeric: tabular-nums; }
-    .woc-sum-row--grand .woc-sum-val { color: var(--ws-text); }
+    .woc-sum-val {
+        font-family: var(--ws-font-mono);
+        font-variant-numeric: tabular-nums;
+        white-space: nowrap;
+    }
+    .woc-sum-row--grand .woc-sum-val {
+        color: var(--ws-text);
+        font-size: 20px;
+        font-weight: 700;
+    }
+
+    /* ── Summary rail ────────────────────────────────────────── */
+    .woc-rail {
+        min-width: 0;
+    }
+    .woc-rail-panel {
+        min-width: 0;
+        overflow: hidden;
+        border: 1px solid var(--ws-border);
+        border-radius: 10px;
+        background: var(--ws-card);
+        box-shadow: var(--shadow-sm);
+    }
+    .woc-rail-head {
+        min-height: 52px;
+        padding: 15px 20px 13px;
+        border-bottom: 1px solid var(--ws-border);
+        color: var(--ws-text);
+        font-family: var(--ws-font-display);
+        font-size: 18px;
+        font-weight: 700;
+        line-height: 24px;
+    }
+    .woc-rail-body {
+        padding: 16px 20px 18px;
+    }
+    .woc-rail-title {
+        margin: 14px 0 3px;
+        color: var(--ws-text);
+        font-size: 16px;
+        font-weight: 500;
+        line-height: 22px;
+        overflow-wrap: anywhere;
+    }
+    .woc-rail-title.is-placeholder {
+        color: var(--ws-text-faint);
+        font-weight: 400;
+    }
+    .woc-rail-meta {
+        color: var(--ws-text-muted);
+        font-size: 13px;
+        line-height: 18px;
+        overflow-wrap: anywhere;
+    }
+    .woc-rail-kv {
+        margin: 16px 0 0;
+        padding-top: 12px;
+        border-top: 1px solid var(--ws-border);
+    }
+    .woc-rail-kv > div {
+        display: flex;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 6px 0;
+        font-size: 13.5px;
+    }
+    .woc-rail-kv dt {
+        margin: 0;
+        color: var(--ws-text-faint);
+    }
+    .woc-rail-kv dd {
+        margin: 0;
+        font-weight: 500;
+        text-align: right;
+    }
+    .woc-rail-total {
+        margin-top: 12px;
+        padding-top: 12px;
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: 12px;
+        border-top: 1px solid var(--ws-border-hover);
+    }
+    .woc-rail-total b {
+        font-family: var(--ws-font-display);
+        font-size: 24px;
+        font-weight: 700;
+        font-variant-numeric: tabular-nums;
+    }
+    .woc-rail-plate--empty {
+        display: inline-flex;
+        align-items: center;
+        padding: 8px 14px;
+        border: 1.5px dashed var(--ws-border-hover);
+        border-radius: 5px;
+        color: var(--ws-text-faint);
+        font-family: var(--ws-font-mono);
+        font-size: 19px;
+        font-weight: 600;
+        letter-spacing: .06em;
+    }
 
     /* ── Sticky action bar ───────────────────────────────────── */
     .woc-action-bar {
@@ -380,18 +547,19 @@
         justify-content: space-between;
         gap: 0.75rem;
         border-top: 1px solid var(--ws-border);
-        border-radius: 0 0 12px 12px;
+        border-radius: 0 0 10px 10px;
         background: var(--ws-sunken);
     }
     .woc-action-summary {
         color: var(--ws-text-muted);
-        font-size: 0.8125rem;
+        font-size: 13.5px;
     }
     .woc-action-summary strong {
         margin-left: 0.375rem;
         color: var(--ws-text);
-        font-size: 0.9375rem;
-        font-weight: 500;
+        font-family: var(--ws-font-mono);
+        font-size: 15px;
+        font-weight: 600;
         font-variant-numeric: tabular-nums;
     }
     .woc-action-actions {
@@ -400,32 +568,36 @@
         gap: 0.75rem;
     }
     .woc-cancel-btn {
+        min-height: 46px;
         display: inline-flex;
         align-items: center;
-        font-size: 0.875rem;
-        font-weight: 500;
-        color: var(--text-muted);
+        justify-content: center;
+        font-size: 15px;
+        color: var(--ws-text);
         padding: 0.55rem 1.125rem;
-        border: 1px solid var(--border);
-        border-radius: var(--radius-sm);
+        border: 1px solid var(--ws-border);
+        border-radius: 8px;
+        background: var(--ws-card);
         transition: color 0.15s, border-color 0.15s, background 0.15s;
     }
-    .woc-cancel-btn:hover { color: var(--text); border-color: var(--text-faint); background: var(--surface-2); }
+    .woc-cancel-btn:hover { border-color: var(--ws-border-hover); background: var(--ws-sunken); }
     .woc-submit-btn {
+        min-height: 46px;
         display: inline-flex;
         align-items: center;
-        gap: 0.4rem;
-        font-size: 0.875rem;
+        justify-content: center;
+        gap: 0.5rem;
+        font-size: 15px;
         font-weight: 500;
         color: var(--ws-primary-fg);
         background: var(--ws-primary);
-        border: none;
+        border: 1px solid var(--ws-primary);
         border-radius: 8px;
         padding: 0.55rem 1.375rem;
         cursor: pointer;
-        transition: opacity 0.15s;
+        transition: background-color 0.15s;
     }
-    .woc-submit-btn:hover { opacity: 0.92; }
+    .woc-submit-btn:hover { background: var(--ws-primary-hover); }
     .woc-submit-btn svg { width: 15px; height: 15px; stroke-width: 2.5; }
 
     /* ── Desktop ─────────────────────────────────────────────── */
@@ -442,6 +614,17 @@
         .woc-part-grid .span2 { grid-column: span 2; }
         .woc-part-grid .span4 { grid-column: span 4; }
     }
+
+    @media (min-width: 1180px) {
+        .woc-layout {
+            grid-template-columns: minmax(0, 1.6fr) minmax(320px, .75fr);
+            gap: 22px;
+        }
+        .woc-rail {
+            position: sticky;
+            top: 26px;
+        }
+    }
 </style>
 @endpush
 
@@ -457,6 +640,7 @@
 </div>
 
 <h1 class="woc-page-title">Νέα εντολή εργασίας</h1>
+<p class="woc-page-sub">Διάλεξε πελάτη και όχημα — τα χιλιόμετρα συμπληρώνονται από την τελευταία καταγραφή.</p>
 
 @if($errors->any())
     <div class="woc-alert">
@@ -492,8 +676,9 @@
     x-data='workOrderForm(@json($initialParts, $jsonFlags), @json($partsCatalog, $jsonFlags), {{ (float) old('labor_cost', 0) }}, @json($errors->messages(), $jsonFlags))'>
     @csrf
 
+    <div class="woc-layout">
     <div class="woc-card" data-work-order-form-card>
-        <x-workshop.form.section title="Πελάτης και όχημα">
+        <x-workshop.form.section title="Πελάτης και όχημα" step="1">
         <div class="woc-card-body woc-card-body--grid">
 
             <div class="woc-field">

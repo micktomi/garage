@@ -20,12 +20,18 @@
         class="ws-sidebar-brand"
         aria-label="Garage Manager — Πίνακας Ελέγχου"
     >
-        <span class="ws-sidebar-brand-full">Garage Manager</span>
+        <span class="ws-sidebar-brand-mark" aria-hidden="true">Σ</span>
+        <span>
+            <span class="ws-sidebar-brand-full">Garage Manager</span>
+            <span class="ws-sidebar-brand-sub" aria-hidden="true">Συνεργείο</span>
+        </span>
         <span class="ws-sidebar-brand-compact" aria-hidden="true">GM</span>
     </a>
 
     <nav class="ws-sidebar-nav" aria-label="Κύρια πλοήγηση" x-on:click="open = false">
         <div class="ws-sidebar-primary">
+            <div class="ws-sidebar-group-label" aria-hidden="true">Καθημερινά</div>
+
             <x-workshop.shell.nav-item
                 :href="route('workshop.dashboard')"
                 label="Πίνακας Ελέγχου"
@@ -37,6 +43,34 @@
                     </svg>
                 </x-slot:icon>
             </x-workshop.shell.nav-item>
+
+            <x-workshop.shell.nav-item
+                :href="route('workshop.work-orders.index')"
+                label="Εντολές Εργασίας"
+                :active="request()->routeIs('workshop.work-orders.*')"
+            >
+                <x-slot:icon>
+                    <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M4 17h16M6 17l1.5-5.5A2 2 0 0 1 9.4 10h5.2a2 2 0 0 1 1.9 1.5L18 17M4 17v2.5M20 17v2.5"/>
+                        <circle cx="7.5" cy="17" r="1"/>
+                        <circle cx="16.5" cy="17" r="1"/>
+                    </svg>
+                </x-slot:icon>
+            </x-workshop.shell.nav-item>
+
+            <x-workshop.shell.nav-item
+                :href="route('workshop.appointments.index')"
+                label="Ραντεβού"
+                :active="request()->routeIs('workshop.appointments.*')"
+            >
+                <x-slot:icon>
+                    <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3.75 9h16.5m-15 12h13.5a1.5 1.5 0 0 0 1.5-1.5V6.75a1.5 1.5 0 0 0-1.5-1.5H5.25a1.5 1.5 0 0 0-1.5 1.5V19.5a1.5 1.5 0 0 0 1.5 1.5Z"/>
+                    </svg>
+                </x-slot:icon>
+            </x-workshop.shell.nav-item>
+
+            <div class="ws-sidebar-group-label" aria-hidden="true">Αρχείο</div>
 
             <x-workshop.shell.nav-item
                 :href="route('workshop.customers.index')"
@@ -61,33 +95,10 @@
                     </svg>
                 </x-slot:icon>
             </x-workshop.shell.nav-item>
-
-            <x-workshop.shell.nav-item
-                :href="route('workshop.work-orders.index')"
-                label="Εντολές Εργασίας"
-                :active="request()->routeIs('workshop.work-orders.*')"
-            >
-                <x-slot:icon>
-                    <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 5.25h6m-6 4.5h6m-6 4.5h3m-6.75 6h13.5A1.5 1.5 0 0 0 20.25 18.75v-15a1.5 1.5 0 0 0-1.5-1.5H5.25a1.5 1.5 0 0 0-1.5 1.5v15a1.5 1.5 0 0 0 1.5 1.5Z"/>
-                    </svg>
-                </x-slot:icon>
-            </x-workshop.shell.nav-item>
-
-            <x-workshop.shell.nav-item
-                :href="route('workshop.appointments.index')"
-                label="Ραντεβού"
-                :active="request()->routeIs('workshop.appointments.*')"
-            >
-                <x-slot:icon>
-                    <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3.75 9h16.5m-15 12h13.5a1.5 1.5 0 0 0 1.5-1.5V6.75a1.5 1.5 0 0 0-1.5-1.5H5.25a1.5 1.5 0 0 0-1.5 1.5V19.5a1.5 1.5 0 0 0 1.5 1.5Z"/>
-                    </svg>
-                </x-slot:icon>
-            </x-workshop.shell.nav-item>
         </div>
 
         <div class="ws-sidebar-footer">
+
             <x-workshop.shell.nav-item
                 :href="url('/admin')"
                 label="Admin"
@@ -98,6 +109,11 @@
                     </svg>
                 </x-slot:icon>
             </x-workshop.shell.nav-item>
+
+            <div class="ws-sidebar-identity">
+                <span class="ws-sidebar-identity-avatar" aria-hidden="true">{{ mb_substr(auth()->user()?->name ?: 'Δ', 0, 1) }}</span>
+                <span class="ws-sidebar-identity-name">{{ auth()->user()?->name ?: 'Διαχειριστής' }}</span>
+            </div>
         </div>
     </nav>
 </aside>

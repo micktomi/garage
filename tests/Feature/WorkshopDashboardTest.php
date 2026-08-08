@@ -55,7 +55,7 @@ class WorkshopDashboardTest extends TestCase
         $response->assertOk()
             ->assertSee('Πέμπτη, 30 Ιουλίου 2026')
             ->assertSee('Στο συνεργείο')
-            ->assertSee('Πρόσφατες Εντολές Εργασίας')
+            ->assertSee('Ανοιχτές εντολές')
             ->assertSee('Ραντεβού σήμερα')
             ->assertSee('ΚΤΕΟ έληξαν')
             ->assertSee('Αναμονή ανταλλακτικών')
@@ -99,9 +99,203 @@ class WorkshopDashboardTest extends TestCase
             $sectionLabels[] = trim($label->textContent);
         }
 
-        $this->assertContains('Στο συνεργείο', $metricLabels);
+        // "Στο συνεργείο" is the strip's own heading; repeating it as a metric
+        // told the reader the same number twice.
+        $this->assertSame([
+            'Ραντεβού σήμερα',
+            'ΚΤΕΟ έληξαν',
+            'Αναμονή ανταλλακτικών',
+        ], $metricLabels);
+        $this->assertNotContains('Στο συνεργείο', $metricLabels);
         $this->assertNotContains('Ανοιχτές εντολές', $metricLabels);
         $this->assertSame([], array_values(array_intersect($metricLabels, $sectionLabels)));
+    }
+
+    public function test_shop_strip_and_open_list_answer_different_questions(): void
+    {
+        $user = User::factory()->create();
+        [$customer, $vehicle] = $this->makeCustomerAndVehicle('ΕΞΩ-1234');
+
+        $onSite = WorkOrder::create([
+            'customer_id' => $customer->id,
+            'vehicle_id' => $vehicle->id,
+            'problem_description' => 'Το όχημα είναι στον ανυψωτήρα',
+            'status' => WorkOrderStatus::InProgress,
+        ]);
+        $awayForParts = WorkOrder::create([
+            'customer_id' => $customer->id,
+            'vehicle_id' => $vehicle->id,
+            'problem_description' => 'Ο πελάτης πήρε το αυτοκίνητο μέχρι να έρθει το ανταλλακτικό',
+            'status' => WorkOrderStatus::AwaitingParts,
+        ]);
+        $awayForParts->update(['in_shop' => false]);
+
+        $response = $this->actingAs($user)->get(route('workshop.dashboard'))->assertOk();
+        $xpath = $this->xpath($response->getContent());
+
+        // The strip counts vehicles, not orders, and holds only what is here.
+        $response->assertSee('Στο συνεργείο')->assertSee('· 1 όχημα');
+
+        $cards = $xpath->query('//section[@aria-label="Οχήματα στο συνεργείο"]//a[contains(concat(" ", normalize-space(@class), " "), " ws-bay ")]');
+        $this->assertCount(1, $cards);
+        $this->assertSame(route('workshop.work-orders.show', $onSite), $cards->item(0)->getAttribute('href'));
+
+        // Both orders are still open, so both stay in the list below.
+        $rows = $xpath->query('//section[@aria-label="Πρόσφατες ανοιχτές εντολές"]//a[contains(concat(" ", normalize-space(@class), " "), " ws-recent-order ")]');
+        $this->assertCount(2, $rows);
+
+        $flags = $xpath->query('//*[contains(concat(" ", normalize-space(@class), " "), " ws-shop-flag ")]');
+        $this->assertCount(1, $flags);
+        $this->assertSame('Εκτός συνεργείου', trim($flags->item(0)->textContent));
+    }
+
+    public function test_closing_an_order_checks_the_vehicle_out_of_the_shop(): void
+    {
+        [$customer, $vehicle] = $this->makeCustomerAndVehicle('ΚΛΕ-9090');
+
+        $order = WorkOrder::create([
+            'customer_id' => $customer->id,
+            'vehicle_id' => $vehicle->id,
+            'problem_description' => 'Σέρβις',
+            'status' => WorkOrderStatus::InProgress,
+        ]);
+
+        $this->assertTrue($order->in_shop);
+        $this->assertNotNull($order->checked_in_at);
+        $this->assertNull($order->checked_out_at);
+
+        $order->update(['status' => WorkOrderStatus::Completed]);
+
+        $this->assertFalse($order->fresh()->in_shop);
+        $this->assertNotNull($order->fresh()->checked_out_at);
+
+        // An order created as already closed never counts as present.
+        $imported = WorkOrder::create([
+            'customer_id' => $customer->id,
+            'vehicle_id' => $vehicle->id,
+            'problem_description' => 'Παλιά ολοκληρωμένη εντολή',
+            'status' => WorkOrderStatus::Completed,
+        ]);
+
+        $this->assertFalse($imported->in_shop);
+        $this->assertSame(0, WorkOrder::inShop()->count());
+    }
+
+    public function test_kteo_panel_splits_lapsed_from_upcoming_and_counts_the_days(): void
+    {
+        $user = User::factory()->create();
+
+        foreach ([
+            ['ΠΑΛ-0001', 'Παναγιώτης Λάμπρου', -80],
+            ['ΠΑΛ-0002', 'Ελένη Σταύρου', -12],
+            ['ΝΕΟ-0003', 'Μαρία Κώστα', 14],
+        ] as [$plate, $name, $offset]) {
+            [, $vehicle] = $this->makeCustomerAndVehicle($plate, $name);
+            $vehicle->update(['kteo_expires_at' => now()->addDays($offset)]);
+        }
+
+        $response = $this->actingAs($user)->get(route('workshop.dashboard'))->assertOk();
+        $content = $response->getContent();
+        $xpath = $this->xpath($content);
+
+        $headings = [];
+        foreach ($xpath->query('//*[contains(concat(" ", normalize-space(@class), " "), " ws-kteo-subhead ")]') as $heading) {
+            $headings[] = trim(preg_replace('/\s+/u', ' ', $heading->textContent));
+        }
+
+        $this->assertSame(['Έληξαν · 2', 'Λήγουν σύντομα · 1'], $headings);
+
+        // The panel title no longer promises a window the list does not keep.
+        $this->assertStringNotContainsString('ΚΤΕΟ εντός 30 ημερών', $content);
+
+        // Day counts turn a date into a debt; lapsed runs oldest first.
+        $deadlines = [];
+        foreach ($xpath->query('//*[contains(concat(" ", normalize-space(@class), " "), " ws-kteo-deadline ")]') as $deadline) {
+            $deadlines[] = trim($deadline->textContent);
+        }
+
+        $this->assertSame([
+            'Έληξε '.now()->subDays(80)->format('d/m').' · 80 ημ',
+            'Έληξε '.now()->subDays(12)->format('d/m').' · 12 ημ',
+            'Λήγει '.now()->addDays(14)->format('d/m').' · 14 ημ',
+        ], $deadlines);
+    }
+
+    public function test_shop_strip_has_no_placeholder_card_and_equal_height_cards(): void
+    {
+        $user = User::factory()->create();
+        [$customer, $vehicle] = $this->makeCustomerAndVehicle('ΓΕΜ-7777');
+
+        // More open orders than the strip shows: the overflow lives behind the
+        // "Όλες οι εντολές" link, not in a dashed placeholder tile.
+        for ($i = 0; $i < 10; $i++) {
+            WorkOrder::create([
+                'customer_id' => $customer->id,
+                'vehicle_id' => $vehicle->id,
+                'problem_description' => str_repeat('Πολύ μακρά περιγραφή εργασίας ', 4),
+                'status' => WorkOrderStatus::InProgress,
+            ]);
+        }
+
+        $response = $this->actingAs($user)->get(route('workshop.dashboard'))->assertOk();
+        $xpath = $this->xpath($response->getContent());
+
+        $cards = $xpath->query('//a[contains(concat(" ", normalize-space(@class), " "), " ws-bay ")]');
+        $this->assertCount(8, $cards);
+        $this->assertCount(0, $xpath->query('//*[contains(concat(" ", normalize-space(@class), " "), " ws-bay-more ")]'));
+
+        // Four equal stage segments on every card, never a percentage width.
+        foreach ($cards as $card) {
+            $this->assertCount(4, $xpath->query('.//*[contains(concat(" ", normalize-space(@class), " "), " ws-bay-rail-step ")]', $card));
+        }
+
+        $layout = file_get_contents(resource_path('views/layouts/workshop.blade.php'));
+
+        $this->assertMatchesRegularExpression(
+            '/\.ws-bay-rail\s*\{[^}]*grid-template-columns:\s*repeat\(4, 1fr\);[^}]*\}/s',
+            $layout,
+        );
+        $this->assertMatchesRegularExpression(
+            '/\.ws-bay-grid\s*\{[^}]*justify-content:\s*start;[^}]*align-items:\s*stretch;[^}]*\}/s',
+            $layout,
+        );
+        $this->assertMatchesRegularExpression(
+            '/\.ws-bay\s*\{[^}]*height:\s*100%;[^}]*\}/s',
+            $layout,
+        );
+        $this->assertMatchesRegularExpression(
+            '/\.ws-bay-foot\s*\{[^}]*margin-top:\s*auto;[^}]*\}/s',
+            $layout,
+        );
+        // One clamped line, so a two-line job never lifts the card's footer.
+        $this->assertMatchesRegularExpression(
+            '/\.ws-bay-job\s*\{[^}]*-webkit-line-clamp:\s*1;[^}]*\}/s',
+            $layout,
+        );
+        $this->assertStringNotContainsString('.ws-bay-more', $layout);
+    }
+
+    public function test_titles_are_only_attached_to_text_that_actually_truncates(): void
+    {
+        $user = User::factory()->create();
+        [$customer, $vehicle] = $this->makeCustomerAndVehicle('ΤΙΤ-4321', 'Άννα Δή');
+        $vehicle->update(['kteo_expires_at' => now()->subDay()]);
+
+        WorkOrder::create([
+            'customer_id' => $customer->id,
+            'vehicle_id' => $vehicle->id,
+            'problem_description' => 'Λάδια',
+            'status' => WorkOrderStatus::New,
+        ]);
+
+        $short = $this->actingAs($user)->get(route('workshop.dashboard'))->assertOk();
+        $this->assertStringNotContainsString('title="Άννα Δή"', $short->getContent());
+
+        $longName = 'Κωνσταντίνος Παπαδόπουλος-Γεωργιάδης';
+        $customer->update(['full_name' => $longName]);
+
+        $long = $this->actingAs($user)->get(route('workshop.dashboard'))->assertOk();
+        $this->assertStringContainsString('title="'.$longName.'"', $long->getContent());
     }
 
     public function test_only_the_expired_kteo_numeric_value_uses_the_danger_tone(): void
@@ -145,8 +339,15 @@ class WorkshopDashboardTest extends TestCase
         $response = $this->actingAs($user)->get(route('workshop.dashboard'))->assertOk();
         $xpath = $this->xpath($response->getContent());
 
-        $this->assertCount(1, $xpath->query('//*[contains(concat(" ", normalize-space(@class), " "), " ws-status-badge--new ")]'));
-        $this->assertCount(1, $xpath->query('//*[contains(concat(" ", normalize-space(@class), " "), " ws-status-badge--in-progress ")]'));
+        // The workshop strip and the open-order list are two views of the same
+        // orders, so the badge count is asserted per surface, not per page.
+        foreach ([
+            '//section[@aria-label="Πρόσφατες ανοιχτές εντολές"]',
+            '//section[@aria-label="Οχήματα στο συνεργείο"]',
+        ] as $surface) {
+            $this->assertCount(1, $xpath->query($surface.'//*[contains(concat(" ", normalize-space(@class), " "), " ws-status-badge--new ")]'), $surface);
+            $this->assertCount(1, $xpath->query($surface.'//*[contains(concat(" ", normalize-space(@class), " "), " ws-status-badge--in-progress ")]'), $surface);
+        }
     }
 
     public function test_dashboard_has_one_search_input_and_one_badge_per_work_order_row(): void
@@ -320,16 +521,19 @@ class WorkshopDashboardTest extends TestCase
     {
         $layout = file_get_contents(resource_path('views/layouts/workshop.blade.php'));
 
-        $this->assertStringContainsString('--ws-page: #E9EEF5;', $layout);
-        $this->assertStringContainsString('--ws-nav: #172033;', $layout);
-        $this->assertStringContainsString('--ws-nav-active: #2A3A57;', $layout);
-        $this->assertStringContainsString('--ws-primary: #155DFC;', $layout);
+        $this->assertStringContainsString('--ws-page: #E9EDE8;', $layout);
+        $this->assertStringContainsString('--ws-nav: #0D2A2F;', $layout);
+        $this->assertStringContainsString('--ws-nav-active: #1D4046;', $layout);
+        $this->assertStringContainsString('--ws-primary: #0D2A2F;', $layout);
+        $this->assertStringContainsString('--ws-signal: #FF5A1F;', $layout);
+        $this->assertStringContainsString('--ws-plate-band: #0B3AA8;', $layout);
         $this->assertStringContainsString('--ws-font-sans:', $layout);
-        $this->assertStringContainsString('--ws-font-serif:', $layout);
+        $this->assertStringContainsString('--ws-font-display:', $layout);
+        $this->assertStringContainsString('--ws-font-mono:', $layout);
         $this->assertStringNotContainsString('fonts.googleapis.com', $layout);
 
         $this->assertMatchesRegularExpression(
-            '/\.ws-dashboard-title\s*\{[^}]*font-family:\s*var\(--ws-font-serif\);[^}]*font-size:\s*32px;[^}]*\}/s',
+            '/\.ws-dashboard-title\s*\{[^}]*font-family:\s*var\(--ws-font-display\);[^}]*font-size:\s*34px;[^}]*\}/s',
             $layout,
         );
         $this->assertMatchesRegularExpression(
@@ -337,7 +541,7 @@ class WorkshopDashboardTest extends TestCase
             $layout,
         );
         $this->assertMatchesRegularExpression(
-            '/\.ws-dashboard \.ws-stat-card\s*\{[^}]*border:\s*1px solid var\(--ws-border\);[^}]*border-radius:\s*16px;[^}]*background:\s*var\(--ws-card\);[^}]*box-shadow:\s*var\(--shadow-sm\);[^}]*\}/s',
+            '/\.ws-dashboard \.ws-stat-card\s*\{[^}]*border:\s*1px solid var\(--ws-border\);[^}]*border-radius:\s*10px;[^}]*background:\s*var\(--ws-card\);[^}]*box-shadow:\s*var\(--shadow-sm\);[^}]*\}/s',
             $layout,
         );
         $this->assertMatchesRegularExpression(
@@ -354,12 +558,13 @@ class WorkshopDashboardTest extends TestCase
     {
         $layout = file_get_contents(resource_path('views/layouts/workshop.blade.php'));
 
+        // Three metrics at every width: two columns would orphan the third.
         $this->assertMatchesRegularExpression(
-            '/\.ws-dashboard \.ws-stat-grid\s*\{[^}]*grid-template-columns:\s*repeat\(2, minmax\(0, 1fr\)\);[^}]*\}/s',
+            '/\.ws-dashboard \.ws-stat-grid\s*\{[^}]*grid-template-columns:\s*repeat\(3, minmax\(0, 1fr\)\);[^}]*\}/s',
             $layout,
         );
         $this->assertMatchesRegularExpression(
-            '/@media\s*\(min-width:\s*1024px\).*?\.ws-dashboard \.ws-stat-grid\s*\{[^}]*repeat\(4, minmax\(0, 1fr\)\)/s',
+            '/@media\s*\(min-width:\s*1024px\).*?\.ws-dashboard \.ws-stat-grid\s*\{[^}]*repeat\(3, minmax\(0, 1fr\)\)/s',
             $layout,
         );
         $this->assertMatchesRegularExpression(

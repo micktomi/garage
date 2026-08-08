@@ -25,6 +25,14 @@ class WorkOrderRow extends Component
 
     public readonly string $dashboardDateLabel;
 
+    /** Full text, set only where the single line actually runs out of room. */
+    public readonly ?string $customerTooltip;
+
+    public readonly ?string $metaTooltip;
+
+    /** True when the order is still open but the vehicle has left the shop. */
+    public readonly bool $outOfShop;
+
     public function __construct(public readonly WorkOrder $order)
     {
         $vehicleName = Str::squish(trim(($order->vehicle?->make ?? '').' '.($order->vehicle?->model ?? '')));
@@ -38,6 +46,9 @@ class WorkOrderRow extends Component
             $this->vehicleName,
             $this->problem,
         ]));
+        $this->customerTooltip = mb_strlen($this->customerName) > 24 ? $this->customerName : null;
+        $this->metaTooltip = mb_strlen($this->meta) > 40 ? $this->meta : null;
+        $this->outOfShop = $order->status->isOpen() && ! $order->in_shop;
         $this->createdLabel = $order->created_at?->locale('el')->diffForHumans() ?: 'Χωρίς ημερομηνία';
         $this->createdDateTime = $order->created_at?->toIso8601String();
         $this->dashboardDateLabel = $order->created_at?->format('d/m/Y') ?: '—';

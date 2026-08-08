@@ -26,10 +26,16 @@ class WorkshopController extends Controller
 
         $openWorkOrders = WorkOrder::whereIn('status', $openStatuses)->count();
         $todayAppointments = Appointment::whereDate('appointment_date', $today)->count();
-        $expiredKteo = Vehicle::whereNotNull('kteo_expires_at')
-            ->whereDate('kteo_expires_at', '<', $today)
-            ->count();
         $awaitingParts = WorkOrder::where('status', WorkOrderStatus::AwaitingParts->value)->count();
+
+        // The strip answers "what is on the floor now", the list below answers
+        // "what is still owed to a customer" — deliberately different sets.
+        $vehiclesInShop = WorkOrder::inShop()->count();
+        $inShopWorkOrders = WorkOrder::with(['customer', 'vehicle'])
+            ->inShop()
+            ->latest()
+            ->take(8)
+            ->get();
 
         $recentWorkOrders = WorkOrder::with(['customer', 'vehicle'])
             ->whereIn('status', $openStatuses)
@@ -37,11 +43,25 @@ class WorkshopController extends Controller
             ->take(8)
             ->get();
 
-        $expiringVehicles = Vehicle::with('customer')
-            ->whereNotNull('kteo_expires_at')
+        $kteoBase = fn () => Vehicle::with('customer')->whereNotNull('kteo_expires_at');
+
+        // Already lapsed: oldest first, because that customer is overdue longest.
+        $expiredKteo = $kteoBase()->whereDate('kteo_expires_at', '<', $today)->count();
+        $expiredKteoVehicles = $kteoBase()
+            ->whereDate('kteo_expires_at', '<', $today)
+            ->orderBy('kteo_expires_at')
+            ->take(5)
+            ->get();
+
+        $expiringKteo = $kteoBase()
+            ->whereDate('kteo_expires_at', '>=', $today)
+            ->whereDate('kteo_expires_at', '<=', $kteoHorizon)
+            ->count();
+        $expiringKteoVehicles = $kteoBase()
+            ->whereDate('kteo_expires_at', '>=', $today)
             ->whereDate('kteo_expires_at', '<=', $kteoHorizon)
             ->orderBy('kteo_expires_at')
-            ->take(6)
+            ->take(5)
             ->get();
 
         $todayLabel = Str::ucfirst($today->locale('el')->translatedFormat('l, j F Y'));
@@ -51,8 +71,12 @@ class WorkshopController extends Controller
             'todayAppointments',
             'expiredKteo',
             'awaitingParts',
+            'vehiclesInShop',
+            'inShopWorkOrders',
             'recentWorkOrders',
-            'expiringVehicles',
+            'expiredKteoVehicles',
+            'expiringKteo',
+            'expiringKteoVehicles',
             'todayLabel',
         ));
     }

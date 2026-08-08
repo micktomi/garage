@@ -50,20 +50,37 @@ class WorkshopMobileDrawerTest extends TestCase
         $this->assertSame('0', $bottomNav['bottom'] ?? null);
         $this->assertSame('repeat(5, minmax(0, 1fr))', $bottomNav['grid-template-columns'] ?? null);
         $bottomItem = $this->styles($css, '.ws-mobile-bottom-item', self::MOBILE);
-        $this->assertSame('#52647A', $bottomItem['color'] ?? null);
+        $this->assertSame('#4A6360', $bottomItem['color'] ?? null);
         $activeBottomItem = $this->styles($css, '.ws-mobile-bottom-item[aria-current="page"]', self::MOBILE);
-        $this->assertSame('#E8F1FF', $activeBottomItem['background'] ?? null);
+        $this->assertSame('#EEF3ED', $activeBottomItem['background'] ?? null);
         $this->assertSame('var(--ws-primary)', $activeBottomItem['color'] ?? null);
         $tokens = $this->styles($css, ':root', self::MOBILE);
-        $this->assertSame('#E9EEF5', $tokens['--ws-page'] ?? null);
+        $this->assertSame('#E9EDE8', $tokens['--ws-page'] ?? null);
         $this->assertSame('#FFFFFF', $tokens['--ws-card'] ?? null);
         $this->assertSame('var(--ws-card)', $this->styles($css, '.ws-dashboard .ws-stat-card', self::MOBILE)['background'] ?? null);
         $this->assertSame('none', $this->styles($css, '.ws-system-status', self::MOBILE)['display'] ?? null);
         $this->assertSame('none', $this->styles($css, '.ws-dashboard-subtitle-prefix', self::MOBILE)['display'] ?? null);
 
+        // One metric per row on a phone: three columns broke the labels apart
+        // and buried the expired-ΚΤΕΟ figure. A full-width cell has room for
+        // the label at its readable size again.
+        $metricGrid = $this->styles($css, '.ws-dashboard .ws-stat-grid', self::MOBILE);
+        $this->assertSame('minmax(0, 1fr)', $metricGrid['grid-template-columns'] ?? null);
+
+        // The 280px cell cap belongs to multi-column widths only. On a phone
+        // it left the cards narrower than everything stacked below them.
+        $this->assertSame(
+            'repeat(auto-fill, minmax(224px, 1fr))',
+            $this->styles($css, '.ws-bay-grid', self::MOBILE)['grid-template-columns'] ?? null,
+        );
+        $this->assertSame(
+            'repeat(4, minmax(0, 1fr))',
+            $this->styles($css, '.ws-bay-grid', self::WIDE)['grid-template-columns'] ?? null,
+        );
+
         $metricLabel = $this->styles($css, '.ws-dashboard .ws-stat-label', self::MOBILE);
-        $this->assertSame('none', $metricLabel['text-transform'] ?? null);
-        $this->assertSame('0', $metricLabel['letter-spacing'] ?? null);
+        $this->assertSame('uppercase', $metricLabel['text-transform'] ?? null);
+        $this->assertSame('.12em', $metricLabel['letter-spacing'] ?? null);
 
         $statusBadge = $this->styles($css, '.ws-dashboard .ws-status-badge', self::MOBILE);
         $this->assertSame('none', $statusBadge['text-transform'] ?? null);
@@ -91,7 +108,7 @@ class WorkshopMobileDrawerTest extends TestCase
 
             $this->assertSame('inline-flex', $this->styles($css, '.ws-system-status', $viewport)['display'] ?? null);
             $this->assertArrayNotHasKey('display', $this->styles($css, '.ws-dashboard-subtitle-prefix', $viewport));
-            $this->assertSame('#E9EEF5', $this->styles($css, ':root', $viewport)['--ws-page'] ?? null);
+            $this->assertSame('#E9EDE8', $this->styles($css, ':root', $viewport)['--ws-page'] ?? null);
             $this->assertSame('#FFFFFF', $this->styles($css, ':root', $viewport)['--ws-card'] ?? null);
             $this->assertSame('uppercase', $this->styles($css, '.ws-dashboard .ws-stat-label', $viewport)['text-transform'] ?? null);
             $this->assertSame('uppercase', $this->styles($css, '.ws-dashboard .ws-status-badge', $viewport)['text-transform'] ?? null);
@@ -212,7 +229,10 @@ class WorkshopMobileDrawerTest extends TestCase
             'Πίνακας Ελέγχου',
             trim($this->element($xpath, '//span[contains(@class, "ws-mobile-context-title")]')->textContent),
         );
-        $this->assertSame('Πρόσφατες εντολές', trim($this->element($xpath, '//section[contains(@class, "ws-dashboard-primary")]//h2/span[contains(@class, "ws-section-label-mobile")]')->textContent));
+        // The panel heading carries one name at every width; only the trailing
+        // link shortens on a phone.
+        $this->assertSame('Ανοιχτές εντολές', trim($this->element($xpath, '//section[contains(@class, "ws-dashboard-primary")]//h2')->textContent));
+        $this->assertCount(0, $xpath->query('//section[contains(@class, "ws-dashboard-primary")]//h2/span[contains(@class, "ws-section-label-mobile")]'));
         $this->assertSame('Όλες', trim($this->element($xpath, '//section[contains(@class, "ws-dashboard-primary")]//a/span[contains(@class, "ws-section-label-mobile")]')->textContent));
         $search = $this->element($xpath, '//a[contains(@class, "ws-mobile-header-action") and @href="'.route('workshop.search').'"]');
         $this->assertCount(1, $xpath->query('.//circle[@cx="10.75" and @cy="10.75" and @r="6.75"]', $search));

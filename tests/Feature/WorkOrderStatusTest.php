@@ -132,10 +132,12 @@ class WorkOrderStatusTest extends TestCase
                 );
             }
 
+            // The donor header carries a single status tag; the status is not
+            // repeated in a summary block below it.
             $this->assertSame(
-                2,
+                1,
                 substr_count($response->getContent(), '<span class="ws-status-badge '),
-                "Expected exactly the toolbar and detail badges for status [{$status->value}].",
+                "Expected exactly the header badge for status [{$status->value}].",
             );
         }
     }

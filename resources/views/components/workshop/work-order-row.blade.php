@@ -1,21 +1,34 @@
 @if($attributes->has('dashboard'))
-    <a href="{{ route('workshop.work-orders.show', $order) }}" class="ws-recent-order">
-        <span class="ws-recent-order-number">#{{ str_pad($order->id, 4, '0', STR_PAD_LEFT) }}</span>
+    <a
+        href="{{ route('workshop.work-orders.show', $order) }}"
+        class="ws-recent-order"
+        data-status="{{ $order->status->value }}"
+    >
+        <x-workshop.plate :value="$plate" size="sm" />
 
         <span class="ws-recent-order-body">
-            <span class="ws-recent-order-customer" title="{{ $customerName }}">{{ $customerName }}</span>
-            <span class="ws-recent-order-meta" title="{{ $plate }} · {{ $meta }}">{{ $plate }} · {{ $meta }}</span>
+            <span class="ws-recent-order-customer" @if($customerTooltip) title="{{ $customerTooltip }}" @endif>{{ $customerName }}</span>
+            <span class="ws-recent-order-meta" @if($metaTooltip) title="{{ $metaTooltip }}" @endif>{{ $meta }}</span>
         </span>
 
-        <span class="ws-recent-order-status">
-            <x-workshop.status-badge :status="$order->status" />
+        <span class="ws-recent-order-aside">
+            <span class="ws-recent-order-number">#{{ str_pad($order->id, 4, '0', STR_PAD_LEFT) }}</span>
+
+            <span class="ws-recent-order-status">
+                <x-workshop.status-badge :status="$order->status" />
+
+                {{-- Explains why an open order is missing from the strip above. --}}
+                @if($outOfShop)
+                    <span class="ws-shop-flag">Εκτός συνεργείου</span>
+                @endif
+            </span>
+
+            <time class="ws-recent-order-time" @if($createdDateTime) datetime="{{ $createdDateTime }}" @endif>{{ $dashboardDateLabel }}</time>
+
+            <svg class="ws-recent-order-chevron" aria-hidden="true" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" d="m9 18 6-6-6-6" />
+            </svg>
         </span>
-
-        <time class="ws-recent-order-time" @if($createdDateTime) datetime="{{ $createdDateTime }}" @endif>{{ $dashboardDateLabel }}</time>
-
-        <svg class="ws-recent-order-chevron" aria-hidden="true" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" d="m9 18 6-6-6-6" />
-        </svg>
     </a>
 @elseif($attributes->get('variant') === 'index')
     <a
@@ -54,8 +67,8 @@
         <x-workshop.plate :value="$plate" />
 
         <span class="ws-row-body">
-            <span class="ws-row-title" title="{{ $customerName }}">{{ $customerName }}</span>
-            <span class="ws-row-meta" title="{{ $meta }}">{{ $meta }}</span>
+            <span class="ws-row-title" @if($customerTooltip) title="{{ $customerTooltip }}" @endif>{{ $customerName }}</span>
+            <span class="ws-row-meta" @if($metaTooltip) title="{{ $metaTooltip }}" @endif>{{ $meta }}</span>
         </span>
 
         <span class="ws-work-order-aside">

@@ -53,3 +53,5 @@ Thumbs.db
 # Homestead
 Homestead.json
 Homestead.yaml
+
+/storage/backups/

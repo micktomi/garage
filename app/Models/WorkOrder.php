@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\WorkOrderStatus;
+use App\Services\Aade\WorkOrderAadeSync;
 use Illuminate\Database\Eloquent\Model;
 
 class WorkOrder extends Model
@@ -86,6 +87,15 @@ class WorkOrder extends Model
 
             if (! $workOrder->in_shop) {
                 $workOrder->checked_out_at ??= $workOrder->checked_in_at;
+            }
+        });
+
+        // The vehicle is physically here only when in_shop actually ended up
+        // true (excludes seeded/imported records created already closed) —
+        // that is the real "entered the shop" signal, not creation itself.
+        static::created(function (WorkOrder $workOrder) {
+            if ($workOrder->in_shop) {
+                app(WorkOrderAadeSync::class)->handleCheckedIn($workOrder);
             }
         });
 

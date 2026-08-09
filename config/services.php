@@ -35,4 +35,18 @@ return [
         ],
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | ΑΑΔΕ Ψηφιακό Πελατολόγιο (garage-aade-bridge)
+    |--------------------------------------------------------------------------
+    |
+    | `branch` is the business's own registered myDATA installation number
+    | (§4.2.2 of the DCL spec) — a tenant-level constant, not derived from any
+    | WorkOrder/Vehicle field.
+    |
+    */
+    'aade' => [
+        'branch' => (int) env('AADE_BRANCH', 1),
+    ],
+
 ];

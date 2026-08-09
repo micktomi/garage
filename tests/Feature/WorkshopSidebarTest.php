@@ -72,7 +72,19 @@ class WorkshopSidebarTest extends TestCase
     {
         $layout = file_get_contents(resource_path('views/layouts/workshop.blade.php'));
 
-        $this->assertStringNotContainsString('.ws-header', $layout);
+        // The sidebar shell (not the old top-nav .ws-header layout) is the
+        // actual page structure: a flex .ws-shell root with the sidebar as
+        // a direct child, asserted positively rather than by checking the
+        // old class is absent (which would false-positive on any future,
+        // unrelated use of "header").
+        $this->assertMatchesRegularExpression(
+            '/\.ws-shell\s*\{[^}]*display:\s*flex;[^}]*\}/s',
+            $layout,
+        );
+        $this->assertMatchesRegularExpression(
+            '/<div class="ws-shell">.*?<x-workshop\.shell\.sidebar\s*\/>/s',
+            $layout,
+        );
         $this->assertStringContainsString('--ws-nav: #0D2A2F;', $layout);
         $this->assertStringContainsString('--ws-nav-active: #1D4046;', $layout);
 
@@ -88,7 +100,23 @@ class WorkshopSidebarTest extends TestCase
             '/\.ws-sidebar-item\[aria-current="page"\]\s*\{[^}]*color:\s*var\(--ws-primary-fg\);[^}]*background:\s*var\(--ws-nav-active\);[^}]*\}/s',
             $layout,
         );
-        $this->assertDoesNotMatchRegularExpression('/width:\s*(80|240)px;/', $layout);
+        // The sidebar has exactly two legitimate widths — 224px on desktop,
+        // 272px in the mobile slide-out drawer — asserted as an allow-list
+        // scoped to .ws-sidebar blocks, rather than a whole-file ban on the
+        // old removed 80px/240px breakpoint values (which could false-fail
+        // on any unrelated element that legitimately needs one of those
+        // widths for its own reasons).
+        preg_match_all('/\.ws-sidebar\s*\{([^}]*)\}/s', $layout, $sidebarBlocks);
+        $sidebarWidths = [];
+        foreach ($sidebarBlocks[1] as $block) {
+            if (preg_match('/width:\s*([\d.]+px)/', $block, $match)) {
+                $sidebarWidths[] = $match[1];
+            }
+        }
+        $this->assertNotEmpty($sidebarWidths);
+        foreach ($sidebarWidths as $width) {
+            $this->assertContains($width, ['224px', '272px'], "Unexpected .ws-sidebar width: {$width}");
+        }
         $this->assertDoesNotMatchRegularExpression(
             '/\.ws-sidebar(?:-item)?[^{]*\{[^}]*var\(--ws-primary\)/s',
             $layout,

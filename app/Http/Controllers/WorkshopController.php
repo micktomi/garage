@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Actions\CreateAppointmentAction;
 use App\Actions\CreateWorkOrderAction;
+use App\Enums\ClosureDocument;
+use App\Enums\NonIssueReason;
 use App\Enums\WorkOrderStatus;
 use App\Models\Appointment;
 use App\Models\Customer;
@@ -232,12 +234,22 @@ class WorkshopController extends Controller
 
     public function workOrdersUpdateStatus(Request $request, WorkOrder $workOrder)
     {
+        $completing = $request->input('status') === WorkOrderStatus::Completed->value;
+        $closureIsNone = $request->input('closure_document') === ClosureDocument::None->value;
+
         $validated = $request->validate([
             'status' => ['required', Rule::enum(WorkOrderStatus::class)],
+            'closure_document' => [Rule::requiredIf($completing), 'nullable', Rule::enum(ClosureDocument::class)],
+            'non_issue_reason' => [Rule::requiredIf($completing && $closureIsNone), 'nullable', Rule::enum(NonIssueReason::class)],
         ]);
 
         $status = WorkOrderStatus::from($validated['status']);
-        $workOrder->update(['status' => $status]);
+
+        $workOrder->update([
+            'status' => $status,
+            'closure_document' => $validated['closure_document'] ?? $workOrder->closure_document,
+            'non_issue_reason' => $validated['non_issue_reason'] ?? null,
+        ]);
 
         return redirect()
             ->route('workshop.work-orders.show', $workOrder)

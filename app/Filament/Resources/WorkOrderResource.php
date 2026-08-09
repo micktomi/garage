@@ -2,6 +2,8 @@
 
 namespace App\Filament\Resources;
 
+use App\Enums\ClosureDocument;
+use App\Enums\NonIssueReason;
 use App\Enums\WorkOrderStatus;
 use App\Filament\Resources\WorkOrderResource\Pages;
 use App\Models\Part;
@@ -221,7 +223,22 @@ class WorkOrderResource extends Resource
                             ->label('Κατάσταση')
                             ->options(WorkOrderStatus::options())
                             ->default(WorkOrderStatus::New->value)
-                            ->required(),
+                            ->required()
+                            ->reactive(),
+                        Forms\Components\Select::make('closure_document')
+                            ->label('Παραστατικό ολοκλήρωσης')
+                            ->options(ClosureDocument::options())
+                            ->default(ClosureDocument::RetailReceipt->value)
+                            ->reactive()
+                            ->visible(fn (Forms\Get $get) => $get('status') === WorkOrderStatus::Completed->value)
+                            ->required(fn (Forms\Get $get) => $get('status') === WorkOrderStatus::Completed->value),
+                        Forms\Components\Select::make('non_issue_reason')
+                            ->label('Αιτιολογία μη έκδοσης')
+                            ->options(NonIssueReason::options())
+                            ->visible(fn (Forms\Get $get) => $get('status') === WorkOrderStatus::Completed->value
+                                && $get('closure_document') === ClosureDocument::None->value)
+                            ->required(fn (Forms\Get $get) => $get('status') === WorkOrderStatus::Completed->value
+                                && $get('closure_document') === ClosureDocument::None->value),
                     ])->columns(2),
             ]);
     }

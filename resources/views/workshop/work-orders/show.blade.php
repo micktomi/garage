@@ -177,6 +177,42 @@
         opacity: 1;
     }
 
+    /* ── Closure fields (Completed transition only) ─────────────── */
+    .wos-status-form--completion {
+        padding: 10px;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        border: 1px solid var(--ws-border);
+        border-radius: 8px;
+        background: var(--ws-sunken);
+    }
+
+    .wos-closure-label {
+        color: var(--ws-text-muted);
+        font-family: var(--ws-font-sans);
+        font-size: 12px;
+        font-weight: 600;
+    }
+
+    .wos-closure-select {
+        width: 100%;
+        min-height: 38px;
+        padding: 6px 10px;
+        border: 1px solid var(--ws-border);
+        border-radius: 6px;
+        background: var(--ws-card);
+        color: var(--ws-text);
+        font-family: var(--ws-font-sans);
+        font-size: 13.5px;
+    }
+
+    .wos-status-form--completion .wos-status-btn {
+        border-color: transparent;
+        background: var(--ws-status-ready-bg);
+        color: var(--ws-status-ready-fg);
+    }
+
     /* ── Parts ───────────────────────────────────────────────── */
     .wos-parts-table,
     .wos-parts-table tbody,
@@ -484,6 +520,14 @@
             </div>
         @endif
 
+        @if($errors->any())
+            <div class="ws-feedback-error" role="alert">
+                @foreach($errors->all() as $error)
+                    <span>{{ $error }}</span>
+                @endforeach
+            </div>
+        @endif
+
         <a href="{{ route('workshop.work-orders.index') }}" class="ws-back-link">
             <svg aria-hidden="true" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5 8.25 12l7.5-7.5"/>
@@ -692,6 +736,41 @@
                                 >
                                     {{ $status->label() }}
                                 </span>
+                            @elseif($status === \App\Enums\WorkOrderStatus::Completed)
+                                <form method="POST" action="{{ route('workshop.work-orders.status', $workOrder) }}" class="wos-status-form wos-status-form--completion">
+                                    @csrf
+                                    @method('PATCH')
+                                    <input type="hidden" name="status" value="{{ $status->value }}">
+
+                                    <label class="wos-closure-label" for="wos-closure-document-{{ $workOrder->id }}">Παραστατικό</label>
+                                    <select
+                                        id="wos-closure-document-{{ $workOrder->id }}"
+                                        name="closure_document"
+                                        class="wos-closure-select"
+                                        onchange="document.getElementById('wos-non-issue-reason-{{ $workOrder->id }}').hidden = (this.value !== 'none')"
+                                    >
+                                        @foreach(\App\Enums\ClosureDocument::cases() as $option)
+                                            <option value="{{ $option->value }}" @selected($option === \App\Enums\ClosureDocument::RetailReceipt)>{{ $option->label() }}</option>
+                                        @endforeach
+                                    </select>
+
+                                    <div id="wos-non-issue-reason-{{ $workOrder->id }}" hidden>
+                                        <label class="wos-closure-label" for="wos-non-issue-reason-select-{{ $workOrder->id }}">Αιτιολογία μη έκδοσης</label>
+                                        <select
+                                            id="wos-non-issue-reason-select-{{ $workOrder->id }}"
+                                            name="non_issue_reason"
+                                            class="wos-closure-select"
+                                        >
+                                            @foreach(\App\Enums\NonIssueReason::cases() as $option)
+                                                <option value="{{ $option->value }}">{{ $option->label() }}</option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+
+                                    <button type="submit" class="wos-status-btn wos-status-btn--{{ $status->value }}">
+                                        {{ $status->label() }}
+                                    </button>
+                                </form>
                             @else
                                 <form method="POST" action="{{ route('workshop.work-orders.status', $workOrder) }}" class="wos-status-form">
                                     @csrf

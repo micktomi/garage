@@ -2,9 +2,12 @@
 
 namespace App\Models;
 
+use App\Enums\ClosureDocument;
+use App\Enums\NonIssueReason;
 use App\Enums\WorkOrderStatus;
 use App\Services\Aade\WorkOrderAadeSync;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Validation\ValidationException;
 
 class WorkOrder extends Model
 {
@@ -24,6 +27,8 @@ class WorkOrder extends Model
         'in_shop',
         'checked_in_at',
         'checked_out_at',
+        'closure_document',
+        'non_issue_reason',
     ];
 
     protected function casts(): array
@@ -34,6 +39,8 @@ class WorkOrder extends Model
             'in_shop' => 'boolean',
             'checked_in_at' => 'datetime',
             'checked_out_at' => 'datetime',
+            'closure_document' => ClosureDocument::class,
+            'non_issue_reason' => NonIssueReason::class,
         ];
     }
 
@@ -99,6 +106,36 @@ class WorkOrder extends Model
             }
         });
 
+        // non_issue_reason only means anything alongside closure_document=none
+        // (ΑΑΔΕ forbids sending it otherwise) — keep it null any other time
+        // regardless of which caller set closure_document.
+        static::saving(function (WorkOrder $workOrder) {
+            if ($workOrder->closure_document !== ClosureDocument::None) {
+                $workOrder->non_issue_reason = null;
+            }
+        });
+
+        // Completing a work order is what triggers the ΑΑΔΕ UpdateClient
+        // (entryCompletion=true) call, which requires knowing what document
+        // was issued — so it's a hard requirement here too, not just at the
+        // UI layer, and for both entry points (workshop controller +
+        // Filament) since both just call WorkOrder::update().
+        static::updating(function (WorkOrder $workOrder) {
+            if ($workOrder->isDirty('status') && $workOrder->status === WorkOrderStatus::Completed) {
+                if ($workOrder->closure_document === null) {
+                    throw ValidationException::withMessages([
+                        'closure_document' => 'Επιλέξτε παραστατικό ολοκλήρωσης πριν κλείσετε την εντολή.',
+                    ]);
+                }
+
+                if ($workOrder->closure_document === ClosureDocument::None && $workOrder->non_issue_reason === null) {
+                    throw ValidationException::withMessages([
+                        'non_issue_reason' => 'Επιλέξτε αιτιολογία μη έκδοσης παραστατικού.',
+                    ]);
+                }
+            }
+        });
+
         // Closing an order also ends the vehicle's stay, so the shop-floor
         // flag never outlives the work it describes.
         static::updating(function (WorkOrder $workOrder) {
@@ -119,6 +156,20 @@ class WorkOrder extends Model
                         $workOrderPart->part->increment('quantity', $workOrderPart->quantity);
                     }
                 }
+            }
+        });
+
+        // Only a genuine open -> Completed transition, never a re-save of an
+        // already-completed order (wasChanged('status') is false then, so
+        // this simply doesn't fire — no separate dedup logic needed here;
+        // OutboxManager::enqueue()'s own checksum check is the second layer).
+        static::updated(function (WorkOrder $workOrder) {
+            if (
+                $workOrder->wasChanged('status') &&
+                $workOrder->status === WorkOrderStatus::Completed &&
+                $workOrder->getRawOriginal('status') !== WorkOrderStatus::Completed->value
+            ) {
+                app(WorkOrderAadeSync::class)->handleCompleted($workOrder);
             }
         });
     }

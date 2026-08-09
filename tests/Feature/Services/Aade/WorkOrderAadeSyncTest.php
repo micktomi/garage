@@ -2,11 +2,13 @@
 
 namespace Tests\Feature\Services\Aade;
 
+use App\Enums\ClosureDocument;
 use App\Enums\WorkOrderStatus;
 use App\Models\Customer;
 use App\Models\Vehicle;
 use App\Models\WorkOrder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Log;
 use Micktomi\GarageAadeBridge\Outbox\Models\OutboxEntry;
 use Tests\TestCase;
 
@@ -68,6 +70,87 @@ class WorkOrderAadeSyncTest extends TestCase
             ->count();
 
         $this->assertSame(1, $entries);
+    }
+
+    public function test_completing_an_open_work_order_with_a_resolved_dcl_id_enqueues_exactly_one_update_client_entry(): void
+    {
+        $workOrder = $this->createWorkOrder(WorkOrderStatus::ReadyForPickup);
+        $this->markSendClientAsSent($workOrder, 100000000830764);
+
+        $workOrder->update(['status' => WorkOrderStatus::Completed, 'closure_document' => ClosureDocument::RetailReceipt]);
+
+        $updateEntries = OutboxEntry::query()
+            ->where('local_entity_type', 'work_order')
+            ->where('local_entity_id', (string) $workOrder->id)
+            ->where('operation', 'update_client')
+            ->get();
+
+        $this->assertCount(1, $updateEntries);
+        $this->assertSame('pending', $updateEntries->first()->status->value);
+        $this->assertSame(100000000830764, $updateEntries->first()->payload['initialDclId']);
+    }
+
+    public function test_resaving_an_already_completed_work_order_does_not_enqueue_a_second_update_client_entry(): void
+    {
+        $workOrder = $this->createWorkOrder(WorkOrderStatus::ReadyForPickup);
+        $this->markSendClientAsSent($workOrder, 100000000830764);
+
+        $workOrder->update(['status' => WorkOrderStatus::Completed, 'closure_document' => ClosureDocument::RetailReceipt]);
+        $workOrder->update(['work_performed' => 'Ολοκληρώθηκε ο έλεγχος.']);
+        $workOrder->update(['status' => WorkOrderStatus::Completed]);
+
+        $updateEntries = OutboxEntry::query()
+            ->where('local_entity_type', 'work_order')
+            ->where('local_entity_id', (string) $workOrder->id)
+            ->where('operation', 'update_client')
+            ->count();
+
+        $this->assertSame(1, $updateEntries);
+    }
+
+    public function test_completing_a_work_order_without_a_resolved_dcl_id_enqueues_nothing_and_logs_a_warning(): void
+    {
+        $workOrder = $this->createWorkOrder(WorkOrderStatus::ReadyForPickup);
+        // No markSendClientAsSent(): the checkpoint-4 SendClient entry created
+        // at checkin is still pending (never actually sent), so resolveDclId
+        // must come back null.
+
+        Log::spy();
+
+        $workOrder->update(['status' => WorkOrderStatus::Completed, 'closure_document' => ClosureDocument::RetailReceipt]);
+
+        $this->assertSame(WorkOrderStatus::Completed, $workOrder->fresh()->status);
+
+        $updateEntries = OutboxEntry::query()
+            ->where('local_entity_type', 'work_order')
+            ->where('local_entity_id', (string) $workOrder->id)
+            ->where('operation', 'update_client')
+            ->count();
+
+        $this->assertSame(0, $updateEntries);
+
+        Log::shouldHaveReceived('warning')
+            ->once()
+            ->withArgs(fn (string $message, array $context) => $context['work_order_id'] === $workOrder->id);
+    }
+
+    public function test_closure_validation_still_applies_when_a_dcl_id_is_resolved(): void
+    {
+        $workOrder = $this->createWorkOrder(WorkOrderStatus::ReadyForPickup);
+        $this->markSendClientAsSent($workOrder, 100000000830764);
+
+        $this->expectException(\Illuminate\Validation\ValidationException::class);
+
+        $workOrder->update(['status' => WorkOrderStatus::Completed]);
+    }
+
+    private function markSendClientAsSent(WorkOrder $workOrder, int $dclId): void
+    {
+        OutboxEntry::query()
+            ->where('local_entity_type', 'work_order')
+            ->where('local_entity_id', (string) $workOrder->id)
+            ->where('operation', 'send_client')
+            ->update(['status' => 'sent', 'dcl_id' => $dclId]);
     }
 
     private function createWorkOrder(WorkOrderStatus $status): WorkOrder

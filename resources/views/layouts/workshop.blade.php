@@ -1483,6 +1483,22 @@
             stroke-width: 2.2;
         }
 
+        .ws-feedback-error {
+            min-height: 48px;
+            margin-bottom: 18px;
+            padding: 12px 14px;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            border: 1px solid var(--ws-status-expired-fg);
+            border-radius: 10px;
+            background: var(--ws-status-expired-bg);
+            color: var(--ws-status-expired-fg);
+            font-family: var(--ws-font-sans);
+            font-size: 13px;
+            font-weight: 600;
+        }
+
         .ws-panel-head {
             min-height: 58px;
             padding: 15px 18px;

@@ -114,8 +114,27 @@ class WorkOrderCreateTest extends TestCase
 
         $view = file_get_contents(resource_path('views/workshop/work-orders/create.blade.php'));
         $this->assertStringContainsString('const maxRows = 8;', $view);
-        $this->assertStringNotContainsString('text-transform: uppercase', $view);
-        $this->assertDoesNotMatchRegularExpression('/letter-spacing\s*:/', $view);
+
+        // Section titles and part-row numbers use normal-case typography
+        // (not the small-caps/tracked-out style the redesign replaced) —
+        // asserted as the specific weight/color each one actually carries,
+        // scoped to its own declaration block so unrelated selectors
+        // elsewhere in the file (e.g. uppercase field labels) can't affect it.
+        $this->assertMatchesRegularExpression(
+            '/\.woc-form-section-title\s*\{[^}]*font-weight:\s*700;[^}]*\}/s',
+            $view,
+        );
+        preg_match('/\.woc-form-section-title\s*\{([^}]*)\}/s', $view, $sectionTitleBlock);
+        $this->assertStringNotContainsString('text-transform', $sectionTitleBlock[1] ?? '');
+        $this->assertStringNotContainsString('letter-spacing', $sectionTitleBlock[1] ?? '');
+
+        $this->assertMatchesRegularExpression(
+            '/\.woc-part-row-num\s*\{[^}]*font-weight:\s*500;[^}]*color:\s*var\(--ws-text-muted\);[^}]*\}/s',
+            $view,
+        );
+        preg_match('/\.woc-part-row-num\s*\{([^}]*)\}/s', $view, $partRowNumBlock);
+        $this->assertStringNotContainsString('text-transform', $partRowNumBlock[1] ?? '');
+        $this->assertStringNotContainsString('letter-spacing', $partRowNumBlock[1] ?? '');
     }
 
     public function test_create_form_uses_muted_destructive_actions_and_sticky_action_bar(): void

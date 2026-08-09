@@ -299,9 +299,18 @@ class WorkOrderStatusTest extends TestCase
             $this->assertSame($label, trim($nodes->item(0)->textContent));
         }
 
+        // Mobile labels are real DOM elements (asserted above via the
+        // wos-part-cell-label spans), not the old CSS-generated-content
+        // technique — checked directly on the rendered table's own td
+        // elements, rather than banning the raw strings anywhere in the
+        // whole view file.
+        $this->assertCount(
+            0,
+            $xpath->query('//table[contains(concat(" ", normalize-space(@class), " "), " wos-parts-table ")]//td[@data-label]'),
+        );
+
         $view = file_get_contents(resource_path('views/workshop/work-orders/show.blade.php'));
-        $this->assertStringNotContainsString('td::before', $view);
-        $this->assertStringNotContainsString('data-label=', $view);
+        $this->assertDoesNotMatchRegularExpression('/\.wos-parts-table\s+td::before/', $view);
     }
 
     public function test_blocking_reason_flag_and_route_are_removed(): void
@@ -326,7 +335,14 @@ class WorkOrderStatusTest extends TestCase
             '/@media\s*\(min-width:\s*1024px\)\s*\{.*?\.wos-parts-table\s*\{[^}]*display:\s*table;[^}]*\}.*?\.wos-parts-table thead\s*\{[^}]*display:\s*table-header-group;[^}]*\}.*?\.wos-parts-table td\s*\{[^}]*display:\s*table-cell;[^}]*\}/s',
             $view,
         );
-        $this->assertStringNotContainsString('@media (min-width: 768px)', $view);
+        // The old 768px breakpoint must not still be wrapping this table —
+        // scoped to .wos-parts-table specifically, not a whole-file ban on
+        // the breakpoint value (other, unrelated elements in this view
+        // legitimately use their own breakpoints, e.g. 600px/1180px above).
+        $this->assertDoesNotMatchRegularExpression(
+            '/@media\s*\(min-width:\s*768px\)\s*\{[^@]*\.wos-parts-table\b/s',
+            $view,
+        );
     }
 
     private function makeWorkOrder(WorkOrderStatus $status, string $plate = 'ΑΑΑ-0001'): WorkOrder

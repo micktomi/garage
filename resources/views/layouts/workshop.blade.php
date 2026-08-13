@@ -51,16 +51,28 @@
             /* Work-order statuses */
             --ws-status-new-bg: #E4F2EC;
             --ws-status-new-fg: #1E7A5C;
+            --ws-status-new-border: #B8DCCF;
             --ws-status-progress-bg: #E6EDFB;
             --ws-status-progress-fg: #2C5CC5;
+            --ws-status-progress-border: #BCCEF0;
             --ws-status-awaiting-bg: #FBF0DA;
             --ws-status-awaiting-fg: #7A4A08;
+            --ws-status-awaiting-border: #E8CA8E;
             --ws-status-ready-bg: #D9EDE2;
             --ws-status-ready-fg: #135C44;
+            --ws-status-ready-border: #A8D2BC;
             --ws-status-completed-bg: #EDF0EC;
             --ws-status-completed-fg: #4A6360;
+            --ws-status-completed-border: #D4DBD5;
             --ws-status-expired-bg: #FFF1EA;
             --ws-status-expired-fg: #B23A0F;
+            --ws-status-expired-border: #F2C2AC;
+
+            /* Dashboard signals */
+            --ws-stat-appointments-bg: #EDF8FC;
+            --ws-stat-appointments-fg: #08779B;
+            --ws-stat-appointments-border: #B7DFEB;
+            --ws-divider-soft: #E8ECE7;
 
             /* Compatibility aliases for the existing workshop detail forms. */
             --bg: var(--ws-page);
@@ -106,7 +118,7 @@
             /* Donor workshop paper: fine diagonal hatch plus a soft top-right lift. */
             background-color: var(--ws-page);
             background-image:
-                repeating-linear-gradient(135deg, rgb(13 42 47 / 2.2%) 0 1px, transparent 1px 9px),
+                repeating-linear-gradient(135deg, rgb(13 42 47 / 1.5%) 0 1px, transparent 1px 9px),
                 radial-gradient(1100px 520px at 78% -8%, rgb(255 255 255 / 90%), transparent 70%);
             background-attachment: fixed;
             color: var(--ws-text);
@@ -802,26 +814,31 @@
         }
 
         .ws-status-badge--new {
+            border: 1px solid var(--ws-status-new-border);
             background: var(--ws-status-new-bg);
             color: var(--ws-status-new-fg);
         }
 
         .ws-status-badge--in-progress {
+            border: 1px solid var(--ws-status-progress-border);
             background: var(--ws-status-progress-bg);
             color: var(--ws-status-progress-fg);
         }
 
         .ws-status-badge--awaiting-parts {
+            border: 1px solid var(--ws-status-awaiting-border);
             background: var(--ws-status-awaiting-bg);
             color: var(--ws-status-awaiting-fg);
         }
 
         .ws-status-badge--ready {
+            border: 1px solid var(--ws-status-ready-border);
             background: var(--ws-status-ready-bg);
             color: var(--ws-status-ready-fg);
         }
 
         .ws-status-badge--completed {
+            border: 1px solid var(--ws-status-completed-border);
             background: var(--ws-status-completed-bg);
             color: var(--ws-status-completed-fg);
         }
@@ -1028,14 +1045,16 @@
             gap: 14px;
         }
 
-        /* Donor metric cell: a left status rail, a quiet label, a large figure. */
+        /* Compact operational metric: semantic rail, icon and strong figure. */
         .ws-dashboard .ws-stat-card {
             position: relative;
             min-width: 0;
-            min-height: 92px;
-            padding: 16px 18px 15px;
-            justify-content: flex-start;
-            gap: 0;
+            min-height: 84px;
+            padding: 13px 16px;
+            display: grid;
+            grid-template-columns: 40px minmax(0, 1fr);
+            align-items: center;
+            gap: 13px;
             overflow: hidden;
             border: 1px solid var(--ws-border);
             border-radius: 10px;
@@ -1050,17 +1069,66 @@
             top: 0;
             bottom: 0;
             left: 0;
-            width: 3px;
-            background: var(--ws-border-hover);
+            width: 4px;
+            background: var(--ws-stat-accent, var(--ws-border-hover));
         }
 
         .ws-dashboard .ws-stat-card--alert::before {
             background: var(--ws-signal);
         }
 
+        .ws-dashboard .ws-stat-card--appointments {
+            --ws-stat-accent: var(--ws-stat-appointments-fg);
+            --ws-stat-border: var(--ws-stat-appointments-border);
+            --ws-stat-tint: var(--ws-stat-appointments-bg);
+            border-color: var(--ws-stat-border);
+            background: linear-gradient(120deg, var(--ws-stat-tint) 0%, var(--ws-card) 82%);
+        }
+
+        .ws-dashboard .ws-stat-card--kteo {
+            --ws-stat-accent: var(--ws-status-expired-fg);
+            --ws-stat-border: var(--ws-status-expired-border);
+            --ws-stat-tint: var(--ws-status-expired-bg);
+            border-color: var(--ws-stat-border);
+            background: linear-gradient(120deg, var(--ws-stat-tint) 0%, var(--ws-card) 82%);
+        }
+
+        .ws-dashboard .ws-stat-card--parts {
+            --ws-stat-accent: var(--ws-status-awaiting-fg);
+            --ws-stat-border: var(--ws-status-awaiting-border);
+            --ws-stat-tint: var(--ws-status-awaiting-bg);
+            border-color: var(--ws-stat-border);
+            background: linear-gradient(120deg, var(--ws-stat-tint) 0%, var(--ws-card) 82%);
+        }
+
         .ws-dashboard .ws-stat-card:hover {
-            border-color: var(--ws-border-hover);
+            border-color: var(--ws-stat-accent, var(--ws-border-hover));
             box-shadow: var(--shadow-md);
+        }
+
+        .ws-stat-icon {
+            width: 40px;
+            height: 40px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid var(--ws-stat-border, var(--ws-border));
+            border-radius: 10px;
+            background: rgb(255 255 255 / 78%);
+            color: var(--ws-stat-accent, var(--ws-text-muted));
+            box-shadow: 0 5px 14px -10px currentColor;
+        }
+
+        .ws-stat-icon svg {
+            width: 20px;
+            height: 20px;
+            stroke-width: 1.8;
+        }
+
+        .ws-stat-content {
+            min-width: 0;
+            display: flex;
+            flex-direction: column;
         }
 
         .ws-dashboard .ws-stat-label {
@@ -1074,16 +1142,16 @@
         }
 
         .ws-stat-row {
-            margin-top: 7px;
+            margin-top: 4px;
             display: flex;
             align-items: flex-end;
             gap: 10px;
         }
 
         .ws-dashboard .ws-stat-value {
-            color: var(--ws-text);
+            color: var(--ws-stat-accent, var(--ws-text));
             font-family: var(--ws-font-display);
-            font-size: 38px;
+            font-size: 34px;
             font-weight: 700;
             line-height: .95;
             font-variant-numeric: tabular-nums;
@@ -1149,24 +1217,53 @@
         }
 
         .ws-bay {
+            --ws-bay-accent: var(--ws-border-hover);
+            --ws-bay-border: var(--ws-border);
+            --ws-bay-tint: var(--ws-sunken);
             position: relative;
             min-width: 0;
             height: 100%;
-            padding: 15px 16px 14px;
+            padding: 14px 16px 14px;
             display: flex;
             flex-direction: column;
             align-items: flex-start;
             overflow: hidden;
-            border: 1px solid var(--ws-border);
+            border: 1px solid var(--ws-bay-border);
+            border-top: 3px solid var(--ws-bay-accent);
             border-radius: 10px;
-            background: var(--ws-card);
-            box-shadow: var(--shadow-sm);
-            transition: transform 160ms ease, box-shadow 160ms ease;
+            background: linear-gradient(155deg, var(--ws-bay-tint) 0%, var(--ws-card) 64%);
+            box-shadow: 0 2px 4px rgb(13 42 47 / 7%), 0 18px 36px -26px rgb(13 42 47 / 50%);
+            transition: transform 160ms ease, border-color 160ms ease, box-shadow 160ms ease;
+        }
+
+        .ws-bay[data-status="new"] {
+            --ws-bay-accent: var(--ws-status-new-fg);
+            --ws-bay-border: var(--ws-status-new-border);
+            --ws-bay-tint: var(--ws-status-new-bg);
+        }
+
+        .ws-bay[data-status="in_progress"] {
+            --ws-bay-accent: var(--ws-status-progress-fg);
+            --ws-bay-border: var(--ws-status-progress-border);
+            --ws-bay-tint: var(--ws-status-progress-bg);
+        }
+
+        .ws-bay[data-status="awaiting_parts"] {
+            --ws-bay-accent: var(--ws-status-awaiting-fg);
+            --ws-bay-border: var(--ws-status-awaiting-border);
+            --ws-bay-tint: var(--ws-status-awaiting-bg);
+        }
+
+        .ws-bay[data-status="ready"] {
+            --ws-bay-accent: var(--ws-status-ready-fg);
+            --ws-bay-border: var(--ws-status-ready-border);
+            --ws-bay-tint: var(--ws-status-ready-bg);
         }
 
         .ws-bay:hover {
+            border-color: var(--ws-bay-accent);
             transform: translateY(-2px);
-            box-shadow: var(--shadow-md);
+            box-shadow: 0 3px 7px rgb(13 42 47 / 10%), 0 22px 42px -25px rgb(13 42 47 / 55%);
         }
 
         .ws-bay:focus-visible {
@@ -1178,12 +1275,13 @@
             position: absolute;
             top: 8px;
             right: 12px;
-            color: rgb(13 42 47 / 5.5%);
+            color: var(--ws-bay-accent);
             font-family: var(--ws-font-display);
             font-size: 40px;
             font-weight: 700;
             line-height: 1;
             letter-spacing: -1px;
+            opacity: .12;
         }
 
         .ws-bay-vehicle {
@@ -1340,6 +1438,15 @@
             border-radius: 10px;
             background: var(--ws-card);
             box-shadow: var(--shadow-sm);
+        }
+
+        .ws-dashboard .ws-panel {
+            border-color: var(--ws-border-hover);
+            box-shadow: 0 2px 4px rgb(13 42 47 / 5%), 0 18px 40px -28px rgb(13 42 47 / 42%);
+        }
+
+        .ws-dashboard .ws-panel > .ws-section-header {
+            background: linear-gradient(90deg, #FAFCF9 0%, var(--ws-card) 72%);
         }
 
         /* Shared page-composition primitives for workshop screens. */
@@ -1951,8 +2058,9 @@
             grid-template-columns: minmax(0, 1fr);
             align-items: center;
             gap: 9px;
-            border-bottom: 1px solid var(--ws-border);
-            border-left: 3px solid transparent;
+            border-bottom: 1px solid var(--ws-divider-soft);
+            border-left: 4px solid transparent;
+            background: var(--ws-card);
             transition: background-color 140ms ease;
         }
 
@@ -1961,7 +2069,7 @@
         }
 
         .ws-recent-order:hover {
-            background: var(--ws-sunken);
+            background: #F7FAF7;
         }
 
         .ws-recent-order[data-status="new"] {
@@ -2039,6 +2147,7 @@
         /* Same badge shape as a status, in the neutral grey pair — it explains
            an absence from the strip above, it is not a state to act on. */
         .ws-shop-flag {
+            border: 1px solid var(--ws-status-completed-border);
             background: var(--ws-status-completed-bg);
             color: var(--ws-status-completed-fg);
         }
@@ -2152,6 +2261,7 @@
             min-height: 58px;
             padding: 13px 18px;
             gap: 13px;
+            border-bottom-color: var(--ws-divider-soft);
         }
 
         /* Lapsed and upcoming ΚΤΕΟ are different jobs; the sticky sub-header
@@ -2166,7 +2276,7 @@
             align-items: baseline;
             gap: 6px;
             border-top: 1px solid var(--ws-border);
-            background: var(--ws-card);
+            background: #FAFCF9;
             color: var(--ws-text-muted);
             font-family: var(--ws-font-display);
             font-size: 11.5px;
@@ -2181,6 +2291,7 @@
         }
 
         .ws-kteo-subhead--expired {
+            background: linear-gradient(90deg, var(--ws-status-expired-bg) 0%, var(--ws-card) 72%);
             color: var(--ws-signal);
         }
 
@@ -2200,8 +2311,8 @@
             }
 
             .ws-dashboard .ws-stat-card {
-                min-height: 100px;
-                padding: 16px 18px 15px;
+                min-height: 88px;
+                padding: 13px 17px;
             }
 
             .ws-recent-order {
@@ -2409,9 +2520,9 @@
             }
 
             .ws-dashboard .ws-stat-card {
-                min-height: 84px;
-                padding: 14px 15px 13px;
-                gap: 0;
+                min-height: 80px;
+                padding: 12px 14px;
+                gap: 12px;
             }
 
             .ws-dashboard .ws-stat-label {
@@ -2420,7 +2531,7 @@
             }
 
             .ws-dashboard .ws-stat-value {
-                font-size: 30px;
+                font-size: 31px;
             }
 
             .ws-dashboard-body {
@@ -2692,10 +2803,16 @@
             }
 
             .ws-dashboard .ws-stat-card {
-                min-height: 76px;
-                padding: 12px 13px 11px;
-                gap: 0;
+                min-height: 74px;
+                padding: 11px 13px;
+                grid-template-columns: 38px minmax(0, 1fr);
+                gap: 11px;
                 border-radius: 10px;
+            }
+
+            .ws-stat-icon {
+                width: 38px;
+                height: 38px;
             }
 
             .ws-dashboard .ws-stat-label {

@@ -68,9 +68,29 @@
         </section>
 
         <div class="ws-stat-grid" aria-label="Σύνοψη ημέρας">
-            <x-workshop.stat-card label="Ραντεβού σήμερα" :value="$todayAppointments" />
-            <x-workshop.stat-card label="ΚΤΕΟ έληξαν" :value="$expiredKteo" tone="danger" />
-            <x-workshop.stat-card label="Αναμονή ανταλλακτικών" :value="$awaitingParts" />
+            <x-workshop.stat-card label="Ραντεβού σήμερα" :value="$todayAppointments" class="ws-stat-card--appointments">
+                <x-slot:icon>
+                    <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3.75 8.25h16.5m-15 12h13.5a1.5 1.5 0 0 0 1.5-1.5v-13.5a1.5 1.5 0 0 0-1.5-1.5H5.25a1.5 1.5 0 0 0-1.5 1.5v13.5a1.5 1.5 0 0 0 1.5 1.5Zm6.75-8.625v3.75h3" />
+                    </svg>
+                </x-slot:icon>
+            </x-workshop.stat-card>
+
+            <x-workshop.stat-card label="ΚΤΕΟ έληξαν" :value="$expiredKteo" tone="danger" class="ws-stat-card--kteo">
+                <x-slot:icon>
+                    <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9.303 3.376c.866 1.5-.217 3.374-1.948 3.374H4.645c-1.73 0-2.813-1.874-1.948-3.374L10.053 3.38c.866-1.5 3.032-1.5 3.898 0l7.352 12.747ZM12 16.5h.008v.008H12V16.5Z" />
+                    </svg>
+                </x-slot:icon>
+            </x-workshop.stat-card>
+
+            <x-workshop.stat-card label="Αναμονή ανταλλακτικών" :value="$awaitingParts" class="ws-stat-card--parts">
+                <x-slot:icon>
+                    <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="m21 7.5-9-5.25L3 7.5m18 0-9 5.25M21 7.5v9l-9 5.25m0-9L3 7.5m9 5.25v9M3 7.5v9l9 5.25" />
+                    </svg>
+                </x-slot:icon>
+            </x-workshop.stat-card>
         </div>
 
         <div class="ws-dashboard-body">

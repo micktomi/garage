@@ -3,76 +3,115 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="theme-color" content="#E9EDE8">
+    <meta name="theme-color" content="#F7F4F0">
     <title>@yield('title', 'Συνεργείο')</title>
     <style>
-        :root {
-            /* Surfaces */
-            --ws-page: #E9EDE8;
-            --ws-card: #FFFFFF;
-            --ws-sunken: #F6F9F5;
+        /* Self-hosted (not a live Google Fonts request) — Geologica, confirmed
+           full Greek-glyph coverage. One variable file per subset, weight
+           700–900 in each, so every display use pulls from the same 3 files. */
+        @font-face {
+            font-family: 'Geologica';
+            font-style: normal;
+            font-weight: 700 900;
+            font-display: swap;
+            src: url('/fonts/geologica/Geologica-greek.woff2') format('woff2');
+            unicode-range: U+0370-0377, U+037A-037F, U+0384-038A, U+038C, U+038E-03A1, U+03A3-03FF;
+        }
+        @font-face {
+            font-family: 'Geologica';
+            font-style: normal;
+            font-weight: 700 900;
+            font-display: swap;
+            src: url('/fonts/geologica/Geologica-latin-ext.woff2') format('woff2');
+            unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+        }
+        @font-face {
+            font-family: 'Geologica';
+            font-style: normal;
+            font-weight: 700 900;
+            font-display: swap;
+            src: url('/fonts/geologica/Geologica-latin.woff2') format('woff2');
+            unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+        }
 
-            /* Text */
-            --ws-text: #0D2A2F;
-            --ws-text-muted: #4A6360;
-            --ws-text-faint: #7B918D;
+        :root {
+            /* Surfaces — warm neutral canvas, not the old sage/teal tint. */
+            --ws-page: #F7F4F0;
+            --ws-card: #FFFFFF;
+            --ws-sunken: #F0ECE6;
+
+            /* Text — warm ink, not teal-black. */
+            --ws-text: #231D18;
+            --ws-text-muted: #6B6156;
+            --ws-text-faint: #8C8072;
 
             /* Lines */
-            --ws-border: #DBE1DA;
-            --ws-border-hover: #C4CFC5;
+            --ws-border: #E4DED5;
+            --ws-border-hover: #D3CABB;
 
-            /* Sidebar */
-            --ws-nav: #0D2A2F;
-            --ws-nav-hover: #17383D;
-            --ws-nav-active: #1D4046;
-            --ws-nav-accent: #FF5A1F;
-            --ws-nav-text: #B9CBC7;
+            /* Sidebar — warm charcoal, not teal-black. */
+            --ws-nav: #221C17;
+            --ws-nav-hover: #2F2822;
+            --ws-nav-active: #3A3128;
+            --ws-nav-accent: #FF6B3D;
+            --ws-nav-text: #C9C0B4;
             --ws-nav-text-hi: #FFFFFF;
-            --ws-nav-divider: #244A4F;
+            --ws-nav-divider: #3A3128;
 
-            /* Donor primary action: the deep ink button, not a coloured accent. */
-            --ws-primary: #0D2A2F;
-            --ws-primary-hover: #14383E;
+            /* Primary — «Κεραμιδί»: the bold warm brand accent. Buttons, links,
+               focus rings and the sidebar mark all read from this one colour. */
+            --ws-primary: #C43813;
+            --ws-primary-hover: #A62E0E;
             --ws-primary-fg: #FFFFFF;
 
-            /* Signal is reserved for attention, never for ordinary actions. */
-            --ws-signal: #FF5A1F;
+            /* Secondary — «Electric Blue»: the cool contrast accent. */
+            --ws-secondary: #1554F0;
+            --ws-secondary-hover: #0C3FC2;
+            --ws-secondary-fg: #FFFFFF;
 
-            /* Greek registration plate band. */
+            /* Signal is a dedicated danger red, decoupled from the brand accent
+               so an alert never gets mistaken for an ordinary action. */
+            --ws-signal: #C22412;
+
+            /* Greek registration plate band — real-world EU colours, untouched. */
             --ws-plate-band: #0B3AA8;
             --ws-plate-band-fg: #FFD200;
 
-            /* Explicit Greek-capable system stacks — no webfont requests. */
+            /* Explicit Greek-capable stacks. Geologica is self-hosted (see
+               @font-face above); the system stack is the fallback if it
+               fails to load. Body/UI text stays on the plain system stack. */
             --ws-font-sans: ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Noto Sans", Arial, sans-serif;
-            --ws-font-display: "Roboto Condensed", "Liberation Sans Narrow", "Arial Narrow", "Noto Sans", ui-sans-serif, system-ui, sans-serif;
+            --ws-font-display: "Geologica", "Roboto Condensed", "Liberation Sans Narrow", "Arial Narrow", "Noto Sans", ui-sans-serif, system-ui, sans-serif;
             --ws-font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Noto Sans Mono", monospace;
-            --ws-font-serif: Georgia, "Times New Roman", "Noto Serif", serif;
+            --ws-font-serif: "Geologica", "Roboto Condensed", "Liberation Sans Narrow", "Arial Narrow", "Noto Sans", ui-sans-serif, system-ui, sans-serif;
 
-            /* Work-order statuses */
-            --ws-status-new-bg: #E4F2EC;
-            --ws-status-new-fg: #1E7A5C;
-            --ws-status-new-border: #B8DCCF;
-            --ws-status-progress-bg: #E6EDFB;
-            --ws-status-progress-fg: #2C5CC5;
-            --ws-status-progress-border: #BCCEF0;
-            --ws-status-awaiting-bg: #FBF0DA;
-            --ws-status-awaiting-fg: #7A4A08;
-            --ws-status-awaiting-border: #E8CA8E;
-            --ws-status-ready-bg: #D9EDE2;
-            --ws-status-ready-fg: #135C44;
-            --ws-status-ready-border: #A8D2BC;
-            --ws-status-completed-bg: #EDF0EC;
-            --ws-status-completed-fg: #4A6360;
-            --ws-status-completed-border: #D4DBD5;
-            --ws-status-expired-bg: #FFF1EA;
-            --ws-status-expired-fg: #B23A0F;
-            --ws-status-expired-border: #F2C2AC;
+            /* Work-order statuses — six genuinely distinct hues, not shades of
+               one tone (the old palette used two different greens for "new"
+               and "ready"). */
+            --ws-status-new-bg: #E3EDFF;
+            --ws-status-new-fg: #1449C7;
+            --ws-status-new-border: #B9CDFB;
+            --ws-status-progress-bg: #F1E7FB;
+            --ws-status-progress-fg: #7A1FB8;
+            --ws-status-progress-border: #DAC0F0;
+            --ws-status-awaiting-bg: #FFF1D2;
+            --ws-status-awaiting-fg: #8A5A00;
+            --ws-status-awaiting-border: #F0D28C;
+            --ws-status-ready-bg: #DDF5E4;
+            --ws-status-ready-fg: #0E7A3E;
+            --ws-status-ready-border: #A9E0BE;
+            --ws-status-completed-bg: #EDEBE6;
+            --ws-status-completed-fg: #5B564C;
+            --ws-status-completed-border: #D6D0C5;
+            --ws-status-expired-bg: #FCE1DD;
+            --ws-status-expired-fg: #C22412;
+            --ws-status-expired-border: #F2B9AE;
 
-            /* Dashboard signals */
-            --ws-stat-appointments-bg: #EDF8FC;
-            --ws-stat-appointments-fg: #08779B;
-            --ws-stat-appointments-border: #B7DFEB;
-            --ws-divider-soft: #E8ECE7;
+            /* Dashboard signals — appointments card shares the secondary blue. */
+            --ws-stat-appointments-bg: #E3EDFF;
+            --ws-stat-appointments-fg: #1554F0;
+            --ws-stat-appointments-border: #B9CDFB;
+            --ws-divider-soft: #EDE7DD;
 
             /* Compatibility aliases for the existing workshop detail forms. */
             --bg: var(--ws-page);
@@ -81,8 +120,8 @@
             --surface-3: var(--ws-sunken);
             --border: var(--ws-border);
             --border-soft: var(--ws-border);
-            --accent: var(--ws-text);
-            --accent-dim: var(--ws-sunken);
+            --accent: var(--ws-primary);
+            --accent-dim: rgba(196, 56, 19, 0.15);
             --accent-glow: transparent;
             --text: var(--ws-text);
             --text-muted: var(--ws-text-muted);
@@ -98,8 +137,8 @@
             --radius-xs: 8px;
             --header-h: 56px;
             --nav-h: 0px;
-            --shadow-sm: 0 1px 2px rgb(13 42 47 / 5%), 0 10px 28px -18px rgb(13 42 47 / 30%);
-            --shadow-md: 0 2px 4px rgb(13 42 47 / 6%), 0 18px 40px -22px rgb(13 42 47 / 40%);
+            --shadow-sm: 0 1px 2px rgb(35 29 24 / 5%), 0 10px 28px -18px rgb(35 29 24 / 30%);
+            --shadow-md: 0 2px 4px rgb(35 29 24 / 6%), 0 18px 40px -22px rgb(35 29 24 / 40%);
             --highlight: none;
         }
 
@@ -118,7 +157,7 @@
             /* Donor workshop paper: fine diagonal hatch plus a soft top-right lift. */
             background-color: var(--ws-page);
             background-image:
-                repeating-linear-gradient(135deg, rgb(13 42 47 / 1.5%) 0 1px, transparent 1px 9px),
+                repeating-linear-gradient(135deg, rgb(35 29 24 / 1.5%) 0 1px, transparent 1px 9px),
                 radial-gradient(1100px 520px at 78% -8%, rgb(255 255 255 / 90%), transparent 70%);
             background-attachment: fixed;
             color: var(--ws-text);
@@ -484,9 +523,9 @@
         }
 
         .ws-search-input:focus {
-            border-color: var(--ws-text);
+            border-color: var(--ws-primary);
             outline: none;
-            box-shadow: 0 0 0 3px rgb(13 42 47 / 10%);
+            box-shadow: 0 0 0 3px rgba(196, 56, 19, 0.12);
         }
 
         .ws-primary-action {
@@ -1008,8 +1047,8 @@
             height: 7px;
             flex: 0 0 7px;
             border-radius: 999px;
-            background: var(--ws-status-new-fg);
-            box-shadow: 0 0 0 3px rgb(30 122 92 / 15%);
+            background: var(--ws-status-ready-fg);
+            box-shadow: 0 0 0 3px rgba(14, 122, 62, 0.15);
         }
 
         .ws-dashboard .ws-dashboard-controls {
@@ -1232,7 +1271,7 @@
             border-top: 3px solid var(--ws-bay-accent);
             border-radius: 10px;
             background: linear-gradient(155deg, var(--ws-bay-tint) 0%, var(--ws-card) 64%);
-            box-shadow: 0 2px 4px rgb(13 42 47 / 7%), 0 18px 36px -26px rgb(13 42 47 / 50%);
+            box-shadow: 0 2px 4px rgb(35 29 24 / 7%), 0 18px 36px -26px rgb(35 29 24 / 50%);
             transition: transform 160ms ease, border-color 160ms ease, box-shadow 160ms ease;
         }
 
@@ -1263,7 +1302,7 @@
         .ws-bay:hover {
             border-color: var(--ws-bay-accent);
             transform: translateY(-2px);
-            box-shadow: 0 3px 7px rgb(13 42 47 / 10%), 0 22px 42px -25px rgb(13 42 47 / 55%);
+            box-shadow: 0 3px 7px rgb(35 29 24 / 10%), 0 22px 42px -25px rgb(35 29 24 / 55%);
         }
 
         .ws-bay:focus-visible {
@@ -1322,7 +1361,7 @@
         .ws-bay-rail-step {
             height: 4px;
             border-radius: 99px;
-            background: #E7EBE6;
+            background: #E6DFD3;
         }
 
         .ws-bay[data-status="new"] .ws-bay-rail-step.is-filled {
@@ -1442,11 +1481,11 @@
 
         .ws-dashboard .ws-panel {
             border-color: var(--ws-border-hover);
-            box-shadow: 0 2px 4px rgb(13 42 47 / 5%), 0 18px 40px -28px rgb(13 42 47 / 42%);
+            box-shadow: 0 2px 4px rgb(35 29 24 / 5%), 0 18px 40px -28px rgb(35 29 24 / 42%);
         }
 
         .ws-dashboard .ws-panel > .ws-section-header {
-            background: linear-gradient(90deg, #FAFCF9 0%, var(--ws-card) 72%);
+            background: linear-gradient(90deg, #FBF9F5 0%, var(--ws-card) 72%);
         }
 
         /* Shared page-composition primitives for workshop screens. */
@@ -1588,6 +1627,40 @@
             height: 17px;
             flex: 0 0 17px;
             stroke-width: 2.2;
+        }
+
+        /* Ίδια γλώσσα με τα feedback banners, αλλά μόνιμο state του
+           πίνακα (όχι flash message): εμφανίζεται όσο υπάρχει εκκρεμότητα. */
+        .ws-aade-alert {
+            margin-bottom: 18px;
+            padding: 12px 14px;
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            border: 1px solid var(--ws-status-expired-fg);
+            border-radius: 10px;
+            background: var(--ws-status-expired-bg);
+            color: var(--ws-status-expired-fg);
+            font-family: var(--ws-font-sans);
+            font-size: 13px;
+        }
+
+        .ws-aade-alert svg {
+            width: 17px;
+            height: 17px;
+            flex: 0 0 17px;
+            margin-top: 1px;
+            stroke-width: 2.2;
+        }
+
+        .ws-aade-alert-body {
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+        }
+
+        .ws-aade-alert-body b {
+            font-weight: 700;
         }
 
         .ws-feedback-error {
@@ -2069,7 +2142,7 @@
         }
 
         .ws-recent-order:hover {
-            background: #F7FAF7;
+            background: #FAF7F3;
         }
 
         .ws-recent-order[data-status="new"] {
@@ -2225,7 +2298,7 @@
             align-items: center;
             justify-content: center;
             border-radius: 9px;
-            background: #EEF3ED;
+            background: #F1ECE4;
             color: var(--ws-text);
         }
 
@@ -2276,7 +2349,7 @@
             align-items: baseline;
             gap: 6px;
             border-top: 1px solid var(--ws-border);
-            background: #FAFCF9;
+            background: #FBF9F5;
             color: var(--ws-text-muted);
             font-family: var(--ws-font-display);
             font-size: 11.5px;
@@ -2569,7 +2642,7 @@
             }
 
             :root {
-                --ws-page: #E9EDE8;
+                --ws-page: #F7F4F0;
             }
 
             .ws-mobile-header {
@@ -2670,7 +2743,7 @@
                 border: 0;
                 border-radius: 12px;
                 background: transparent;
-                color: #4A6360;
+                color: var(--ws-text-muted);
                 font-family: var(--ws-font-sans);
                 font-size: 9px;
                 font-weight: 600;
@@ -2681,7 +2754,7 @@
 
             .ws-mobile-bottom-item:hover,
             .ws-mobile-bottom-item[aria-current="page"] {
-                background: #EEF3ED;
+                background: #F1ECE4;
                 color: var(--ws-primary);
             }
 
@@ -2725,7 +2798,7 @@
                 border-radius: 999px;
                 background: var(--ws-primary);
                 color: var(--ws-primary-fg);
-                box-shadow: 0 6px 16px rgb(21 93 252 / 24%);
+                box-shadow: 0 6px 16px rgb(196 56 19 / 24%);
             }
 
             .ws-mobile-bottom-item--create .ws-mobile-bottom-icon svg {

@@ -521,11 +521,11 @@ class WorkshopDashboardTest extends TestCase
     {
         $layout = file_get_contents(resource_path('views/layouts/workshop.blade.php'));
 
-        $this->assertStringContainsString('--ws-page: #E9EDE8;', $layout);
-        $this->assertStringContainsString('--ws-nav: #0D2A2F;', $layout);
-        $this->assertStringContainsString('--ws-nav-active: #1D4046;', $layout);
-        $this->assertStringContainsString('--ws-primary: #0D2A2F;', $layout);
-        $this->assertStringContainsString('--ws-signal: #FF5A1F;', $layout);
+        $this->assertStringContainsString('--ws-page: #F7F4F0;', $layout);
+        $this->assertStringContainsString('--ws-nav: #221C17;', $layout);
+        $this->assertStringContainsString('--ws-nav-active: #3A3128;', $layout);
+        $this->assertStringContainsString('--ws-primary: #C43813;', $layout);
+        $this->assertStringContainsString('--ws-signal: #C22412;', $layout);
         $this->assertStringContainsString('--ws-plate-band: #0B3AA8;', $layout);
         $this->assertStringContainsString('--ws-font-sans:', $layout);
         $this->assertStringContainsString('--ws-font-display:', $layout);

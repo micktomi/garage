@@ -50,12 +50,12 @@ class WorkshopMobileDrawerTest extends TestCase
         $this->assertSame('0', $bottomNav['bottom'] ?? null);
         $this->assertSame('repeat(5, minmax(0, 1fr))', $bottomNav['grid-template-columns'] ?? null);
         $bottomItem = $this->styles($css, '.ws-mobile-bottom-item', self::MOBILE);
-        $this->assertSame('#4A6360', $bottomItem['color'] ?? null);
+        $this->assertSame('var(--ws-text-muted)', $bottomItem['color'] ?? null);
         $activeBottomItem = $this->styles($css, '.ws-mobile-bottom-item[aria-current="page"]', self::MOBILE);
-        $this->assertSame('#EEF3ED', $activeBottomItem['background'] ?? null);
+        $this->assertSame('#F1ECE4', $activeBottomItem['background'] ?? null);
         $this->assertSame('var(--ws-primary)', $activeBottomItem['color'] ?? null);
         $tokens = $this->styles($css, ':root', self::MOBILE);
-        $this->assertSame('#E9EDE8', $tokens['--ws-page'] ?? null);
+        $this->assertSame('#F7F4F0', $tokens['--ws-page'] ?? null);
         $this->assertSame('#FFFFFF', $tokens['--ws-card'] ?? null);
         $this->assertSame('var(--ws-card)', $this->styles($css, '.ws-dashboard .ws-stat-card', self::MOBILE)['background'] ?? null);
         $this->assertSame('none', $this->styles($css, '.ws-system-status', self::MOBILE)['display'] ?? null);
@@ -108,7 +108,7 @@ class WorkshopMobileDrawerTest extends TestCase
 
             $this->assertSame('inline-flex', $this->styles($css, '.ws-system-status', $viewport)['display'] ?? null);
             $this->assertArrayNotHasKey('display', $this->styles($css, '.ws-dashboard-subtitle-prefix', $viewport));
-            $this->assertSame('#E9EDE8', $this->styles($css, ':root', $viewport)['--ws-page'] ?? null);
+            $this->assertSame('#F7F4F0', $this->styles($css, ':root', $viewport)['--ws-page'] ?? null);
             $this->assertSame('#FFFFFF', $this->styles($css, ':root', $viewport)['--ws-card'] ?? null);
             $this->assertSame('uppercase', $this->styles($css, '.ws-dashboard .ws-stat-label', $viewport)['text-transform'] ?? null);
             $this->assertSame('uppercase', $this->styles($css, '.ws-dashboard .ws-status-badge', $viewport)['text-transform'] ?? null);

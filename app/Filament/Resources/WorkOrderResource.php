@@ -16,6 +16,7 @@ use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Facades\Gate;
 
 class WorkOrderResource extends Resource
 {
@@ -33,6 +34,12 @@ class WorkOrderResource extends Resource
     {
         return $form
             ->schema([
+                // Optimistic concurrency token. Root level on purpose: the
+                // page's stale check reads $this->data['lock_version'], and
+                // the model never lists it as fillable, so it can travel
+                // through the form without being writable.
+                Forms\Components\Hidden::make('lock_version'),
+
                 Forms\Components\Section::make('Πληροφορίες Πελάτη & Οχήματος')
                     ->schema([
                         Forms\Components\Select::make('customer_id')
@@ -157,7 +164,8 @@ class WorkOrderResource extends Resource
                                     ->label('Κόστος αγοράς')
                                     ->numeric()
                                     ->prefix('€')
-                                    ->nullable(),
+                                    ->nullable()
+                                    ->disabled(fn (): bool => Gate::denies('administer-pricing')),
                                 Forms\Components\TextInput::make('unit_price')
                                     ->label('Τιμή πώλησης')
                                     ->numeric()

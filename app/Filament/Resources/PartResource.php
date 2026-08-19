@@ -12,6 +12,7 @@ use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
+use Illuminate\Support\Facades\Gate;
 
 class PartResource extends Resource
 {
@@ -45,16 +46,22 @@ class PartResource extends Resource
                     ->numeric()
                     ->default(0)
                     ->required(),
+                // Visible to everyone, writable by the owner: the counter
+                // needs to read a price, it does not set one. Filament does
+                // not dehydrate disabled fields, so a tampered Livewire
+                // payload cannot smuggle a value past this either.
                 Forms\Components\TextInput::make('purchase_price')
                     ->label('Τιμή αγοράς')
                     ->numeric()
                     ->prefix('€')
-                    ->default(0),
+                    ->default(0)
+                    ->disabled(fn (): bool => Gate::denies('administer-pricing')),
                 Forms\Components\TextInput::make('sale_price')
                     ->label('Τιμή πώλησης')
                     ->numeric()
                     ->prefix('€')
-                    ->default(0),
+                    ->default(0)
+                    ->disabled(fn (): bool => Gate::denies('administer-pricing')),
             ]);
     }
 

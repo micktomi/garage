@@ -104,6 +104,14 @@
         display: contents;
     }
 
+    .wos-status-locked {
+        margin: 2px 0 0;
+        color: var(--ws-text-muted);
+        font-family: var(--ws-font-sans);
+        font-size: 12px;
+        line-height: 1.5;
+    }
+
     .wos-status-btn {
         width: 100%;
         min-height: 42px;
@@ -727,6 +735,18 @@
                         <h2 id="wos-status-title" class="ws-panel-title">Αλλαγή κατάστασης</h2>
                     </div>
                     <div class="wos-status-body">
+                        @cannot('amendCompleted', $workOrder)
+                            {{-- Ο server απαντά ούτως ή άλλως 403 (WorkOrderPolicy::amendCompleted).
+                                 Εδώ απλώς δεν προσφέρονται κουμπιά που οδηγούν σε αδιέξοδο. --}}
+                            <span
+                                class="wos-status-btn wos-status-btn--{{ $workOrder->status->value }} is-current"
+                                aria-current="true"
+                                aria-label="Τρέχουσα κατάσταση: {{ $workOrder->status->label() }}"
+                            >
+                                {{ $workOrder->status->label() }}
+                            </span>
+                            <p class="wos-status-locked">Η εντολή έχει δηλωθεί στην ΑΑΔΕ. Η τροποποίησή της γίνεται μόνο από τον ιδιοκτήτη.</p>
+                        @else
                         @foreach($statusOptions as $status)
                             @if($status === $workOrder->status)
                                 <span
@@ -740,6 +760,7 @@
                                 <form method="POST" action="{{ route('workshop.work-orders.status', $workOrder) }}" class="wos-status-form wos-status-form--completion">
                                     @csrf
                                     @method('PATCH')
+                                    <input type="hidden" name="lock_version" value="{{ $workOrder->lock_version }}">
                                     <input type="hidden" name="status" value="{{ $status->value }}">
 
                                     <label class="wos-closure-label" for="wos-closure-document-{{ $workOrder->id }}">Παραστατικό</label>
@@ -756,11 +777,21 @@
 
                                     <div id="wos-non-issue-reason-{{ $workOrder->id }}" hidden>
                                         <label class="wos-closure-label" for="wos-non-issue-reason-select-{{ $workOrder->id }}">Αιτιολογία μη έκδοσης</label>
+                                        {{-- Το κενό option είναι επιλεγμένο εξ ορισμού για δύο
+                                             λόγους: όσο το παραστατικό δεν είναι «Χωρίς
+                                             παραστατικό» το control υποβάλλει κενή τιμή αντί για
+                                             αυθαίρετη φορολογική αιτιολογία (το `hidden` κρύβει,
+                                             δεν εμποδίζει την υποβολή), και όταν είναι, η
+                                             αιτιολογία επιλέγεται ρητά αντί να προεπιλέγεται.
+                                             Σκόπιμα HTML και όχι `disabled` μέσω του onchange: θα
+                                             έκανε την ολοκλήρωση χωρίς παραστατικό να εξαρτάται
+                                             από το να τρέξει το script. --}}
                                         <select
                                             id="wos-non-issue-reason-select-{{ $workOrder->id }}"
                                             name="non_issue_reason"
                                             class="wos-closure-select"
                                         >
+                                            <option value="" selected>Επιλέξτε αιτιολογία…</option>
                                             @foreach(\App\Enums\NonIssueReason::cases() as $option)
                                                 <option value="{{ $option->value }}">{{ $option->label() }}</option>
                                             @endforeach
@@ -775,6 +806,7 @@
                                 <form method="POST" action="{{ route('workshop.work-orders.status', $workOrder) }}" class="wos-status-form">
                                     @csrf
                                     @method('PATCH')
+                                    <input type="hidden" name="lock_version" value="{{ $workOrder->lock_version }}">
                                     <input type="hidden" name="status" value="{{ $status->value }}">
                                     <button type="submit" class="wos-status-btn wos-status-btn--{{ $status->value }}">
                                         {{ $status->label() }}
@@ -782,6 +814,7 @@
                                 </form>
                             @endif
                         @endforeach
+                        @endcannot
                     </div>
                 </section>
 

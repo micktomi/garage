@@ -21,6 +21,7 @@ class CreateWorkOrderAction
         $this->authorize($actor);
 
         $validated = Validator::make($data, [
+            'idempotency_key' => ['nullable', 'string', 'max:64'],
             'customer_id' => ['required', 'integer', 'exists:customers,id'],
             'vehicle_id' => [
                 'required',
@@ -42,6 +43,7 @@ class CreateWorkOrderAction
         return DB::transaction(function () use ($validated, $actor, $source): WorkOrder {
             $laborCost = (float) ($validated['labor_cost'] ?? 0);
             $workOrder = WorkOrder::create([
+                'idempotency_key' => $validated['idempotency_key'] ?? null,
                 'customer_id' => $validated['customer_id'],
                 'vehicle_id' => $validated['vehicle_id'],
                 'problem_description' => $validated['problem_description'],

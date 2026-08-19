@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Validation\ValidationException;
 
 class WorkOrderPart extends Model
 {
@@ -38,11 +39,39 @@ class WorkOrderPart extends Model
         return $this->description ?? '-';
     }
 
+    /**
+     * Stock consumption as a single conditional UPDATE: the "is there enough"
+     * check and the decrement are one statement, so two rows of the same part
+     * — whether in one order, in two browser tabs, or in two requests — can
+     * never both pass. Neither UI's own per-row form rule can see the other
+     * consumption, which is why this lives here rather than in a controller.
+     */
+    private static function consumeStock(Part $part, float $quantity): void
+    {
+        if ($quantity <= 0) {
+            // Returning stock, not consuming it — no availability to check.
+            $part->decrement('quantity', $quantity);
+
+            return;
+        }
+
+        $consumed = Part::query()
+            ->whereKey($part->getKey())
+            ->where('quantity', '>=', $quantity)
+            ->decrement('quantity', $quantity);
+
+        if ($consumed === 0) {
+            throw ValidationException::withMessages([
+                'quantity' => 'Ανεπαρκές απόθεμα. Διαθέσιμο: '.$part->fresh()?->quantity,
+            ]);
+        }
+    }
+
     protected static function booted()
     {
         static::created(function ($workOrderPart) {
             if ($workOrderPart->source === 'from_stock' && $workOrderPart->part_id) {
-                $workOrderPart->part->decrement('quantity', $workOrderPart->quantity);
+                self::consumeStock($workOrderPart->part, $workOrderPart->quantity);
             }
             $workOrderPart->workOrder->calculatePartsCost();
         });
@@ -56,11 +85,11 @@ class WorkOrderPart extends Model
                     if ($oldPart) {
                         $oldPart->increment('quantity', $oldQuantity);
                     }
-                    $workOrderPart->part->decrement('quantity', $workOrderPart->quantity);
+                    self::consumeStock($workOrderPart->part, $workOrderPart->quantity);
                 } else {
                     $oldQuantity = $workOrderPart->getOriginal('quantity');
                     $diff = $workOrderPart->quantity - $oldQuantity;
-                    $workOrderPart->part->decrement('quantity', $diff);
+                    self::consumeStock($workOrderPart->part, $diff);
                 }
             }
             $workOrderPart->workOrder->calculatePartsCost();

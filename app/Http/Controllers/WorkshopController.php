@@ -13,14 +13,17 @@ use App\Models\Part;
 use App\Models\Vehicle;
 use App\Models\VehicleModel;
 use App\Models\WorkOrder;
+use App\Support\Aade\OutboxHealth;
+use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 
 class WorkshopController extends Controller
 {
-    public function dashboard()
+    public function dashboard(OutboxHealth $outboxHealth)
     {
         $today = Carbon::today();
         $kteoHorizon = $today->copy()->addDays(30);
@@ -66,6 +69,11 @@ class WorkshopController extends Controller
             ->take(5)
             ->get();
 
+        // Stuck ΑΑΔΕ entries surface here as well as on the Filament
+        // dashboard, because this is the page the shop actually keeps open.
+        // Counts only — the decision to resend is never a dashboard button.
+        $aadeAlerts = $outboxHealth->counts();
+
         $todayLabel = Str::ucfirst($today->locale('el')->translatedFormat('l, j F Y'));
 
         return view('workshop.index', compact(
@@ -79,6 +87,7 @@ class WorkshopController extends Controller
             'expiredKteoVehicles',
             'expiringKteo',
             'expiringKteoVehicles',
+            'aadeAlerts',
             'todayLabel',
         ));
     }
@@ -164,6 +173,7 @@ class WorkshopController extends Controller
     public function workOrdersStore(Request $request, CreateWorkOrderAction $createWorkOrder)
     {
         $validated = $request->validate([
+            'idempotency_key' => ['nullable', 'string', 'max:64'],
             'customer_id' => ['required', 'integer', 'exists:customers,id'],
             'vehicle_id' => [
                 'required',
@@ -217,11 +227,67 @@ class WorkshopController extends Controller
             'vehicle_id.exists' => 'Το επιλεγμένο όχημα δεν ανήκει στον επιλεγμένο πελάτη.',
         ]);
 
-        $workOrder = $createWorkOrder->execute($validated, $request->user(), 'workshop');
+        // Purchase cost is margin data, not counter data. Rather than
+        // rejecting the submission, fall back to the value the catalogue
+        // already holds — the row is still recorded, just not repriced by
+        // someone who is not allowed to reprice it.
+        if (Gate::denies('administer-pricing')) {
+            $validated['parts'] = $this->costsFromCatalogue($validated['parts'] ?? []);
+        }
+
+        // Replay guard. The fast path is a plain lookup; the unique index on
+        // idempotency_key is what actually decides a genuine race, so a losing
+        // insert is resolved by re-reading the winner rather than by locking.
+        $token = $validated['idempotency_key'] ?? null;
+
+        if ($token !== null && $replayed = WorkOrder::where('idempotency_key', $token)->first()) {
+            return redirect()
+                ->route('workshop.work-orders.show', $replayed)
+                ->with('success', 'Η εντολή εργασίας είχε ήδη καταχωρηθεί.');
+        }
+
+        try {
+            $workOrder = $createWorkOrder->execute($validated, $request->user(), 'workshop');
+        } catch (UniqueConstraintViolationException $exception) {
+            $winner = $token === null ? null : WorkOrder::where('idempotency_key', $token)->first();
+
+            if ($winner === null) {
+                throw $exception;
+            }
+
+            return redirect()
+                ->route('workshop.work-orders.show', $winner)
+                ->with('success', 'Η εντολή εργασίας είχε ήδη καταχωρηθεί.');
+        }
 
         return redirect()
             ->route('workshop.work-orders.show', $workOrder)
             ->with('success', 'Η εντολή εργασίας δημιουργήθηκε.');
+    }
+
+    /**
+     * Replaces every user-supplied unit_cost with the stock part's own
+     * purchase price (and 0 for anything not taken from stock, matching what
+     * CreateWorkOrderAction already does for customer-supplied lines).
+     *
+     * @param  array<int, array<string, mixed>>  $parts
+     * @return array<int, array<string, mixed>>
+     */
+    private function costsFromCatalogue(array $parts): array
+    {
+        $catalogue = Part::query()
+            ->whereIn('id', collect($parts)->pluck('part_id')->filter()->all())
+            ->pluck('purchase_price', 'id');
+
+        return collect($parts)
+            ->map(function (array $row) use ($catalogue): array {
+                $row['unit_cost'] = ($row['source'] ?? null) === 'from_stock'
+                    ? (float) ($catalogue[$row['part_id'] ?? null] ?? 0)
+                    : 0;
+
+                return $row;
+            })
+            ->all();
     }
 
     public function workOrdersShow(WorkOrder $workOrder)
@@ -238,14 +304,28 @@ class WorkshopController extends Controller
         $closureIsNone = $request->input('closure_document') === ClosureDocument::None->value;
 
         $validated = $request->validate([
+            // Required, not optional: an omitted token is a page rendered
+            // before this guard existed, which is the same stale
+            // representation the guard is here to refuse.
+            'lock_version' => ['required', 'integer'],
             'status' => ['required', Rule::enum(WorkOrderStatus::class)],
             'closure_document' => [Rule::requiredIf($completing), 'nullable', Rule::enum(ClosureDocument::class)],
             'non_issue_reason' => [Rule::requiredIf($completing && $closureIsNone), 'nullable', Rule::enum(NonIssueReason::class)],
+        ], [
+            'lock_version.required' => 'Ανανεώστε τη σελίδα και δοκιμάστε ξανά.',
         ]);
+
+        // Only bites once the order is already Completed — closing an open
+        // one is ordinary counter work. See WorkOrderPolicy::amendCompleted().
+        Gate::authorize('amendCompleted', $workOrder);
 
         $status = WorkOrderStatus::from($validated['status']);
 
-        $workOrder->update([
+        // Atomic compare-and-swap — see WorkOrder::updateWithExpectedVersion().
+        // Throws the same ValidationException(['lock_version' => ...]) the
+        // old pre-check did, so a stale submission still redirects back with
+        // the identical session error.
+        $workOrder->updateWithExpectedVersion($validated['lock_version'], [
             'status' => $status,
             'closure_document' => $validated['closure_document'] ?? $workOrder->closure_document,
             'non_issue_reason' => $validated['non_issue_reason'] ?? null,

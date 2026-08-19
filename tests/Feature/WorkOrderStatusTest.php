@@ -41,7 +41,12 @@ class WorkOrderStatusTest extends TestCase
             WorkOrderStatus::ReadyForPickup,
             WorkOrderStatus::Completed,
         ] as $status) {
-            $payload = ['status' => $status->value];
+            // Re-read every iteration: each accepted transition advances the
+            // work order's optimistic-concurrency token.
+            $payload = [
+                'lock_version' => $workOrder->fresh()->lock_version,
+                'status' => $status->value,
+            ];
             if ($status === WorkOrderStatus::Completed) {
                 $payload['closure_document'] = 'retail_receipt';
             }
@@ -62,7 +67,7 @@ class WorkOrderStatusTest extends TestCase
 
         $this->actingAs($user)->patch(
             route('workshop.work-orders.status', $workOrder),
-            ['status' => WorkOrderStatus::Completed->value],
+            ['lock_version' => $workOrder->lock_version, 'status' => WorkOrderStatus::Completed->value],
         )->assertSessionHasErrors('closure_document');
 
         $this->assertSame(WorkOrderStatus::ReadyForPickup, $workOrder->fresh()->status);
@@ -75,7 +80,7 @@ class WorkOrderStatusTest extends TestCase
 
         $this->actingAs($user)->patch(
             route('workshop.work-orders.status', $workOrder),
-            ['status' => WorkOrderStatus::Completed->value, 'closure_document' => 'none'],
+            ['lock_version' => $workOrder->lock_version, 'status' => WorkOrderStatus::Completed->value, 'closure_document' => 'none'],
         )->assertSessionHasErrors('non_issue_reason');
 
         $this->assertSame(WorkOrderStatus::ReadyForPickup, $workOrder->fresh()->status);
@@ -88,7 +93,7 @@ class WorkOrderStatusTest extends TestCase
 
         $this->actingAs($user)->patch(
             route('workshop.work-orders.status', $workOrder),
-            ['status' => WorkOrderStatus::Completed->value, 'closure_document' => 'none', 'non_issue_reason' => 'warranty'],
+            ['lock_version' => $workOrder->lock_version, 'status' => WorkOrderStatus::Completed->value, 'closure_document' => 'none', 'non_issue_reason' => 'warranty'],
         )->assertRedirect(route('workshop.work-orders.show', $workOrder));
 
         $fresh = $workOrder->fresh();
@@ -104,7 +109,7 @@ class WorkOrderStatusTest extends TestCase
 
         $this->actingAs($user)->patch(
             route('workshop.work-orders.status', $workOrder),
-            ['status' => 'waiting_for_moon_alignment'],
+            ['lock_version' => $workOrder->lock_version, 'status' => 'waiting_for_moon_alignment'],
         )->assertSessionHasErrors('status');
 
         $this->assertSame(WorkOrderStatus::New, $workOrder->fresh()->status);

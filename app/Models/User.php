@@ -3,6 +3,7 @@
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
+use App\Enums\UserRole;
 use Filament\Models\Contracts\FilamentUser;
 use Filament\Panel;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -22,7 +23,19 @@ class User extends Authenticatable implements FilamentUser
     protected $fillable = [
         'name',
         'email',
+        'role',
         'password',
+    ];
+
+    /**
+     * Matches the column default. Without it a model built in memory (a
+     * factory, a seeder, a form object) would report a null role until it
+     * was re-read, and every capability check would have to guard for that.
+     *
+     * @var array<string, mixed>
+     */
+    protected $attributes = [
+        'role' => UserRole::Owner->value,
     ];
 
     /**
@@ -45,9 +58,20 @@ class User extends Authenticatable implements FilamentUser
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'role' => UserRole::class,
         ];
     }
 
+    public function isOwner(): bool
+    {
+        return $this->role === UserRole::Owner;
+    }
+
+    /**
+     * Both roles use the panel — the counter staff live in it all day. What
+     * changes per role is which actions inside it are authorized, which is
+     * the policies' job, not this method's.
+     */
     public function canAccessPanel(Panel $panel): bool
     {
         return true;

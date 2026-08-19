@@ -676,6 +676,10 @@
     x-data='workOrderForm(@json($initialParts, $jsonFlags), @json($partsCatalog, $jsonFlags), {{ (float) old('labor_cost', 0) }}, @json($errors->messages(), $jsonFlags))'>
     @csrf
 
+    {{-- Replay guard: kept stable across validation re-renders via old(), so a
+         corrected resubmit is still the same logical submission. --}}
+    <input type="hidden" name="idempotency_key" value="{{ old('idempotency_key', (string) Str::uuid()) }}">
+
     <div class="woc-layout">
     <div class="woc-card" data-work-order-form-card>
         <x-workshop.form.section title="Πελάτης και όχημα" step="1">
@@ -871,8 +875,15 @@
                             <div class="woc-field" x-show="row.source !== 'customer_supplied'">
                                 <label :for="'cost-'+row._key" class="woc-label">Κόστος / τεμ.</label>
                                 <div class="woc-eur">
+                                    {{-- readonly, όχι κρυφό: το προσωπικό βλέπει το
+                                         κόστος από τον κατάλογο, δεν το ορίζει. Ο server
+                                         το αντικαθιστά ούτως ή άλλως με την τιμή του
+                                         καταλόγου (WorkshopController::costsFromCatalogue),
+                                         οπότε το attribute δεν είναι ο έλεγχος — μόνο η
+                                         ένδειξη ότι δεν είναι επεξεργάσιμο. --}}
                                     <input type="number" :id="'cost-'+row._key" :name="'parts['+index+'][unit_cost]'"
                                         class="woc-input" x-model="row.unit_cost"
+                                        @cannot('administer-pricing') readonly @endcannot
                                         step="0.01" placeholder="0,00" lang="el">
                                     <span class="woc-eur-sym">€</span>
                                 </div>

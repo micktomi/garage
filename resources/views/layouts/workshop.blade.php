@@ -49,14 +49,17 @@
             --ws-border: #E4DED5;
             --ws-border-hover: #D3CABB;
 
-            /* Sidebar — warm charcoal, not teal-black. */
-            --ws-nav: #221C17;
-            --ws-nav-hover: #2F2822;
-            --ws-nav-active: #3A3128;
+            /* Sidebar — deep oxblood-terracotta, the first stroke of colour
+               the page shows. Same hue family as --ws-primary, taken dark
+               enough that white text clears 12:1 and the muted tan below
+               still clears 6.7:1 — verified computationally, not eyeballed. */
+            --ws-nav: #661D0A;
+            --ws-nav-hover: #782F1C;
+            --ws-nav-active: #8C4330;
             --ws-nav-accent: #FF6B3D;
-            --ws-nav-text: #C9C0B4;
+            --ws-nav-text: #E3C6B8;
             --ws-nav-text-hi: #FFFFFF;
-            --ws-nav-divider: #3A3128;
+            --ws-nav-divider: #8C4330;
 
             /* Primary — «Κεραμιδί»: the bold warm brand accent. Buttons, links,
                focus rings and the sidebar mark all read from this one colour. */
@@ -107,10 +110,28 @@
             --ws-status-expired-fg: #C22412;
             --ws-status-expired-border: #F2B9AE;
 
-            /* Dashboard signals — appointments card shares the secondary blue. */
-            --ws-stat-appointments-bg: #E3EDFF;
+            /* Filled-surface variants of the same six hues, for the vehicle
+               bay cards and the dashboard stat cards — genuinely tinted, not
+               a pale badge wash. Deep enough to read as real colour; ink text
+               (11-13:1) and every large-text saturated fg (3.1-4.2:1) were
+               checked against each one, not eyeballed. Badges keep the paler
+               tokens above so a pill never blends into the card behind it. */
+            --ws-status-new-card-bg: #AEC0EA;
+            --ws-status-new-card-border: #668BE1;
+            --ws-status-progress-card-bg: #D4B4E9;
+            --ws-status-progress-card-border: #B16EDE;
+            --ws-status-awaiting-card-bg: #E6C994;
+            --ws-status-awaiting-card-border: #DFAA49;
+            --ws-status-ready-card-bg: #8EE1B3;
+            --ws-status-ready-card-border: #45D987;
+            --ws-status-expired-card-bg: #EDC0BB;
+            --ws-status-expired-card-border: #E37F74;
+
+            /* Dashboard signals — appointments card shares the secondary
+               blue's filled-surface tint above. */
+            --ws-stat-appointments-bg: #AEC0EA;
             --ws-stat-appointments-fg: #1554F0;
-            --ws-stat-appointments-border: #B9CDFB;
+            --ws-stat-appointments-border: #668BE1;
             --ws-divider-soft: #EDE7DD;
 
             /* Compatibility aliases for the existing workshop detail forms. */
@@ -999,15 +1020,22 @@
 
         .ws-dashboard-header {
             margin-bottom: 32px;
+            padding: 28px 32px;
             display: flex;
             align-items: center;
             justify-content: space-between;
             gap: 24px;
+            border-radius: 16px;
+            /* Same two tokens as the sidebar and the primary button — the
+               hero band ties back to both rather than inventing a third
+               one-off colour. */
+            background: linear-gradient(120deg, var(--ws-primary) 0%, var(--ws-nav) 100%);
+            box-shadow: var(--shadow-md);
         }
 
         .ws-dashboard-title {
             margin: 0;
-            color: var(--ws-text);
+            color: #FFFFFF;
             font-family: var(--ws-font-display);
             font-size: 34px;
             font-weight: 700;
@@ -1017,7 +1045,7 @@
 
         .ws-dashboard-subtitle {
             margin: 7px 0 0;
-            color: var(--ws-text-muted);
+            color: rgba(255, 255, 255, 0.9);
             font-family: var(--ws-font-sans);
             font-size: 13.5px;
             line-height: 1.5;
@@ -1121,23 +1149,23 @@
             --ws-stat-border: var(--ws-stat-appointments-border);
             --ws-stat-tint: var(--ws-stat-appointments-bg);
             border-color: var(--ws-stat-border);
-            background: linear-gradient(120deg, var(--ws-stat-tint) 0%, var(--ws-card) 82%);
+            background: var(--ws-stat-tint);
         }
 
         .ws-dashboard .ws-stat-card--kteo {
             --ws-stat-accent: var(--ws-status-expired-fg);
-            --ws-stat-border: var(--ws-status-expired-border);
-            --ws-stat-tint: var(--ws-status-expired-bg);
+            --ws-stat-border: var(--ws-status-expired-card-border);
+            --ws-stat-tint: var(--ws-status-expired-card-bg);
             border-color: var(--ws-stat-border);
-            background: linear-gradient(120deg, var(--ws-stat-tint) 0%, var(--ws-card) 82%);
+            background: var(--ws-stat-tint);
         }
 
         .ws-dashboard .ws-stat-card--parts {
             --ws-stat-accent: var(--ws-status-awaiting-fg);
-            --ws-stat-border: var(--ws-status-awaiting-border);
-            --ws-stat-tint: var(--ws-status-awaiting-bg);
+            --ws-stat-border: var(--ws-status-awaiting-card-border);
+            --ws-stat-tint: var(--ws-status-awaiting-card-bg);
             border-color: var(--ws-stat-border);
-            background: linear-gradient(120deg, var(--ws-stat-tint) 0%, var(--ws-card) 82%);
+            background: var(--ws-stat-tint);
         }
 
         .ws-dashboard .ws-stat-card:hover {
@@ -1153,7 +1181,7 @@
             justify-content: center;
             border: 1px solid var(--ws-stat-border, var(--ws-border));
             border-radius: 10px;
-            background: rgb(255 255 255 / 78%);
+            background: #FFFFFF;
             color: var(--ws-stat-accent, var(--ws-text-muted));
             box-shadow: 0 5px 14px -10px currentColor;
         }
@@ -1171,7 +1199,9 @@
         }
 
         .ws-dashboard .ws-stat-label {
-            color: var(--ws-text-faint);
+            /* Ink, not faint: --ws-text-faint was tuned against a near-white
+               card and drops well under 4.5:1 on the filled status tints. */
+            color: var(--ws-text);
             font-family: var(--ws-font-sans);
             font-size: 10.5px;
             font-weight: 500;
@@ -1270,33 +1300,35 @@
             border: 1px solid var(--ws-bay-border);
             border-top: 3px solid var(--ws-bay-accent);
             border-radius: 10px;
-            background: linear-gradient(155deg, var(--ws-bay-tint) 0%, var(--ws-card) 64%);
+            /* Flat filled tint, not a fade to white — see the --card-bg
+               tokens' own comment for the contrast reasoning. */
+            background: var(--ws-bay-tint);
             box-shadow: 0 2px 4px rgb(35 29 24 / 7%), 0 18px 36px -26px rgb(35 29 24 / 50%);
             transition: transform 160ms ease, border-color 160ms ease, box-shadow 160ms ease;
         }
 
         .ws-bay[data-status="new"] {
             --ws-bay-accent: var(--ws-status-new-fg);
-            --ws-bay-border: var(--ws-status-new-border);
-            --ws-bay-tint: var(--ws-status-new-bg);
+            --ws-bay-border: var(--ws-status-new-card-border);
+            --ws-bay-tint: var(--ws-status-new-card-bg);
         }
 
         .ws-bay[data-status="in_progress"] {
             --ws-bay-accent: var(--ws-status-progress-fg);
-            --ws-bay-border: var(--ws-status-progress-border);
-            --ws-bay-tint: var(--ws-status-progress-bg);
+            --ws-bay-border: var(--ws-status-progress-card-border);
+            --ws-bay-tint: var(--ws-status-progress-card-bg);
         }
 
         .ws-bay[data-status="awaiting_parts"] {
             --ws-bay-accent: var(--ws-status-awaiting-fg);
-            --ws-bay-border: var(--ws-status-awaiting-border);
-            --ws-bay-tint: var(--ws-status-awaiting-bg);
+            --ws-bay-border: var(--ws-status-awaiting-card-border);
+            --ws-bay-tint: var(--ws-status-awaiting-card-bg);
         }
 
         .ws-bay[data-status="ready"] {
             --ws-bay-accent: var(--ws-status-ready-fg);
-            --ws-bay-border: var(--ws-status-ready-border);
-            --ws-bay-tint: var(--ws-status-ready-bg);
+            --ws-bay-border: var(--ws-status-ready-card-border);
+            --ws-bay-tint: var(--ws-status-ready-card-bg);
         }
 
         .ws-bay:hover {
@@ -1343,7 +1375,9 @@
             -webkit-box-orient: vertical;
             -webkit-line-clamp: 1;
             overflow: hidden;
-            color: var(--ws-text-muted);
+            /* Ink, not muted: --ws-text-muted was tuned against a near-white
+               card and drops under 4.5:1 on the filled status tints above. */
+            color: var(--ws-text);
             font-size: 12.5px;
             line-height: 17px;
         }

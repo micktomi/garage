@@ -314,7 +314,7 @@ class WorkOrderStatusTest extends TestCase
             $xpath->query('//table[contains(concat(" ", normalize-space(@class), " "), " wos-parts-table ")]//td[@data-label]'),
         );
 
-        $view = file_get_contents(resource_path('views/workshop/work-orders/show.blade.php'));
+        $view = file_get_contents(resource_path('css/workshop.css'));
         $this->assertDoesNotMatchRegularExpression('/\.wos-parts-table\s+td::before/', $view);
     }
 
@@ -326,7 +326,7 @@ class WorkOrderStatusTest extends TestCase
 
     public function test_parts_switch_from_stacked_cards_to_table_only_at_1024px(): void
     {
-        $view = file_get_contents(resource_path('views/workshop/work-orders/show.blade.php'));
+        $view = file_get_contents(resource_path('css/workshop.css'));
 
         $this->assertMatchesRegularExpression(
             '/\.wos-parts-table,\s*\.wos-parts-table tbody,\s*\.wos-parts-table tr,\s*\.wos-parts-table td\s*\{[^}]*display:\s*block;[^}]*\}/s',

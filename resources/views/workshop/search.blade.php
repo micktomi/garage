@@ -3,53 +3,6 @@
 @section('title', 'Οχήματα — Συνεργείο')
 @section('header-title', 'Οχήματα')
 
-@push('styles')
-<style>
-    .sr-search-form {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 8px;
-        margin-bottom: 20px;
-    }
-    .sr-search-input {
-        min-width: 0;
-        height: 44px;
-        flex: 1;
-        padding: 0 14px;
-        border: 1px solid var(--ws-border);
-        border-radius: 8px;
-        background: var(--ws-card);
-        color: var(--ws-text);
-        font-size: 14px;
-        transition: border-color 120ms ease;
-    }
-    .sr-search-input::placeholder { color: var(--ws-text-muted); }
-    .sr-search-input:hover { border-color: var(--ws-border-hover); }
-    .sr-search-input:focus {
-        border-color: var(--ws-primary);
-        outline: 2px solid var(--ws-primary);
-        outline-offset: 2px;
-    }
-    .sr-empty {
-        padding: 24px;
-        text-align: center;
-        border: 1px solid var(--ws-border);
-        border-radius: 12px;
-        background: var(--ws-card);
-        color: var(--ws-text-muted);
-    }
-    .sr-empty-title {
-        margin-bottom: 2px;
-        color: var(--ws-text);
-        font-size: 14px;
-        font-weight: 500;
-    }
-    .sr-empty-sub {
-        color: var(--ws-text-muted);
-        font-size: 13px;
-    }
-</style>
-@endpush
 
 @section('content')
 

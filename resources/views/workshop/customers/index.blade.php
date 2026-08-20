@@ -3,66 +3,6 @@
 @section('title', 'Πελάτες — Συνεργείο')
 @section('header-title', 'Πελάτες')
 
-@push('styles')
-<style>
-    .cu-search-form {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 8px;
-        margin-bottom: 20px;
-    }
-    .cu-search-input {
-        min-width: 0;
-        height: 44px;
-        padding: 0 14px;
-        flex: 1 1 220px;
-        border: 1px solid var(--ws-border);
-        border-radius: 8px;
-        background: var(--ws-card);
-        color: var(--ws-text);
-        font-size: 14px;
-        transition: border-color 120ms ease;
-    }
-    .cu-search-input::placeholder { color: var(--ws-text-muted); }
-    .cu-search-input:hover { border-color: var(--ws-border-hover); }
-    .cu-search-clear {
-        display: inline-flex;
-        align-items: center;
-        min-height: 44px;
-        padding: 0 8px;
-        color: var(--ws-text-muted);
-        font-size: 13px;
-    }
-    .cu-search-clear:hover { color: var(--ws-text); }
-
-    .cu-card-email {
-        flex: 1 1 180px;
-        min-width: 0;
-    }
-
-    .cu-empty {
-        text-align: center;
-        padding: 4rem 1rem;
-        color: var(--ws-text-muted);
-    }
-    .cu-empty-icon {
-        width: 48px;
-        height: 48px;
-        margin: 0 auto 1rem;
-        color: var(--ws-text-muted);
-    }
-    .cu-empty-title {
-        font-size: 1rem;
-        font-weight: 600;
-        color: var(--ws-text);
-        margin-bottom: 0.25rem;
-    }
-    .cu-empty-sub {
-        font-size: 0.875rem;
-        color: var(--ws-text-muted);
-    }
-</style>
-@endpush
 
 @section('content')
 

@@ -41,9 +41,9 @@ class WorkshopMobileDrawerTest extends TestCase
         $this->assertSame('flex', $this->styles($css, '.ws-mobile-header', self::MOBILE)['display'] ?? null);
         $this->assertSame('inline-flex', $this->styles($css, '.ws-drawer-close', self::MOBILE)['display'] ?? null);
         $mobileHeader = $this->styles($css, '.ws-mobile-header', self::MOBILE);
-        $this->assertSame('var(--ws-nav)', $mobileHeader['background'] ?? null);
+        $this->assertSame('var(--ws-primary)', $mobileHeader['background'] ?? null);
         $this->assertSame('var(--ws-nav-text-hi)', $mobileHeader['color'] ?? null);
-        $this->assertSame('1px solid var(--ws-nav-divider)', $mobileHeader['border-bottom'] ?? null);
+        $this->assertSame('1px solid rgba(255, 255, 255, 0.14)', $mobileHeader['border-bottom'] ?? null);
         $bottomNav = $this->styles($css, '.ws-mobile-bottom-nav', self::MOBILE);
         $this->assertSame('grid', $bottomNav['display'] ?? null);
         $this->assertSame('fixed', $bottomNav['position'] ?? null);
@@ -52,40 +52,71 @@ class WorkshopMobileDrawerTest extends TestCase
         $bottomItem = $this->styles($css, '.ws-mobile-bottom-item', self::MOBILE);
         $this->assertSame('var(--ws-text-muted)', $bottomItem['color'] ?? null);
         $activeBottomItem = $this->styles($css, '.ws-mobile-bottom-item[aria-current="page"]', self::MOBILE);
-        $this->assertSame('#F1ECE4', $activeBottomItem['background'] ?? null);
+        $this->assertSame('#E7F1EE', $activeBottomItem['background'] ?? null);
         $this->assertSame('var(--ws-primary)', $activeBottomItem['color'] ?? null);
         $tokens = $this->styles($css, ':root', self::MOBILE);
-        $this->assertSame('#F7F4F0', $tokens['--ws-page'] ?? null);
+        $this->assertSame('#F1EFE8', $tokens['--ws-page'] ?? null);
         $this->assertSame('#FFFFFF', $tokens['--ws-card'] ?? null);
         $this->assertSame('var(--ws-card)', $this->styles($css, '.ws-dashboard .ws-stat-card', self::MOBILE)['background'] ?? null);
-        $this->assertSame('none', $this->styles($css, '.ws-system-status', self::MOBILE)['display'] ?? null);
-        $this->assertSame('none', $this->styles($css, '.ws-dashboard-subtitle-prefix', self::MOBILE)['display'] ?? null);
 
-        // One metric per row on a phone: three columns broke the labels apart
-        // and buried the expired-ΚΤΕΟ figure. A full-width cell has room for
-        // the label at its readable size again.
+        // The date banner card is dropped entirely on mobile — its content
+        // moves into the sticky app header instead.
+        $this->assertSame('none', $this->styles($css, '.ws-dashboard-header', self::MOBILE)['display'] ?? null);
+
+        // Three metrics stay side by side at every width, in a compact strip
+        // short enough to leave room for the vehicle list below it.
         $metricGrid = $this->styles($css, '.ws-dashboard .ws-stat-grid', self::MOBILE);
-        $this->assertSame('minmax(0, 1fr)', $metricGrid['grid-template-columns'] ?? null);
+        $this->assertSame('repeat(3, minmax(0, 1fr))', $metricGrid['grid-template-columns'] ?? null);
+        $this->assertSame('48px', $this->styles($css, '.ws-dashboard .ws-stat-card', self::MOBILE)['min-height'] ?? null);
 
-        // The 280px cell cap belongs to multi-column widths only. On a phone
-        // it left the cards narrower than everything stacked below them.
-        $this->assertSame(
-            'repeat(auto-fill, minmax(224px, 1fr))',
-            $this->styles($css, '.ws-bay-grid', self::MOBILE)['grid-template-columns'] ?? null,
-        );
+        // The vehicle strip becomes a single-column list of compact,
+        // two-line rows on a phone — no card grid, no per-status fill. The
+        // accent stripe is an inset ::before (top/bottom offset) rather than
+        // a border, so it never touches the divider above/below and each
+        // row still reads as its own object.
+        $bayGrid = $this->styles($css, '.ws-bay-grid', self::MOBILE);
+        $this->assertSame('block', $bayGrid['display'] ?? null);
+        $bayRow = $this->styles($css, '.ws-bay', self::MOBILE);
+        $this->assertSame('70px', $bayRow['min-height'] ?? null);
+        $this->assertArrayNotHasKey('border-left', $bayRow);
+        $bayStripe = $this->styles($css, '.ws-bay::before', self::MOBILE);
+        $this->assertSame('8px', $bayStripe['top'] ?? null);
+        $this->assertSame('8px', $bayStripe['bottom'] ?? null);
+        $this->assertSame('4px', $bayStripe['width'] ?? null);
+        $this->assertSame('var(--ws-bay-accent)', $bayStripe['background'] ?? null);
+        $this->assertSame('none', $this->styles($css, '.ws-bay-rail', self::MOBILE)['display'] ?? null);
+        $this->assertSame('none', $this->styles($css, '.ws-bay-number', self::MOBILE)['display'] ?? null);
         $this->assertSame(
             'repeat(4, minmax(0, 1fr))',
             $this->styles($css, '.ws-bay-grid', self::WIDE)['grid-template-columns'] ?? null,
         );
 
+        // Row 1 is plate + status, row 2 is model·customer + elapsed days —
+        // the problem/reason text from the desktop card is dropped here.
+        $this->assertSame('1', $this->styles($css, '.ws-bay-main .ws-plate', self::MOBILE)['grid-row'] ?? null);
+        $this->assertSame('2', $this->styles($css, '.ws-bay-line-mobile', self::MOBILE)['grid-row'] ?? null);
+        $this->assertSame('none', $this->styles($css, '.ws-bay-line-mobile .ws-bay-job', self::MOBILE)['display'] ?? null);
+        $this->assertSame('1', $this->styles($css, '.ws-bay-foot .ws-status-badge', self::MOBILE)['grid-row'] ?? null);
+        $this->assertSame('2', $this->styles($css, '.ws-bay-elapsed', self::MOBILE)['grid-row'] ?? null);
+
+        // "Όλες οι εντολές" duplicated the bottom nav's own Εργασίες tab.
+        $this->assertSame('none', $this->styles($css, '.ws-bays-head .ws-eyebrow--quiet', self::MOBILE)['display'] ?? null);
+        $this->assertArrayNotHasKey('display', $this->styles($css, '.ws-bays-head .ws-eyebrow--quiet', self::DESKTOP));
+
+        // No ALL CAPS anywhere on mobile except the one section-eyebrow style.
         $metricLabel = $this->styles($css, '.ws-dashboard .ws-stat-label', self::MOBILE);
-        $this->assertSame('uppercase', $metricLabel['text-transform'] ?? null);
-        $this->assertSame('.12em', $metricLabel['letter-spacing'] ?? null);
+        $this->assertArrayNotHasKey('text-transform', $metricLabel);
+        $this->assertSame('0', $metricLabel['letter-spacing'] ?? null);
 
         $statusBadge = $this->styles($css, '.ws-dashboard .ws-status-badge', self::MOBILE);
         $this->assertSame('none', $statusBadge['text-transform'] ?? null);
         $this->assertSame('0', $statusBadge['letter-spacing'] ?? null);
         $this->assertSame('104px', $this->styles($css, '.ws-recent-order-status', self::MOBILE)['max-width'] ?? null);
+
+        // "Ανοιχτές εντολές" duplicates the vehicle strip above it — dropped
+        // on mobile only.
+        $this->assertSame('none', $this->styles($css, '.ws-dashboard-primary', self::MOBILE)['display'] ?? null);
+        $this->assertArrayNotHasKey('display', $this->styles($css, '.ws-dashboard-primary', self::DESKTOP));
     }
 
     public function test_desktop_keeps_the_sidebar_and_hides_the_mobile_menu(): void
@@ -108,10 +139,11 @@ class WorkshopMobileDrawerTest extends TestCase
 
             $this->assertSame('inline-flex', $this->styles($css, '.ws-system-status', $viewport)['display'] ?? null);
             $this->assertArrayNotHasKey('display', $this->styles($css, '.ws-dashboard-subtitle-prefix', $viewport));
-            $this->assertSame('#F7F4F0', $this->styles($css, ':root', $viewport)['--ws-page'] ?? null);
+            $this->assertSame('#F1EFE8', $this->styles($css, ':root', $viewport)['--ws-page'] ?? null);
             $this->assertSame('#FFFFFF', $this->styles($css, ':root', $viewport)['--ws-card'] ?? null);
-            $this->assertSame('uppercase', $this->styles($css, '.ws-dashboard .ws-stat-label', $viewport)['text-transform'] ?? null);
-            $this->assertSame('uppercase', $this->styles($css, '.ws-dashboard .ws-status-badge', $viewport)['text-transform'] ?? null);
+            // Nowhere is ALL CAPS except the one section-eyebrow style.
+            $this->assertArrayNotHasKey('text-transform', $this->styles($css, '.ws-dashboard .ws-stat-label', $viewport));
+            $this->assertSame('none', $this->styles($css, '.ws-dashboard .ws-status-badge', $viewport)['text-transform'] ?? null);
             $this->assertSame('none', $this->styles($css, '.ws-section-label-mobile', $viewport)['display'] ?? null);
         }
 
@@ -234,10 +266,10 @@ class WorkshopMobileDrawerTest extends TestCase
         $this->assertSame('Ανοιχτές εντολές', trim($this->element($xpath, '//section[contains(@class, "ws-dashboard-primary")]//h2')->textContent));
         $this->assertCount(0, $xpath->query('//section[contains(@class, "ws-dashboard-primary")]//h2/span[contains(@class, "ws-section-label-mobile")]'));
         $this->assertSame('Όλες', trim($this->element($xpath, '//section[contains(@class, "ws-dashboard-primary")]//a/span[contains(@class, "ws-section-label-mobile")]')->textContent));
-        $search = $this->element($xpath, '//a[contains(@class, "ws-mobile-header-action") and @href="'.route('workshop.search').'"]');
-        $this->assertCount(1, $xpath->query('.//circle[@cx="10.75" and @cy="10.75" and @r="6.75"]', $search));
-        $this->assertCount(1, $xpath->query('.//path[@d="m15.75 15.75 4.5 4.5"]', $search));
-        $this->assertCount(0, $xpath->query('.//path[contains(@d, "m21 21-5.197-5.197")]', $search));
+
+        // The dashboard already has its own search field below the header —
+        // the header's magnifying-glass action would only duplicate it.
+        $this->assertCount(0, $xpath->query('//a[contains(@class, "ws-mobile-header-action") and @href="'.route('workshop.search').'"]'));
     }
 
     public function test_nested_mobile_page_uses_its_existing_parent_route_as_the_top_bar_back_action(): void
@@ -251,6 +283,13 @@ class WorkshopMobileDrawerTest extends TestCase
         $this->assertSame(route('workshop.work-orders.index'), $back->getAttribute('href'));
         $this->assertSame('Πίσω', $back->getAttribute('aria-label'));
         $this->assertSame('Πίσω', $back->getAttribute('title'));
+
+        // Every page other than the dashboard has no search field of its
+        // own, so it keeps the header icon as its one way into search.
+        $search = $this->element($xpath, './/a[contains(@class, "ws-mobile-header-action") and @href="'.route('workshop.search').'"]', $header);
+        $this->assertCount(1, $xpath->query('.//circle[@cx="10.75" and @cy="10.75" and @r="6.75"]', $search));
+        $this->assertCount(1, $xpath->query('.//path[@d="m15.75 15.75 4.5 4.5"]', $search));
+        $this->assertCount(0, $xpath->query('.//path[contains(@d, "m21 21-5.197-5.197")]', $search));
     }
 
     private function page(): string
@@ -260,13 +299,18 @@ class WorkshopMobileDrawerTest extends TestCase
         return $this->actingAs($user)->get(route('workshop.dashboard'))->assertOk()->getContent();
     }
 
-    /** The inline stylesheet as the browser receives it. */
+    /**
+     * The /workshop stylesheet as authored. Extracted out of the layout's
+     * inline <style> block into resources/css/workshop.css and loaded via
+     * @vite — every /workshop page shares this one file now, so it no
+     * longer needs to be pulled out of any single page's rendered HTML.
+     */
     private function stylesheet(): string
     {
-        preg_match('#<style>(.*?)</style>#s', $this->page(), $matches);
-        $this->assertNotEmpty($matches, 'The workshop layout must ship an inline stylesheet.');
+        $css = file_get_contents(resource_path('css/workshop.css'));
+        $this->assertNotEmpty($css, 'resources/css/workshop.css must exist and contain the /workshop stylesheet.');
 
-        return preg_replace('#/\*.*?\*/#s', '', $matches[1]);
+        return preg_replace('#/\*.*?\*/#s', '', $css);
     }
 
     /** Declarations applying to $selector at $viewport, in cascade order. */

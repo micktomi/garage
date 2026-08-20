@@ -2,6 +2,7 @@
 
 @section('title', 'Πίνακας Ελέγχου — Συνεργείο')
 @section('header-title', 'Πίνακας Ελέγχου')
+@section('header-subtitle', $todayLabel)
 
 @section('content')
     <div class="ws-dashboard">

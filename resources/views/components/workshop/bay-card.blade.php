@@ -6,10 +6,15 @@
 >
     <span class="ws-bay-number" aria-hidden="true">{{ $orderNumber }}</span>
 
-    <x-workshop.plate :value="$plate" />
+    <span class="ws-bay-main">
+        <x-workshop.plate :value="$plate" />
 
-    <span class="ws-bay-vehicle">{{ $vehicleName }}</span>
-    <span class="ws-bay-job" @if($jobTooltip) title="{{ $jobTooltip }}" @endif>{{ $jobLine }}</span>
+        <span class="ws-bay-line-mobile">
+            <span class="ws-bay-vehicle">{{ $vehicleName }}</span>
+            <span class="ws-bay-customer">{{ $order->customer?->full_name }}</span>
+            <span class="ws-bay-job" @if($jobTooltip) title="{{ $jobTooltip }}" @endif>{{ $jobLine }}</span>
+        </span>
+    </span>
 
     <span class="ws-bay-rail" aria-hidden="true">
         @for($step = 1; $step <= $stages; $step++)

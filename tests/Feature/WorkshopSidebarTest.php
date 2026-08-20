@@ -71,6 +71,10 @@ class WorkshopSidebarTest extends TestCase
     public function test_sidebar_css_uses_the_approved_dark_slate_224px_shell(): void
     {
         $layout = file_get_contents(resource_path('views/layouts/workshop.blade.php'));
+        // /workshop CSS was extracted out of the layout's inline <style>
+        // block into its own stylesheet — the layout keeps the markup, the
+        // rules themselves now live here.
+        $css = file_get_contents(resource_path('css/workshop.css'));
 
         // The sidebar shell (not the old top-nav .ws-header layout) is the
         // actual page structure: a flex .ws-shell root with the sidebar as
@@ -79,26 +83,26 @@ class WorkshopSidebarTest extends TestCase
         // unrelated use of "header").
         $this->assertMatchesRegularExpression(
             '/\.ws-shell\s*\{[^}]*display:\s*flex;[^}]*\}/s',
-            $layout,
+            $css,
         );
         $this->assertMatchesRegularExpression(
             '/<div class="ws-shell">.*?<x-workshop\.shell\.sidebar\s*\/>/s',
             $layout,
         );
-        $this->assertStringContainsString('--ws-nav: #661D0A;', $layout);
-        $this->assertStringContainsString('--ws-nav-active: #8C4330;', $layout);
+        $this->assertStringContainsString('--ws-nav: #0F6E56;', $css);
+        $this->assertStringContainsString('--ws-nav-active: #0A4838;', $css);
 
         $this->assertMatchesRegularExpression(
             '/\.ws-sidebar\s*\{[^}]*position:\s*sticky;[^}]*width:\s*224px;[^}]*flex:\s*0 0 224px;[^}]*background:\s*var\(--ws-nav\);[^}]*border-right:\s*1px solid var\(--ws-border\);[^}]*\}/s',
-            $layout,
+            $css,
         );
         $this->assertMatchesRegularExpression(
             '/\.ws-sidebar-item\s*\{[^}]*min-height:\s*44px;[^}]*flex-direction:\s*row;[^}]*font-size:\s*14px;[^}]*\}/s',
-            $layout,
+            $css,
         );
         $this->assertMatchesRegularExpression(
             '/\.ws-sidebar-item\[aria-current="page"\]\s*\{[^}]*color:\s*var\(--ws-primary-fg\);[^}]*background:\s*var\(--ws-nav-active\);[^}]*\}/s',
-            $layout,
+            $css,
         );
         // The sidebar has exactly two legitimate widths — 224px on desktop,
         // 272px in the mobile slide-out drawer — asserted as an allow-list
@@ -106,7 +110,7 @@ class WorkshopSidebarTest extends TestCase
         // old removed 80px/240px breakpoint values (which could false-fail
         // on any unrelated element that legitimately needs one of those
         // widths for its own reasons).
-        preg_match_all('/\.ws-sidebar\s*\{([^}]*)\}/s', $layout, $sidebarBlocks);
+        preg_match_all('/\.ws-sidebar\s*\{([^}]*)\}/s', $css, $sidebarBlocks);
         $sidebarWidths = [];
         foreach ($sidebarBlocks[1] as $block) {
             if (preg_match('/width:\s*([\d.]+px)/', $block, $match)) {
@@ -119,7 +123,7 @@ class WorkshopSidebarTest extends TestCase
         }
         $this->assertDoesNotMatchRegularExpression(
             '/\.ws-sidebar(?:-item)?[^{]*\{[^}]*var\(--ws-primary\)/s',
-            $layout,
+            $css,
         );
     }
 

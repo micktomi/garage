@@ -1,0 +1,4475 @@
+/*
+ * /workshop consolidated stylesheet.
+ *
+ * Extraction-only consolidation (no dedup, no redesign, no reordering
+ * within a source). Loaded once from resources/views/layouts/workshop.blade.php
+ * for every /workshop page.
+ *
+ * Section (a)+(b): :root tokens + shared/global workshop chrome, moved
+ * verbatim from the layout's own <style> block. The dashboard's own rules
+ * (.ws-dashboard*, .ws-bay*, .ws-stat-card variants, .ws-recent-order*,
+ * .ws-kteo-subhead*) live inside this same block, interleaved with the
+ * genuinely shared chrome rules (sidebar, mobile header/nav, base resets,
+ * plate/status-badge/list/form primitives) — most visibly inside the
+ * @media (max-width: 767px) block, where dashboard-only mobile rules and
+ * shared mobile-shell rules were added across several prior sessions in
+ * whatever order the work happened. Physically separating "dashboard" from
+ * "shared" would require reordering rules relative to each other, which
+ * risks changing which declaration wins wherever a selector is touched more
+ * than once — so this pass leaves that internal order exactly as it was
+ * instead of forcing the requested shared/per-page split onto content that
+ * isn't cleanly separable without that risk. See the chat report for detail.
+ *
+ * Section (c): genuinely independent per-page rules, each verified to have
+ * zero selector overlap with any other source before being moved here.
+ *
+ * NOT included here — deliberately left in place as page-local
+ * @push('styles') blocks in their own Blade files: vehicles/create.blade.php,
+ * appointments/create.blade.php, customers/create.blade.php,
+ * vehicles/edit.blade.php, work-orders/create.blade.php. These five files
+ * reuse the same .woc-* class names for two genuinely different designs
+ * (an older one shared by the first four, a newer one in work-orders/create)
+ * that today only coexist safely because each page loads only its own
+ * @push('styles') block. Moving either version into this always-loaded file
+ * would make it win via cascade on all five pages, breaking four of them —
+ * see the chat report's "Deferred conflicting CSS" section.
+ */
+
+        /* Self-hosted (not a live Google Fonts request) — Geologica, confirmed
+           full Greek-glyph coverage. One variable file per subset, weight
+           700–900 in each, so every display use pulls from the same 3 files. */
+        @font-face {
+            font-family: 'Geologica';
+            font-style: normal;
+            font-weight: 700 900;
+            font-display: swap;
+            src: url('/fonts/geologica/Geologica-greek.woff2') format('woff2');
+            unicode-range: U+0370-0377, U+037A-037F, U+0384-038A, U+038C, U+038E-03A1, U+03A3-03FF;
+        }
+        @font-face {
+            font-family: 'Geologica';
+            font-style: normal;
+            font-weight: 700 900;
+            font-display: swap;
+            src: url('/fonts/geologica/Geologica-latin-ext.woff2') format('woff2');
+            unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+        }
+        @font-face {
+            font-family: 'Geologica';
+            font-style: normal;
+            font-weight: 700 900;
+            font-display: swap;
+            src: url('/fonts/geologica/Geologica-latin.woff2') format('woff2');
+            unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+        }
+
+        :root {
+            /* Surfaces — warm neutral canvas, not the old sage/teal tint. */
+            --ws-page: #F1EFE8;
+            --ws-card: #FFFFFF;
+            --ws-sunken: #F0ECE6;
+
+            /* Text — warm ink, not teal-black. */
+            --ws-text: #231D18;
+            --ws-text-muted: #6B6156;
+            --ws-text-faint: #8C8072;
+
+            /* Lines — flat black at low opacity so it reads as a hairline on
+               every surface (page, card, filled tint) without a second token
+               per surface. */
+            --ws-border: rgba(0, 0, 0, 0.08);
+            --ws-border-hover: #D3CABB;
+
+            /* Sidebar — same primary green as the header, not a separate
+               terracotta surface. Hover is a lighter step, active is a
+               darker step (both same hue/saturation as --ws-primary, only
+               lightness moved) so the current page reads as "pressed" into
+               the rail rather than lifted off it. White text clears 6.2:1 on
+               the resting surface and 10.5:1 on active; the muted label tone
+               clears 4.75:1 on rest and 8.7:1 on active — all verified
+               computationally, not eyeballed. */
+            --ws-nav: #0F6E56;
+            --ws-nav-hover: #117E63;
+            --ws-nav-active: #0A4838;
+            --ws-nav-accent: #1DD1A3;
+            --ws-nav-text: #C9E8DD;
+            --ws-nav-text-hi: #FFFFFF;
+            --ws-nav-divider: #0C5845;
+
+            /* Primary — deep teal-green. Header, FAB, the active-nav accent
+               and links all read from this one colour. */
+            --ws-primary: #0F6E56;
+            --ws-primary-hover: #1D9E75;
+            --ws-primary-fg: #FFFFFF;
+
+            /* Secondary — «Electric Blue»: the cool contrast accent. */
+            --ws-secondary: #1554F0;
+            --ws-secondary-hover: #0C3FC2;
+            --ws-secondary-fg: #FFFFFF;
+
+            /* Signal is a dedicated danger red for ΚΤΕΟ/expiry alerts,
+               matching the status red below so a lapsed inspection reads as
+               the same colour everywhere it appears. */
+            --ws-signal: #E24B4A;
+
+            /* Greek registration plate band — real-world EU colours, untouched. */
+            --ws-plate-band: #0B3AA8;
+            --ws-plate-band-fg: #FFD200;
+
+            /* Explicit Greek-capable stacks. Geologica is self-hosted (see
+               @font-face above); the system stack is the fallback if it
+               fails to load. Body/UI text stays on the plain system stack. */
+            --ws-font-sans: ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Noto Sans", Arial, sans-serif;
+            --ws-font-display: "Geologica", "Roboto Condensed", "Liberation Sans Narrow", "Arial Narrow", "Noto Sans", ui-sans-serif, system-ui, sans-serif;
+            --ws-font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Noto Sans Mono", monospace;
+            --ws-font-serif: "Geologica", "Roboto Condensed", "Liberation Sans Narrow", "Arial Narrow", "Noto Sans", ui-sans-serif, system-ui, sans-serif;
+
+            /* Work-order statuses — five genuinely distinct hues. A status
+               colour is only ever used as small text/a badge/a thin accent
+               stripe — never as a card's own fill — so each fg is the given
+               brand hex at full strength, with pale/mid tints derived from it
+               for the badge pill. */
+            --ws-status-new-bg: #E7F1FB;
+            --ws-status-new-fg: #378ADD;
+            --ws-status-new-border: #91BFEC;
+            --ws-status-progress-bg: #F0EFFB;
+            --ws-status-progress-fg: #7F77DD;
+            --ws-status-progress-border: #B9B4EC;
+            --ws-status-awaiting-bg: #FDF3E5;
+            --ws-status-awaiting-fg: #EF9F27;
+            --ws-status-awaiting-border: #F6CA88;
+            --ws-status-ready-bg: #ECF3E4;
+            --ws-status-ready-fg: #639922;
+            --ws-status-ready-border: #A9C785;
+            --ws-status-completed-bg: #EDEBE6;
+            --ws-status-completed-fg: #5B564C;
+            --ws-status-completed-border: #D6D0C5;
+            --ws-status-expired-bg: #FCE9E9;
+            --ws-status-expired-fg: #E24B4A;
+            --ws-status-expired-border: #EF9C9B;
+
+            /* Dashboard signals — appointments card keeps the secondary
+               blue as its accent (not one of the five statuses above). */
+            --ws-stat-appointments-fg: #1554F0;
+            --ws-divider-soft: #EDE7DD;
+
+            /* Compatibility aliases for the existing workshop detail forms. */
+            --bg: var(--ws-page);
+            --surface: var(--ws-card);
+            --surface-2: var(--ws-sunken);
+            --surface-3: var(--ws-sunken);
+            --border: var(--ws-border);
+            --border-soft: var(--ws-border);
+            --accent: var(--ws-primary);
+            --accent-dim: rgba(15, 110, 86, 0.15);
+            --accent-glow: transparent;
+            --text: var(--ws-text);
+            --text-muted: var(--ws-text-muted);
+            --text-faint: var(--ws-text-muted);
+            --success: var(--ws-status-ready-fg);
+            --success-dim: var(--ws-status-ready-bg);
+            --danger: var(--ws-status-expired-fg);
+            --danger-dim: var(--ws-status-expired-bg);
+            --info: var(--ws-status-progress-fg);
+            --info-dim: var(--ws-status-progress-bg);
+            --radius: 10px;
+            --radius-sm: 8px;
+            --radius-xs: 8px;
+            --header-h: 56px;
+            --nav-h: 0px;
+            --shadow-sm: 0 1px 2px rgb(35 29 24 / 5%), 0 10px 28px -18px rgb(35 29 24 / 30%);
+            --shadow-md: 0 2px 4px rgb(35 29 24 / 6%), 0 18px 40px -22px rgb(35 29 24 / 40%);
+            --highlight: none;
+        }
+
+        *, *::before, *::after {
+            box-sizing: border-box;
+        }
+
+        html {
+            background: var(--ws-page);
+            -webkit-text-size-adjust: 100%;
+        }
+
+        body {
+            min-height: 100vh;
+            margin: 0;
+            /* Donor workshop paper: fine diagonal hatch plus a soft top-right lift. */
+            background-color: var(--ws-page);
+            background-image:
+                repeating-linear-gradient(135deg, rgb(35 29 24 / 1.5%) 0 1px, transparent 1px 9px),
+                radial-gradient(1100px 520px at 78% -8%, rgb(255 255 255 / 90%), transparent 70%);
+            background-attachment: fixed;
+            color: var(--ws-text);
+            font-family: var(--ws-font-sans);
+            font-size: 15px;
+            font-weight: 400;
+            line-height: 1.5;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        a {
+            color: inherit;
+            text-decoration: none;
+        }
+
+        button,
+        input,
+        select,
+        textarea {
+            font: inherit;
+        }
+
+        :where(a, button, input, select, textarea):focus-visible {
+            outline: 2px solid var(--ws-primary);
+            outline-offset: 2px;
+        }
+
+        [x-cloak] {
+            display: none !important;
+        }
+
+        /* Mobile-only shell pieces. Hidden on desktop, so the desktop layout is untouched. */
+        .ws-mobile-header,
+        .ws-mobile-bottom-nav,
+        .ws-drawer-backdrop,
+        .ws-drawer-close {
+            display: none;
+        }
+
+        .ws-sr-only {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+            border: 0;
+        }
+
+        .ws-shell {
+            min-height: 100vh;
+            display: flex;
+            align-items: flex-start;
+        }
+
+        .ws-sidebar {
+            position: sticky;
+            top: 0;
+            width: 224px;
+            height: 100vh;
+            padding: 18px 12px;
+            flex: 0 0 224px;
+            display: flex;
+            flex-direction: column;
+            background: var(--ws-nav);
+            color: var(--ws-nav-text);
+            border-right: 1px solid var(--ws-border);
+        }
+
+        .ws-sidebar-brand {
+            width: 100%;
+            min-height: 48px;
+            margin-bottom: 22px;
+            padding: 0 8px;
+            display: flex;
+            align-items: center;
+            justify-content: flex-start;
+            gap: 11px;
+            border-radius: 8px;
+            color: var(--ws-nav-text-hi);
+            font-family: var(--ws-font-sans);
+            font-size: 14px;
+            font-weight: 700;
+            line-height: 20px;
+            letter-spacing: -0.01em;
+        }
+
+        .ws-sidebar-brand:hover {
+            background: var(--ws-nav-hover);
+        }
+
+        .ws-sidebar-brand-mark {
+            width: 34px;
+            height: 34px;
+            flex: 0 0 34px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 8px;
+            background: var(--ws-nav-accent);
+            color: #FFFFFF;
+            font-family: var(--ws-font-display);
+            font-size: 17px;
+            font-weight: 700;
+            line-height: 1;
+        }
+
+        .ws-sidebar-brand-full {
+            display: block;
+            font-family: var(--ws-font-display);
+            font-size: 17px;
+            font-weight: 700;
+            line-height: 1.15;
+        }
+
+        .ws-sidebar-brand-sub {
+            display: block;
+            color: var(--ws-nav-text);
+            font-family: var(--ws-font-sans);
+            font-size: 11px;
+            font-weight: 500;
+            line-height: 15px;
+            letter-spacing: .14em;
+            text-transform: uppercase;
+            opacity: .72;
+        }
+
+        .ws-sidebar-brand-compact {
+            display: none;
+        }
+
+        .ws-sidebar-nav,
+        .ws-sidebar-primary {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .ws-sidebar-group-label {
+            padding: 0 10px 8px;
+            color: var(--ws-nav-text);
+            font-family: var(--ws-font-sans);
+            font-size: 10px;
+            font-weight: 600;
+            line-height: 14px;
+            letter-spacing: .16em;
+            text-transform: uppercase;
+            opacity: .62;
+        }
+
+        .ws-sidebar-group-label + .ws-sidebar-group-label,
+        .ws-sidebar-primary > .ws-sidebar-item + .ws-sidebar-group-label {
+            padding-top: 18px;
+        }
+
+        .ws-sidebar-nav {
+            min-height: 0;
+            flex: 1;
+        }
+
+        .ws-sidebar-item {
+            width: 100%;
+            min-height: 44px;
+            padding: 10px 10px;
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            justify-content: flex-start;
+            gap: 11px;
+            border-radius: 8px;
+            color: var(--ws-nav-text);
+            font-family: var(--ws-font-sans);
+            font-size: 14px;
+            font-weight: 500;
+            line-height: 20px;
+            text-align: left;
+            transition: color 120ms ease, background-color 120ms ease;
+        }
+
+        .ws-sidebar-item:hover {
+            color: var(--ws-nav-text-hi);
+            background: var(--ws-nav-hover);
+        }
+
+        .ws-sidebar-item[aria-current="page"] {
+            color: var(--ws-primary-fg);
+            background: var(--ws-nav-active);
+            box-shadow: inset 3px 0 0 var(--ws-nav-accent);
+        }
+
+        .ws-sidebar-icon {
+            width: 18px;
+            height: 18px;
+            flex: 0 0 auto;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--ws-nav-text);
+            opacity: .85;
+        }
+
+        .ws-sidebar-item:hover .ws-sidebar-icon {
+            color: var(--ws-nav-text-hi);
+            opacity: 1;
+        }
+
+        .ws-sidebar-item[aria-current="page"] .ws-sidebar-icon {
+            color: var(--ws-nav-accent);
+            opacity: 1;
+        }
+
+        .ws-sidebar-icon svg {
+            width: 18px;
+            height: 18px;
+            stroke-width: 1.8;
+        }
+
+        .ws-sidebar-label {
+            display: block;
+        }
+
+        .ws-sidebar-footer {
+            margin-top: auto;
+            padding-top: 14px;
+            border-top: 1px solid var(--ws-nav-divider);
+        }
+
+        .ws-sidebar-identity {
+            margin-top: 6px;
+            padding: 10px 10px 2px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: var(--ws-nav-text);
+            font-family: var(--ws-font-sans);
+            font-size: 13px;
+            line-height: 18px;
+        }
+
+        .ws-sidebar-identity-avatar {
+            width: 28px;
+            height: 28px;
+            flex: 0 0 28px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 999px;
+            background: var(--ws-nav-active);
+            color: var(--ws-nav-text-hi);
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .ws-sidebar-identity-name {
+            min-width: 0;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .ws-content {
+            min-width: 0;
+            flex: 1;
+        }
+
+        .ws-main {
+            width: 100%;
+            max-width: 1560px;
+            margin: 0;
+            padding: 26px 30px 60px;
+        }
+
+        .ws-page-heading {
+            margin-bottom: 16px;
+        }
+
+        .ws-page-date {
+            margin: 0 0 4px;
+            color: var(--ws-text-muted);
+            font-size: 13px;
+        }
+
+        .ws-page-title {
+            margin: 0;
+            color: var(--ws-text);
+            font-size: 28px;
+            font-weight: 500;
+            line-height: 32px;
+        }
+
+        .ws-page-heading-row {
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+        }
+
+        .ws-dashboard-controls {
+            margin-bottom: 24px;
+            display: grid;
+            grid-template-columns: minmax(0, 2fr) auto;
+            gap: 12px;
+        }
+
+        .ws-search-form {
+            position: relative;
+            min-width: 0;
+        }
+
+        .ws-search-submit {
+            position: absolute;
+            z-index: 1;
+            top: 6px;
+            left: 6px;
+            width: 36px;
+            height: 36px;
+            padding: 0;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border: 0;
+            border-radius: 8px;
+            background: transparent;
+            color: var(--ws-text-muted);
+            cursor: pointer;
+            transition: color 120ms ease, background-color 120ms ease;
+        }
+
+        .ws-search-submit:hover {
+            background: var(--ws-sunken);
+            color: var(--ws-text);
+        }
+
+        .ws-search-icon {
+            width: 18px;
+            height: 18px;
+            pointer-events: none;
+        }
+
+        .ws-search-input {
+            width: 100%;
+            height: 52px;
+            padding: 0 16px 0 44px;
+            border: 1px solid var(--ws-border);
+            border-radius: 10px;
+            background: var(--ws-card);
+            color: var(--ws-text);
+            font-size: 15px;
+            transition: border-color 150ms ease, box-shadow 150ms ease;
+        }
+
+        .ws-search-input::placeholder {
+            color: var(--ws-text-faint);
+            opacity: 1;
+        }
+
+        .ws-search-input:hover {
+            border-color: var(--ws-border-hover);
+        }
+
+        .ws-search-input:focus {
+            border-color: var(--ws-primary);
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(15, 110, 86, 0.12);
+        }
+
+        .ws-primary-action {
+            min-width: 160px;
+            min-height: 52px;
+            padding: 8px 22px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 9px;
+            border: 1px solid transparent;
+            border-radius: 10px;
+            background: var(--ws-primary);
+            color: var(--ws-primary-fg);
+            font-size: 15px;
+            font-weight: 500;
+            transition: background-color 150ms ease, transform 100ms ease;
+        }
+
+        .ws-primary-action:hover {
+            background: var(--ws-primary-hover);
+        }
+
+        .ws-primary-action:active {
+            transform: translateY(1px);
+        }
+
+        .ws-primary-action svg {
+            width: 18px;
+            height: 18px;
+            stroke-width: 2;
+        }
+
+        .ws-stat-grid {
+            margin-bottom: 24px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 12px;
+        }
+
+        .ws-stat-card {
+            min-height: 88px;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            gap: 8px;
+            border-radius: 8px;
+            background: var(--ws-sunken);
+        }
+
+        .ws-stat-label {
+            color: var(--ws-text-muted);
+            font-size: 13px;
+            font-weight: 500;
+            line-height: 16px;
+        }
+
+        .ws-stat-value {
+            color: var(--ws-text);
+            font-size: 28px;
+            font-weight: 500;
+            line-height: 28px;
+        }
+
+        .ws-stat-value--danger {
+            color: var(--ws-status-expired-fg);
+        }
+
+        .ws-dashboard-sections {
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+
+        .ws-section-header {
+            min-height: 36px;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+        }
+
+        .ws-section-label-mobile {
+            display: none;
+        }
+
+        .ws-section-header h2 {
+            margin: 0;
+            color: var(--ws-text-muted);
+            font-size: 13px;
+            font-weight: 500;
+        }
+
+        .ws-section-header a {
+            min-height: 36px;
+            padding: 8px 0 8px 12px;
+            display: inline-flex;
+            align-items: center;
+            color: var(--ws-text-muted);
+            font-size: 13px;
+            transition: color 120ms ease;
+        }
+
+        .ws-section-header a:hover {
+            color: var(--ws-text);
+        }
+
+        .ws-list {
+            border: 1px solid var(--ws-border);
+            border-radius: 12px;
+            background: var(--ws-card);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .ws-work-order-row,
+        .ws-kteo-row {
+            min-height: 68px;
+            padding: 14px 16px;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            border-bottom: 1px solid var(--ws-border);
+            transition: background-color 120ms ease;
+        }
+
+        .ws-list > :first-child {
+            border-radius: 12px 12px 0 0;
+        }
+
+        .ws-list > :last-child {
+            border-bottom: 0;
+            border-radius: 0 0 12px 12px;
+        }
+
+        .ws-list > :only-child {
+            border-radius: 12px;
+        }
+
+        .ws-work-order-row:hover {
+            background: var(--ws-sunken);
+        }
+
+        .ws-work-order-grid {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr);
+            align-items: stretch;
+            gap: 12px;
+            border: 0;
+            border-radius: 0;
+            background: transparent;
+        }
+
+        .ws-work-order-grid .ws-work-order-row {
+            min-width: 0;
+            min-height: 84px;
+            height: 100%;
+            padding: 14px;
+            gap: 12px;
+            border: 1px solid var(--ws-border);
+            border-radius: 12px;
+            background: var(--ws-card);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .ws-work-order-grid .ws-work-order-row:hover {
+            border-color: var(--ws-border-hover);
+            background: var(--ws-sunken);
+        }
+
+        .ws-work-order-grid .ws-work-order-aside {
+            max-width: 45%;
+            margin-left: auto;
+        }
+
+        .ws-work-order-grid .ws-status-badge {
+            max-width: 100%;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .ws-work-order-chevron {
+            width: 16px;
+            height: 16px;
+            flex: 0 0 16px;
+            color: var(--ws-text-faint);
+            stroke-width: 1.8;
+            transition: color 120ms ease, transform 120ms ease;
+        }
+
+        .ws-work-order-grid .ws-work-order-row:hover .ws-work-order-chevron {
+            color: var(--ws-text-muted);
+            transform: translateX(2px);
+        }
+
+        .ws-work-order-grid > .ws-empty-state {
+            grid-column: 1 / -1;
+            border: 1px solid var(--ws-border);
+            border-radius: 12px;
+            background: var(--ws-card);
+        }
+
+        /* Greek registration plate — the donor's EU band plus the number field. */
+        .ws-plate {
+            max-width: 100%;
+            flex-shrink: 0;
+            display: inline-flex;
+            align-items: stretch;
+            overflow: hidden;
+            border: 1.5px solid var(--ws-text);
+            border-radius: 5px;
+            background: var(--ws-card);
+            color: var(--ws-text);
+            font-family: var(--ws-font-mono);
+            vertical-align: middle;
+        }
+
+        .ws-plate-band {
+            width: 15px;
+            flex: 0 0 15px;
+            padding-top: 4px;
+            display: flex;
+            align-items: flex-start;
+            justify-content: center;
+            background: var(--ws-plate-band);
+            color: var(--ws-plate-band-fg);
+            font-size: 8px;
+            font-weight: 600;
+            line-height: 1;
+        }
+
+        .ws-plate-number {
+            min-width: 0;
+            padding: 5px 9px;
+            overflow: hidden;
+            font-size: 14px;
+            font-weight: 600;
+            line-height: 18px;
+            letter-spacing: .06em;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .ws-plate--sm .ws-plate-band {
+            width: 12px;
+            flex: 0 0 12px;
+            padding-top: 3px;
+            font-size: 7px;
+        }
+
+        .ws-plate--sm .ws-plate-number {
+            padding: 4px 7px;
+            font-size: 12.5px;
+            line-height: 16px;
+        }
+
+        .ws-plate--lg .ws-plate-band {
+            width: 19px;
+            flex: 0 0 19px;
+            padding-top: 6px;
+            font-size: 9px;
+        }
+
+        .ws-plate--lg .ws-plate-number {
+            padding: 8px 14px;
+            font-size: 20px;
+            line-height: 24px;
+        }
+
+        .ws-row-body {
+            flex: 1;
+            min-width: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .ws-row-title,
+        .ws-row-meta,
+        .ws-kteo-deadline {
+            display: block;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .ws-row-title {
+            color: var(--ws-text);
+            font-size: 15px;
+            font-weight: 500;
+            line-height: 20px;
+        }
+
+        .ws-row-meta,
+        .ws-kteo-deadline {
+            color: var(--ws-text-muted);
+            font-size: 13px;
+            font-weight: 400;
+            line-height: 18px;
+        }
+
+        .ws-work-order-aside {
+            flex: 0 0 auto;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 4px;
+        }
+
+        .ws-status-badge,
+        .ws-shop-flag {
+            max-width: 220px;
+            padding: 5px 9px;
+            display: inline-flex;
+            align-items: center;
+            border-radius: 5px;
+            font-family: var(--ws-font-sans);
+            font-size: 11.5px;
+            font-weight: 600;
+            line-height: 14px;
+            letter-spacing: 0;
+            white-space: nowrap;
+        }
+
+        .ws-status-badge--new {
+            border: 1px solid var(--ws-status-new-border);
+            background: var(--ws-status-new-bg);
+            color: var(--ws-status-new-fg);
+        }
+
+        .ws-status-badge--in-progress {
+            border: 1px solid var(--ws-status-progress-border);
+            background: var(--ws-status-progress-bg);
+            color: var(--ws-status-progress-fg);
+        }
+
+        .ws-status-badge--awaiting-parts {
+            border: 1px solid var(--ws-status-awaiting-border);
+            background: var(--ws-status-awaiting-bg);
+            color: var(--ws-status-awaiting-fg);
+        }
+
+        .ws-status-badge--ready {
+            border: 1px solid var(--ws-status-ready-border);
+            background: var(--ws-status-ready-bg);
+            color: var(--ws-status-ready-fg);
+        }
+
+        .ws-status-badge--completed {
+            border: 1px solid var(--ws-status-completed-border);
+            background: var(--ws-status-completed-bg);
+            color: var(--ws-status-completed-fg);
+        }
+
+        .ws-row-time {
+            color: var(--ws-text-muted);
+            font-size: 12px;
+            font-weight: 400;
+            line-height: 16px;
+            white-space: nowrap;
+        }
+
+        .ws-kteo-deadline--expired {
+            color: var(--ws-status-expired-fg);
+        }
+
+        .ws-kteo-actions {
+            flex: 0 0 auto;
+            display: flex;
+            gap: 8px;
+        }
+
+        .ws-icon-action {
+            width: 36px;
+            height: 36px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid var(--ws-border);
+            border-radius: 8px;
+            background: var(--ws-card);
+            color: var(--ws-text-muted);
+            transition: color 120ms ease, border-color 120ms ease, background-color 120ms ease;
+        }
+
+        .ws-icon-action:hover {
+            border-color: var(--ws-border-hover);
+            background: var(--ws-sunken);
+            color: var(--ws-text);
+        }
+
+        .ws-icon-action svg {
+            width: 18px;
+            height: 18px;
+            stroke-width: 1.8;
+        }
+
+        .ws-empty-state {
+            min-height: 76px;
+            padding: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+        }
+
+        .ws-empty-icon {
+            width: 36px;
+            height: 36px;
+            flex: 0 0 auto;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 8px;
+            background: var(--ws-sunken);
+            color: var(--ws-text-muted);
+        }
+
+        .ws-empty-icon svg {
+            width: 20px;
+            height: 20px;
+            stroke-width: 1.6;
+        }
+
+        .ws-empty-copy {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: baseline;
+            gap: 4px 8px;
+        }
+
+        .ws-empty-title {
+            color: var(--ws-text-muted);
+            font-size: 13px;
+        }
+
+        .ws-empty-action a {
+            min-height: 36px;
+            display: inline-flex;
+            align-items: center;
+            color: var(--ws-text);
+            font-size: 13px;
+            font-weight: 500;
+            text-decoration: underline;
+            text-underline-offset: 3px;
+        }
+
+        /* Shared helpers retained for the existing workshop forms. */
+        .ws-label {
+            margin-bottom: 8px;
+            color: var(--ws-text-muted);
+            font-size: 13px;
+            font-weight: 500;
+        }
+
+        .ws-gap {
+            height: 24px;
+        }
+
+        .ws-gap-sm {
+            height: 16px;
+        }
+
+        /* Dashboard-only visual system port. */
+        .ws-dashboard {
+            min-width: 0;
+            font-family: var(--ws-font-sans);
+        }
+
+        .ws-dashboard-header {
+            margin-bottom: 32px;
+            padding: 28px 32px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 24px;
+            border-radius: 16px;
+            /* Header band reads from the primary colour alone, not the
+               (unrelated) sidebar hue — a header, per the palette, is a
+               primary-coloured surface. */
+            background: linear-gradient(120deg, var(--ws-primary) 0%, var(--ws-primary-hover) 100%);
+            box-shadow: var(--shadow-md);
+        }
+
+        .ws-dashboard-title {
+            margin: 0;
+            color: #FFFFFF;
+            font-family: var(--ws-font-display);
+            font-size: 34px;
+            font-weight: 700;
+            line-height: 1;
+            letter-spacing: -.2px;
+        }
+
+        .ws-dashboard-subtitle {
+            margin: 7px 0 0;
+            color: rgba(255, 255, 255, 0.9);
+            font-family: var(--ws-font-sans);
+            font-size: 13.5px;
+            line-height: 1.5;
+        }
+
+        .ws-system-status {
+            min-height: 32px;
+            padding: 6px 13px 6px 10px;
+            flex: 0 0 auto;
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            border: 1px solid var(--ws-border);
+            border-radius: 999px;
+            background: var(--ws-card);
+            color: var(--ws-text-muted);
+            font-family: var(--ws-font-sans);
+            font-size: 12px;
+            font-weight: 500;
+            line-height: 16px;
+            letter-spacing: 0;
+            text-transform: none;
+        }
+
+        .ws-system-status-dot {
+            width: 7px;
+            height: 7px;
+            flex: 0 0 7px;
+            border-radius: 999px;
+            background: var(--ws-status-ready-fg);
+            box-shadow: 0 0 0 3px rgba(14, 122, 62, 0.15);
+        }
+
+        .ws-dashboard .ws-dashboard-controls {
+            margin-bottom: 24px;
+            grid-template-columns: minmax(0, 1fr) auto;
+            gap: 12px;
+        }
+
+        .ws-dashboard .ws-search-input {
+            border-radius: 10px;
+            box-shadow: var(--shadow-sm);
+            font-family: var(--ws-font-sans);
+        }
+
+        .ws-dashboard .ws-primary-action {
+            min-width: 168px;
+            border-radius: 10px;
+            background: var(--ws-primary);
+            box-shadow: var(--shadow-sm);
+            font-family: var(--ws-font-sans);
+        }
+
+        .ws-dashboard .ws-primary-action:hover {
+            background: var(--ws-primary-hover);
+            opacity: 1;
+        }
+
+        /* Three metrics: the in-shop count moved to the strip's own heading,
+           where it is not a duplicate of the cards below it. */
+        .ws-dashboard .ws-stat-grid {
+            margin-bottom: 26px;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 14px;
+        }
+
+        /* Compact operational metric: semantic rail, icon and strong figure. */
+        .ws-dashboard .ws-stat-card {
+            position: relative;
+            min-width: 0;
+            min-height: 84px;
+            padding: 13px 16px;
+            display: grid;
+            grid-template-columns: 40px minmax(0, 1fr);
+            align-items: center;
+            gap: 13px;
+            overflow: hidden;
+            border: 1px solid var(--ws-border);
+            border-radius: 10px;
+            background: var(--ws-card);
+            box-shadow: var(--shadow-sm);
+            transition: border-color 160ms ease, box-shadow 160ms ease;
+        }
+
+        .ws-dashboard .ws-stat-card::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            left: 0;
+            width: 4px;
+            background: var(--ws-stat-accent, var(--ws-border-hover));
+        }
+
+        .ws-dashboard .ws-stat-card--alert::before {
+            background: var(--ws-signal);
+        }
+
+        /* The status colour is only ever a thin accent stripe (the ::before
+           above) plus text — it never fills the card's own background. */
+        .ws-dashboard .ws-stat-card--appointments {
+            --ws-stat-accent: var(--ws-stat-appointments-fg);
+        }
+
+        .ws-dashboard .ws-stat-card--kteo {
+            --ws-stat-accent: var(--ws-status-expired-fg);
+        }
+
+        .ws-dashboard .ws-stat-card--parts {
+            --ws-stat-accent: var(--ws-status-awaiting-fg);
+        }
+
+        .ws-dashboard .ws-stat-card:hover {
+            border-color: var(--ws-stat-accent, var(--ws-border-hover));
+            box-shadow: var(--shadow-md);
+        }
+
+        .ws-stat-icon {
+            width: 40px;
+            height: 40px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid var(--ws-stat-border, var(--ws-border));
+            border-radius: 10px;
+            background: #FFFFFF;
+            color: var(--ws-stat-accent, var(--ws-text-muted));
+            box-shadow: 0 5px 14px -10px currentColor;
+        }
+
+        .ws-stat-icon svg {
+            width: 20px;
+            height: 20px;
+            stroke-width: 1.8;
+        }
+
+        .ws-stat-content {
+            min-width: 0;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .ws-dashboard .ws-stat-label {
+            color: var(--ws-text-muted);
+            font-family: var(--ws-font-sans);
+            font-size: 11.5px;
+            font-weight: 600;
+            line-height: 15px;
+            letter-spacing: 0;
+        }
+
+        .ws-stat-row {
+            margin-top: 4px;
+            display: flex;
+            align-items: flex-end;
+            gap: 10px;
+        }
+
+        .ws-dashboard .ws-stat-value {
+            color: var(--ws-stat-accent, var(--ws-text));
+            font-family: var(--ws-font-display);
+            font-size: 34px;
+            font-weight: 700;
+            line-height: .95;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .ws-dashboard .ws-stat-value--danger {
+            color: var(--ws-signal);
+        }
+
+        /* ── Workshop strip ───────────────────────────────────────────
+           A presentation view of the open work orders. The application
+           models no physical bays, so nothing here is persisted and no
+           free-position count is invented — each card is one open order. */
+        .ws-bays {
+            margin-bottom: 24px;
+        }
+
+        .ws-bays-head {
+            margin-bottom: 11px;
+            display: flex;
+            flex-wrap: wrap;
+            align-items: baseline;
+            justify-content: space-between;
+            gap: 4px 16px;
+        }
+
+        .ws-eyebrow {
+            color: var(--ws-text-muted);
+            font-family: var(--ws-font-display);
+            font-size: 13px;
+            font-weight: 700;
+            line-height: 18px;
+            letter-spacing: .18em;
+            text-transform: uppercase;
+        }
+
+        .ws-eyebrow b {
+            color: var(--ws-text);
+            font-weight: 700;
+        }
+
+        .ws-eyebrow--quiet {
+            flex: 0 0 auto;
+            color: var(--ws-text-faint);
+            font-weight: 400;
+            letter-spacing: .1em;
+            transition: color 120ms ease;
+        }
+
+        a.ws-eyebrow--quiet:hover {
+            color: var(--ws-text);
+        }
+
+        /* Cards sit in a fixed size band rather than stretching to fill the
+           row, so a strip of one and a strip of eight look like the same
+           object. Four per row on desktop is set explicitly below. */
+        .ws-bay-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(224px, 280px));
+            justify-content: start;
+            align-items: stretch;
+            gap: 14px;
+        }
+
+        .ws-bay {
+            /* The status colour is a thin accent stripe plus text — it never
+               fills the card's own background. */
+            --ws-bay-accent: var(--ws-border-hover);
+            position: relative;
+            min-width: 0;
+            height: 100%;
+            padding: 14px 16px 14px;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            overflow: hidden;
+            border: 1px solid var(--ws-border);
+            border-top: 4px solid var(--ws-bay-accent);
+            border-radius: 10px;
+            background: var(--ws-card);
+            box-shadow: 0 2px 4px rgb(35 29 24 / 7%), 0 18px 36px -26px rgb(35 29 24 / 50%);
+            transition: transform 160ms ease, border-color 160ms ease, box-shadow 160ms ease;
+        }
+
+        .ws-bay[data-status="new"] {
+            --ws-bay-accent: var(--ws-status-new-fg);
+        }
+
+        .ws-bay[data-status="in_progress"] {
+            --ws-bay-accent: var(--ws-status-progress-fg);
+        }
+
+        .ws-bay[data-status="awaiting_parts"] {
+            --ws-bay-accent: var(--ws-status-awaiting-fg);
+        }
+
+        .ws-bay[data-status="ready"] {
+            --ws-bay-accent: var(--ws-status-ready-fg);
+        }
+
+        .ws-bay:hover {
+            border-color: var(--ws-bay-accent);
+            transform: translateY(-2px);
+            box-shadow: 0 3px 7px rgb(35 29 24 / 10%), 0 22px 42px -25px rgb(35 29 24 / 55%);
+        }
+
+        .ws-bay:focus-visible {
+            outline: 2px solid var(--ws-text);
+            outline-offset: -2px;
+        }
+
+        .ws-bay-number {
+            position: absolute;
+            top: 8px;
+            right: 12px;
+            color: var(--ws-bay-accent);
+            font-family: var(--ws-font-display);
+            font-size: 40px;
+            font-weight: 700;
+            line-height: 1;
+            letter-spacing: -1px;
+            opacity: .12;
+        }
+
+        /* Pure grouping spans for the mobile row layout below — display:
+           contents removes them from the box tree everywhere else, so the
+           desktop/tablet card is byte-for-byte the same as before. */
+        .ws-bay-main,
+        .ws-bay-line-mobile {
+            display: contents;
+        }
+
+        /* Customer name only exists as its own element for the mobile row's
+           "model · customer" line — the desktop card keeps showing customer
+           and problem together via .ws-bay-job, unchanged. */
+        .ws-bay-customer {
+            display: none;
+        }
+
+        .ws-bay-vehicle {
+            max-width: 100%;
+            margin: 11px 0 2px;
+            overflow: hidden;
+            color: var(--ws-text);
+            font-size: 14.5px;
+            font-weight: 500;
+            line-height: 20px;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        /* One line only: a two-line job description used to push the whole
+           card taller and break the row's baseline. */
+        .ws-bay-job {
+            max-width: 100%;
+            display: -webkit-box;
+            -webkit-box-orient: vertical;
+            -webkit-line-clamp: 1;
+            overflow: hidden;
+            /* Ink, not muted: --ws-text-muted was tuned against a near-white
+               card and drops under 4.5:1 on the filled status tints above. */
+            color: var(--ws-text);
+            font-size: 12.5px;
+            line-height: 17px;
+        }
+
+        /* Four equal stages — παραλαβή, διάγνωση, εργασία, έτοιμο. Equal
+           widths on every card, never a percentage of anything. */
+        .ws-bay-rail {
+            width: 100%;
+            margin-top: 11px;
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 3px;
+        }
+
+        .ws-bay-rail-step {
+            height: 4px;
+            border-radius: 99px;
+            background: #E6DFD3;
+        }
+
+        .ws-bay[data-status="new"] .ws-bay-rail-step.is-filled {
+            background: var(--ws-status-new-fg);
+        }
+
+        .ws-bay[data-status="in_progress"] .ws-bay-rail-step.is-filled {
+            background: var(--ws-status-progress-fg);
+        }
+
+        .ws-bay[data-status="awaiting_parts"] .ws-bay-rail-step.is-filled {
+            background: var(--ws-status-awaiting-fg);
+        }
+
+        .ws-bay[data-status="ready"] .ws-bay-rail-step.is-filled {
+            background: var(--ws-status-ready-fg);
+        }
+
+        /* Long Greek status labels wrap onto their own line rather than
+           squeezing the elapsed time into an ellipsis. The auto top margin
+           pins the footer to the card's bottom edge whatever sits above it. */
+        .ws-bay-foot {
+            width: 100%;
+            margin-top: auto;
+            padding-top: 13px;
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px 10px;
+        }
+
+        .ws-bay-elapsed {
+            flex: 0 0 auto;
+            color: var(--ws-text-faint);
+            font-family: var(--ws-font-mono);
+            font-size: 12px;
+            line-height: 16px;
+            white-space: nowrap;
+        }
+
+        .ws-bay-foot .ws-status-badge {
+            max-width: 100%;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .ws-dashboard-body {
+            min-width: 0;
+            display: grid;
+            grid-template-columns: minmax(0, 1fr);
+            gap: 22px;
+        }
+
+        .ws-dashboard-primary,
+        .ws-dashboard-aside {
+            min-width: 0;
+        }
+
+        .ws-dashboard-aside {
+            display: flex;
+            flex-direction: column;
+            gap: 22px;
+        }
+
+        /* The donor keeps the section head inside the panel, above a hairline. */
+        .ws-dashboard .ws-section-header {
+            min-height: 32px;
+            margin-bottom: 0;
+            padding: 17px 20px 15px;
+            align-items: baseline;
+            border-bottom: 1px solid var(--ws-border);
+        }
+
+        .ws-dashboard .ws-section-header h2,
+        .ws-dashboard-section-title {
+            margin: 0;
+            color: var(--ws-text);
+            font-family: var(--ws-font-display);
+            font-size: 19px;
+            font-weight: 700;
+            line-height: 26px;
+            letter-spacing: 0;
+        }
+
+        .ws-dashboard .ws-section-header a {
+            min-height: 0;
+            padding: 0 0 1px;
+            color: var(--ws-text-muted);
+            border-bottom: 1px solid var(--ws-border-hover);
+            font-family: var(--ws-font-sans);
+            font-size: 13px;
+            font-weight: 400;
+        }
+
+        .ws-dashboard .ws-section-header a:hover {
+            color: var(--ws-text);
+            border-bottom-color: var(--ws-text);
+        }
+
+        .ws-dashboard .ws-section-header a > [aria-hidden="true"] {
+            display: none;
+        }
+
+        .ws-dashboard-section-title {
+            margin-bottom: 11px;
+        }
+
+        .ws-panel {
+            min-width: 0;
+            overflow: hidden;
+            border: 1px solid var(--ws-border);
+            border-radius: 10px;
+            background: var(--ws-card);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .ws-dashboard .ws-panel {
+            border-color: var(--ws-border-hover);
+            box-shadow: 0 2px 4px rgb(35 29 24 / 5%), 0 18px 40px -28px rgb(35 29 24 / 42%);
+        }
+
+        .ws-dashboard .ws-panel > .ws-section-header {
+            background: linear-gradient(90deg, #FBF9F5 0%, var(--ws-card) 72%);
+        }
+
+        /* Shared page-composition primitives for workshop screens. */
+        .ws-page-hero {
+            margin-bottom: 32px;
+            display: flex;
+            align-items: flex-end;
+            justify-content: space-between;
+            gap: 24px;
+        }
+
+        .ws-page-hero-copy {
+            min-width: 0;
+        }
+
+        .ws-page-eyebrow {
+            margin: 0 0 6px;
+            color: var(--ws-primary);
+            font-family: var(--ws-font-sans);
+            font-size: 12px;
+            font-weight: 700;
+            line-height: 18px;
+            letter-spacing: .06em;
+            text-transform: uppercase;
+        }
+
+        .ws-page-display-title {
+            margin: 0;
+            color: var(--ws-text);
+            font-family: var(--ws-font-serif);
+            font-size: 32px;
+            font-weight: 700;
+            line-height: 1.15;
+            letter-spacing: -.025em;
+            overflow-wrap: anywhere;
+        }
+
+        .ws-page-subtitle {
+            margin: 7px 0 0;
+            color: var(--ws-text-muted);
+            font-family: var(--ws-font-serif);
+            font-size: 15px;
+            line-height: 1.5;
+            overflow-wrap: anywhere;
+        }
+
+        .ws-page-actions {
+            flex: 0 0 auto;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+
+        .ws-page-actions .ws-primary-action {
+            min-width: 168px;
+            min-height: 44px;
+            border-radius: 10px;
+            background: var(--ws-primary);
+            box-shadow: var(--shadow-sm);
+            font-family: var(--ws-font-sans);
+        }
+
+        .ws-page-actions .ws-primary-action:hover {
+            background: var(--ws-primary-hover);
+            opacity: 1;
+        }
+
+        .ws-secondary-action {
+            min-height: 42px;
+            padding: 9px 14px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            border: 1px solid var(--ws-border);
+            border-radius: 10px;
+            background: var(--ws-card);
+            color: var(--ws-text);
+            box-shadow: var(--shadow-sm);
+            font-family: var(--ws-font-sans);
+            font-size: 13px;
+            font-weight: 600;
+            transition: border-color 140ms ease, background-color 140ms ease;
+        }
+
+        .ws-secondary-action:hover {
+            border-color: var(--ws-border-hover);
+            background: var(--ws-sunken);
+        }
+
+        .ws-secondary-action svg {
+            width: 17px;
+            height: 17px;
+            stroke-width: 1.9;
+        }
+
+        .ws-back-link {
+            min-height: 40px;
+            margin-bottom: 18px;
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            color: var(--ws-text-muted);
+            font-family: var(--ws-font-sans);
+            font-size: 13px;
+            font-weight: 600;
+            transition: color 140ms ease;
+        }
+
+        .ws-back-link:hover {
+            color: var(--ws-primary);
+        }
+
+        .ws-back-link svg {
+            width: 16px;
+            height: 16px;
+            stroke-width: 2;
+        }
+
+        .ws-feedback-success {
+            min-height: 48px;
+            margin-bottom: 18px;
+            padding: 12px 14px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            border: 1px solid var(--ws-status-ready-fg);
+            border-radius: 10px;
+            background: var(--ws-status-ready-bg);
+            color: var(--ws-status-ready-fg);
+            font-family: var(--ws-font-sans);
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        .ws-feedback-success svg {
+            width: 17px;
+            height: 17px;
+            flex: 0 0 17px;
+            stroke-width: 2.2;
+        }
+
+        /* Ίδια γλώσσα με τα feedback banners, αλλά μόνιμο state του
+           πίνακα (όχι flash message): εμφανίζεται όσο υπάρχει εκκρεμότητα. */
+        .ws-aade-alert {
+            margin-bottom: 18px;
+            padding: 12px 14px;
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            border: 1px solid var(--ws-status-expired-fg);
+            border-radius: 10px;
+            background: var(--ws-status-expired-bg);
+            color: var(--ws-status-expired-fg);
+            font-family: var(--ws-font-sans);
+            font-size: 13px;
+        }
+
+        .ws-aade-alert svg {
+            width: 17px;
+            height: 17px;
+            flex: 0 0 17px;
+            margin-top: 1px;
+            stroke-width: 2.2;
+        }
+
+        .ws-aade-alert-body {
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+        }
+
+        .ws-aade-alert-body b {
+            font-weight: 700;
+        }
+
+        .ws-feedback-error {
+            min-height: 48px;
+            margin-bottom: 18px;
+            padding: 12px 14px;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            border: 1px solid var(--ws-status-expired-fg);
+            border-radius: 10px;
+            background: var(--ws-status-expired-bg);
+            color: var(--ws-status-expired-fg);
+            font-family: var(--ws-font-sans);
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        .ws-panel-head {
+            min-height: 58px;
+            padding: 15px 18px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            border-bottom: 1px solid var(--ws-border);
+        }
+
+        .ws-panel-title {
+            margin: 0;
+            color: var(--ws-text);
+            font-family: var(--ws-font-serif);
+            font-size: 19px;
+            font-weight: 700;
+            line-height: 26px;
+            letter-spacing: -.012em;
+        }
+
+        .ws-panel-meta {
+            flex-shrink: 0;
+            color: var(--ws-text-muted);
+            font-family: var(--ws-font-sans);
+            font-size: 12px;
+            font-weight: 600;
+            line-height: 18px;
+            white-space: nowrap;
+        }
+
+        .ws-field-label {
+            margin-bottom: 5px;
+            display: block;
+            color: var(--ws-text-muted);
+            font-family: var(--ws-font-sans);
+            font-size: 10px;
+            font-weight: 700;
+            line-height: 14px;
+            letter-spacing: .07em;
+            text-transform: uppercase;
+        }
+
+        .ws-sunken-card {
+            min-width: 0;
+            padding: 14px;
+            border-radius: 12px;
+            background: var(--ws-sunken);
+        }
+
+        .ws-info-list {
+            margin: 0;
+            padding: 2px 18px;
+        }
+
+        .ws-info-row {
+            min-width: 0;
+            padding: 13px 0;
+            display: grid;
+            grid-template-columns: minmax(105px, .8fr) minmax(0, 1.2fr);
+            align-items: start;
+            gap: 14px;
+            border-bottom: 1px solid var(--ws-border);
+        }
+
+        .ws-info-row:last-child {
+            border-bottom: 0;
+        }
+
+        .ws-info-row dt,
+        .ws-info-row dd {
+            margin: 0;
+        }
+
+        .ws-info-row dt {
+            color: var(--ws-text-muted);
+            font-family: var(--ws-font-sans);
+            font-size: 12px;
+            font-weight: 600;
+            line-height: 19px;
+        }
+
+        .ws-info-row dd {
+            min-width: 0;
+            color: var(--ws-text);
+            font-family: var(--ws-font-serif);
+            font-size: 14px;
+            font-weight: 700;
+            line-height: 20px;
+            text-align: right;
+            overflow-wrap: anywhere;
+        }
+
+        .ws-card-grid {
+            min-width: 0;
+            display: grid;
+            grid-template-columns: minmax(0, 1fr);
+            align-items: stretch;
+            gap: 14px;
+        }
+
+        .ws-clickable-card {
+            height: 100%;
+            color: var(--ws-text);
+            transition: border-color 160ms ease, box-shadow 160ms ease, transform 160ms ease;
+        }
+
+        .ws-clickable-card:hover {
+            border-color: var(--ws-border-hover);
+            box-shadow: var(--shadow-md);
+            transform: translateY(-1px);
+        }
+
+        .ws-clickable-card:focus-visible {
+            border-color: var(--ws-primary);
+            outline: 2px solid var(--ws-primary);
+            outline-offset: 2px;
+        }
+
+        .ws-operational-card {
+            position: relative;
+            min-width: 0;
+            min-height: 176px;
+            height: 100%;
+            padding: 14px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            transition: border-color 140ms ease, background-color 140ms ease, box-shadow 140ms ease;
+        }
+
+        .ws-operational-card:hover,
+        .ws-operational-card:focus-within {
+            border-color: var(--ws-border-hover);
+            background: var(--ws-sunken);
+        }
+
+        .ws-operational-card__overlay {
+            position: absolute;
+            z-index: 1;
+            inset: 0;
+            border-radius: inherit;
+        }
+
+        .ws-operational-card__overlay:focus-visible {
+            outline: 2px solid var(--ws-primary);
+            outline-offset: -2px;
+        }
+
+        .ws-operational-card__head {
+            min-width: 0;
+            display: flex;
+            flex-wrap: wrap;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 12px;
+        }
+
+        .ws-operational-card__head > .ws-operational-card__identity {
+            flex: 1 1 180px;
+        }
+
+        .ws-operational-card__identity,
+        .ws-operational-card__body {
+            min-width: 0;
+        }
+
+        .ws-operational-card__body {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .ws-operational-card__title {
+            margin: 0;
+            overflow: hidden;
+            color: var(--ws-text);
+            font-family: var(--ws-font-serif);
+            font-size: 15px;
+            font-weight: 700;
+            line-height: 20px;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .ws-operational-card__subtitle {
+            display: block;
+            min-width: 0;
+            overflow: hidden;
+            color: var(--ws-text-muted);
+            font-family: var(--ws-font-sans);
+            font-size: 13px;
+            line-height: 18px;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .ws-operational-card__count {
+            flex: 0 0 auto;
+            max-width: 100%;
+            padding: 3px 8px;
+            overflow: hidden;
+            border: 1px solid var(--ws-border);
+            border-radius: 8px;
+            color: var(--ws-text-muted);
+            font-family: var(--ws-font-sans);
+            font-size: 12px;
+            font-weight: 600;
+            line-height: 18px;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .ws-operational-card__meta {
+            min-width: 0;
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 4px 12px;
+            color: var(--ws-text-muted);
+            font-family: var(--ws-font-sans);
+            font-size: 12px;
+            line-height: 18px;
+        }
+
+        .ws-operational-card__truncate {
+            min-width: 0;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .ws-operational-card__plate-list {
+            min-width: 0;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+        }
+
+        .ws-operational-card .ws-plate {
+            max-width: 100%;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .ws-operational-card__interactive {
+            position: relative;
+            z-index: 2;
+        }
+
+        .ws-operational-card__inline-action {
+            color: var(--ws-text-muted);
+        }
+
+        .ws-operational-card__inline-action:hover {
+            color: var(--ws-text);
+            text-decoration: underline;
+        }
+
+        .ws-operational-card__footer {
+            position: relative;
+            z-index: 2;
+            margin-top: auto;
+            padding-top: 10px;
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 6px;
+            border-top: 1px solid var(--ws-border);
+        }
+
+        .ws-card-action {
+            min-height: 36px;
+            padding: 7px 10px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+            border: 1px solid var(--ws-border);
+            border-radius: 8px;
+            background: var(--ws-card);
+            color: var(--ws-text-muted);
+            font-family: var(--ws-font-sans);
+            font-size: 12px;
+            font-weight: 600;
+            line-height: 18px;
+            white-space: nowrap;
+            transition: color 120ms ease, border-color 120ms ease, background-color 120ms ease;
+        }
+
+        .ws-card-action:hover {
+            border-color: var(--ws-border-hover);
+            background: var(--ws-card);
+            color: var(--ws-text);
+        }
+
+        .ws-card-action--primary {
+            border-color: transparent;
+            background: var(--ws-primary);
+            color: var(--ws-primary-fg);
+        }
+
+        .ws-card-action--primary:hover {
+            border-color: transparent;
+            background: var(--ws-primary-hover);
+            color: var(--ws-primary-fg);
+        }
+
+        .ws-card-action svg {
+            width: 13px;
+            height: 13px;
+            stroke-width: 2.5;
+        }
+
+        .ws-pagination {
+            min-width: 0;
+            margin-top: 16px;
+            color: var(--ws-text-muted);
+            font-family: var(--ws-font-sans);
+            font-size: 13px;
+            line-height: 18px;
+        }
+
+        .ws-pagination nav,
+        .ws-pagination nav > div {
+            min-width: 0;
+        }
+
+        .ws-pagination nav > div:first-child {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+        }
+
+        .ws-pagination nav > div:last-child {
+            display: none;
+        }
+
+        .ws-pagination p {
+            margin: 0;
+            color: var(--ws-text-muted);
+        }
+
+        .ws-pagination nav a,
+        .ws-pagination nav [aria-disabled="true"] > span,
+        .ws-pagination nav [aria-current="page"] > span {
+            min-width: 36px;
+            min-height: 36px;
+            padding: 7px 10px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid var(--ws-border);
+            border-radius: 8px;
+            background: var(--ws-card);
+            color: var(--ws-text-muted);
+            white-space: nowrap;
+        }
+
+        .ws-pagination nav a:hover {
+            border-color: var(--ws-border-hover);
+            background: var(--ws-sunken);
+            color: var(--ws-text);
+        }
+
+        .ws-pagination nav [aria-disabled="true"] > span {
+            color: var(--ws-text-faint);
+            cursor: default;
+        }
+
+        .ws-pagination nav [aria-current="page"] > span {
+            background: var(--ws-sunken);
+            color: var(--ws-text);
+            font-weight: 700;
+        }
+
+        .ws-pagination svg.w-5.h-5 {
+            width: 18px;
+            height: 18px;
+            display: block;
+            flex: 0 0 18px;
+        }
+
+        @media (min-width: 640px) {
+            .ws-pagination nav > div:first-child {
+                display: none;
+            }
+
+            .ws-pagination nav > div:last-child {
+                display: flex;
+                flex-wrap: wrap;
+                align-items: center;
+                justify-content: space-between;
+                gap: 12px 20px;
+            }
+
+            .ws-pagination nav > div:last-child > div:last-child,
+            .ws-pagination nav > div:last-child > div:last-child > span {
+                min-width: 0;
+                max-width: 100%;
+            }
+
+            .ws-pagination nav > div:last-child > div:last-child > span {
+                display: inline-flex;
+                flex-wrap: wrap;
+                align-items: center;
+                gap: 4px;
+            }
+        }
+
+        @media (min-width: 1024px) {
+            .ws-card-grid--two-up {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+        }
+
+        @media (max-width: 767px) {
+            .ws-page-hero {
+                margin-bottom: 24px;
+                align-items: stretch;
+                flex-direction: column;
+                gap: 16px;
+            }
+
+            .ws-page-display-title {
+                font-size: 28px;
+            }
+
+            .ws-page-actions {
+                justify-content: space-between;
+            }
+
+            .ws-panel-head {
+                padding-right: 16px;
+                padding-left: 16px;
+            }
+        }
+
+        .ws-recent-orders-head {
+            display: none;
+        }
+
+        /* Donor open-order row: plate, who/what, then the compact right rail.
+           The left edge carries the status colour. */
+        .ws-recent-order {
+            min-width: 0;
+            padding: 15px 20px 15px 17px;
+            display: grid;
+            grid-template-columns: minmax(0, 1fr);
+            align-items: center;
+            gap: 9px;
+            border-bottom: 1px solid var(--ws-divider-soft);
+            border-left: 4px solid transparent;
+            background: var(--ws-card);
+            transition: background-color 140ms ease;
+        }
+
+        .ws-recent-order:last-child {
+            border-bottom: 0;
+        }
+
+        .ws-recent-order:hover {
+            background: #FAF7F3;
+        }
+
+        .ws-recent-order[data-status="new"] {
+            border-left-color: var(--ws-status-new-fg);
+        }
+
+        .ws-recent-order[data-status="in_progress"] {
+            border-left-color: var(--ws-status-progress-fg);
+        }
+
+        .ws-recent-order[data-status="awaiting_parts"] {
+            border-left-color: var(--ws-status-awaiting-fg);
+        }
+
+        .ws-recent-order[data-status="ready"] {
+            border-left-color: var(--ws-status-ready-fg);
+        }
+
+        .ws-recent-order .ws-plate {
+            justify-self: start;
+        }
+
+        .ws-recent-order-number {
+            color: var(--ws-text-faint);
+            font-family: var(--ws-font-mono);
+            font-size: 12.5px;
+            font-weight: 500;
+            line-height: 18px;
+        }
+
+        .ws-recent-order-body {
+            min-width: 0;
+        }
+
+        .ws-recent-order-customer,
+        .ws-recent-order-meta {
+            display: block;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .ws-recent-order-customer {
+            color: var(--ws-text);
+            font-family: var(--ws-font-sans);
+            font-size: 15px;
+            font-weight: 500;
+            line-height: 21px;
+        }
+
+        .ws-recent-order-meta {
+            margin-top: 2px;
+            color: var(--ws-text-muted);
+            font-family: var(--ws-font-sans);
+            font-size: 13px;
+            line-height: 18px;
+        }
+
+        .ws-recent-order-aside {
+            min-width: 0;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+        }
+
+        .ws-recent-order-status {
+            min-width: 0;
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 6px;
+        }
+
+        /* Same badge shape as a status, in the neutral grey pair — it explains
+           an absence from the strip above, it is not a state to act on. */
+        .ws-shop-flag {
+            border: 1px solid var(--ws-status-completed-border);
+            background: var(--ws-status-completed-bg);
+            color: var(--ws-status-completed-fg);
+        }
+
+        .ws-dashboard .ws-status-badge,
+        .ws-dashboard .ws-shop-flag {
+            max-width: 100%;
+            overflow: hidden;
+            font-family: var(--ws-font-sans);
+            text-overflow: ellipsis;
+            text-transform: none;
+        }
+
+        .ws-recent-order-time {
+            color: var(--ws-text-muted);
+            font-family: var(--ws-font-mono);
+            font-size: 12.5px;
+            line-height: 18px;
+            white-space: nowrap;
+        }
+
+        .ws-recent-order-chevron {
+            width: 16px;
+            height: 16px;
+            flex: 0 0 16px;
+            color: var(--ws-text-faint);
+            stroke-width: 1.8;
+            transition: color 140ms ease, transform 140ms ease;
+        }
+
+        .ws-recent-order:hover .ws-recent-order-chevron {
+            color: var(--ws-text);
+            transform: translateX(2px);
+        }
+
+        /* Donor quick-entry tiles: a hairline-separated three-up strip. */
+        .ws-quick-actions {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 1px;
+            background: var(--ws-border);
+        }
+
+        .ws-quick-action {
+            min-height: 92px;
+            padding: 18px 10px 16px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 9px;
+            background: var(--ws-card);
+            font-family: var(--ws-font-sans);
+            text-align: center;
+            transition: background-color 120ms ease;
+        }
+
+        .ws-quick-action:hover {
+            background: var(--ws-sunken);
+        }
+
+        .ws-quick-action-main {
+            min-width: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 9px;
+        }
+
+        .ws-quick-action-icon {
+            width: 38px;
+            height: 38px;
+            flex: 0 0 38px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 9px;
+            background: #F1ECE4;
+            color: var(--ws-text);
+        }
+
+        .ws-quick-action-icon svg {
+            width: 19px;
+            height: 19px;
+            stroke-width: 1.8;
+        }
+
+        .ws-quick-action-label {
+            max-width: 100%;
+            overflow: hidden;
+            color: var(--ws-text);
+            font-size: 13px;
+            font-weight: 400;
+            line-height: 18px;
+            text-overflow: ellipsis;
+        }
+
+        .ws-quick-action-plus {
+            display: none;
+        }
+
+        .ws-dashboard-kteo .ws-list {
+            overflow: hidden;
+            border: 0;
+            border-radius: 0;
+            box-shadow: none;
+        }
+
+        .ws-dashboard-kteo .ws-kteo-row {
+            min-width: 0;
+            min-height: 58px;
+            padding: 13px 18px;
+            gap: 13px;
+            border-bottom-color: var(--ws-divider-soft);
+        }
+
+        /* Lapsed and upcoming ΚΤΕΟ are different jobs; the sticky sub-header
+           keeps which one you are reading visible while the list scrolls. */
+        .ws-kteo-subhead {
+            position: sticky;
+            z-index: 1;
+            top: 0;
+            margin: 0;
+            padding: 9px 18px 7px;
+            display: flex;
+            align-items: baseline;
+            gap: 6px;
+            border-top: 1px solid var(--ws-border);
+            background: #FBF9F5;
+            color: var(--ws-text-muted);
+            font-family: var(--ws-font-display);
+            font-size: 12.5px;
+            font-weight: 700;
+            line-height: 16px;
+            letter-spacing: 0;
+        }
+
+        .ws-kteo-subhead:first-of-type {
+            border-top: 0;
+        }
+
+        .ws-kteo-subhead--expired {
+            background: linear-gradient(90deg, var(--ws-status-expired-bg) 0%, var(--ws-card) 72%);
+            color: var(--ws-signal);
+        }
+
+        .ws-kteo-subhead span {
+            font-weight: 700;
+        }
+
+        .ws-dashboard .ws-empty-state {
+            min-height: 132px;
+            font-family: var(--ws-font-sans);
+        }
+
+        @media (min-width: 1024px) {
+            .ws-dashboard .ws-stat-grid {
+                grid-template-columns: repeat(3, minmax(0, 1fr));
+                gap: 20px;
+            }
+
+            .ws-dashboard .ws-stat-card {
+                min-height: 88px;
+                padding: 13px 17px;
+            }
+
+            .ws-recent-order {
+                min-height: 72px;
+                padding: 15px 20px 15px 17px;
+                grid-template-columns: 124px minmax(0, 1fr) auto;
+                gap: 16px;
+            }
+
+            .ws-recent-order-aside {
+                justify-content: flex-end;
+                gap: 16px;
+            }
+
+            .ws-recent-order-status {
+                overflow: hidden;
+            }
+        }
+
+        @media (min-width: 1200px) {
+            .ws-dashboard-body {
+                grid-template-columns: minmax(0, 2fr) minmax(280px, 1fr);
+                gap: 22px;
+                align-items: start;
+            }
+        }
+
+        /* Once four cards can hold their minimum width, pin the strip to four
+           per row so eight orders read as two tidy rows that line up with the
+           metrics and panels below instead of ending short of them. */
+        @media (min-width: 1280px) {
+            .ws-bay-grid {
+                grid-template-columns: repeat(4, minmax(0, 1fr));
+            }
+        }
+
+        @media (min-width: 1120px) {
+            .ws-work-order-grid {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+        }
+
+        @media (max-width: 1023px) {
+            .ws-main {
+                padding-left: 16px;
+                padding-right: 16px;
+            }
+
+            .ws-stat-grid {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+        }
+
+        /* Below 768px the rail is removed from the flow entirely and becomes an
+           off-canvas drawer, so the content keeps the full viewport width. */
+        @media (max-width: 767px) {
+            .ws-mobile-header {
+                position: sticky;
+                z-index: 30;
+                top: 0;
+                height: var(--header-h);
+                padding: 0 8px 0 4px;
+                display: flex;
+                align-items: center;
+                gap: 12px;
+                background: var(--ws-primary);
+                color: var(--ws-nav-text-hi);
+            }
+
+            .ws-mobile-brand {
+                margin-left: auto;
+                padding-right: 8px;
+                color: var(--ws-nav-text);
+                font-size: 14px;
+                font-weight: 500;
+            }
+
+            .ws-drawer-backdrop {
+                position: fixed;
+                z-index: 40;
+                inset: 0;
+                display: block;
+                background: rgb(24 24 27 / 45%);
+            }
+
+            .ws-sidebar {
+                position: fixed;
+                z-index: 50;
+                top: 0;
+                left: 0;
+                width: 272px;
+                max-width: 82vw;
+                height: 100dvh;
+                padding: 16px 12px;
+                overflow-y: auto;
+                visibility: hidden;
+                transform: translateX(-100%);
+                transition: transform 220ms ease, visibility 0s linear 220ms;
+            }
+
+            .ws-sidebar--open {
+                visibility: visible;
+                transform: translateX(0);
+                transition: transform 220ms ease;
+            }
+
+            .ws-sidebar-brand {
+                padding: 0 56px 0 12px;
+                justify-content: flex-start;
+            }
+
+            .ws-sidebar-brand-full {
+                display: block;
+            }
+
+            .ws-sidebar-brand-compact {
+                display: none;
+            }
+
+            .ws-sidebar-item {
+                min-height: 48px;
+                padding: 12px;
+                flex-direction: row;
+                justify-content: flex-start;
+                gap: 12px;
+                font-size: 14px;
+                line-height: 20px;
+                text-align: left;
+            }
+
+            .ws-drawer-close {
+                position: absolute;
+                top: 12px;
+                right: 12px;
+                width: 44px;
+                height: 44px;
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                border: 0;
+                border-radius: 8px;
+                background: transparent;
+                color: var(--ws-nav-text-hi);
+                cursor: pointer;
+            }
+
+            .ws-drawer-close:hover {
+                background: var(--ws-nav-hover);
+            }
+
+            .ws-drawer-close svg {
+                width: 20px;
+                height: 20px;
+                stroke-width: 1.8;
+            }
+
+            .ws-content {
+                width: 100%;
+            }
+
+            .ws-main {
+                max-width: none;
+                margin: 0;
+                padding: 16px 16px 32px;
+            }
+
+            .ws-mobile-header {
+                border-bottom: 1px solid rgba(255, 255, 255, 0.14);
+                box-shadow: var(--shadow-sm);
+            }
+
+            .ws-sidebar {
+                box-shadow: 16px 0 40px rgb(17 24 39 / 18%);
+            }
+
+            /* The banner card leaves entirely on mobile — its one piece of
+               real content (the date) moves into the sticky app header
+               instead, see .ws-mobile-context-subtitle below. */
+            .ws-dashboard-header {
+                display: none;
+            }
+
+            .ws-dashboard .ws-dashboard-controls {
+                margin-bottom: 24px;
+                grid-template-columns: minmax(0, 1fr);
+            }
+
+            .ws-dashboard .ws-primary-action {
+                width: 100%;
+            }
+
+            .ws-dashboard .ws-stat-grid {
+                margin-bottom: 24px;
+                gap: 12px;
+            }
+
+            .ws-dashboard .ws-stat-card {
+                min-height: 80px;
+                padding: 12px 14px;
+                gap: 12px;
+            }
+
+            .ws-dashboard .ws-stat-label {
+                font-size: 10px;
+                line-height: 14px;
+            }
+
+            .ws-dashboard .ws-stat-value {
+                font-size: 31px;
+            }
+
+            .ws-dashboard-body {
+                gap: 20px;
+            }
+
+            .ws-recent-order {
+                padding: 14px 15px 14px 12px;
+            }
+
+            .ws-eyebrow {
+                font-size: 12px;
+                letter-spacing: .12em;
+            }
+
+            .ws-quick-action {
+                min-height: 84px;
+                padding: 15px 6px 13px;
+            }
+
+            .ws-quick-action-label {
+                font-size: 12px;
+                line-height: 16px;
+            }
+            body {
+                --nav-h: 68px;
+            }
+
+            .ws-mobile-header {
+                height: calc(56px + env(safe-area-inset-top, 0px));
+                padding: env(safe-area-inset-top, 0px) 10px 0;
+                gap: 8px;
+            }
+
+            .ws-mobile-context {
+                min-width: 0;
+                padding-left: 6px;
+                flex: 1;
+                display: flex;
+                flex-direction: column;
+                justify-content: center;
+                gap: 1px;
+            }
+
+            .ws-mobile-context-title,
+            .ws-mobile-context-subtitle {
+                display: block;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+            }
+
+            .ws-mobile-context-title {
+                color: var(--ws-nav-text-hi);
+                font-size: 17px;
+                font-weight: 700;
+                line-height: 22px;
+            }
+
+            /* Where the mobile dashboard's date banner used to live — now a
+               plain 12px line under the page title in the sticky header. */
+            .ws-mobile-context-subtitle {
+                color: rgba(255, 255, 255, 0.82);
+                font-size: 12px;
+                font-weight: 500;
+                line-height: 16px;
+                letter-spacing: 0;
+            }
+
+            .ws-mobile-header-action {
+                width: 44px;
+                height: 44px;
+                padding: 0;
+                flex: 0 0 44px;
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                border: 0;
+                border-radius: 12px;
+                background: transparent;
+                color: var(--ws-nav-text-hi);
+                transition: color 120ms ease, background-color 120ms ease;
+            }
+
+            .ws-mobile-back-action {
+                color: var(--ws-nav-text-hi);
+            }
+
+            .ws-mobile-header-action:hover {
+                background: rgba(255, 255, 255, 0.16);
+                color: var(--ws-nav-text-hi);
+            }
+
+            .ws-mobile-header-action svg {
+                width: 21px;
+                height: 21px;
+                stroke-width: 1.9;
+            }
+
+            .ws-mobile-bottom-nav {
+                position: fixed;
+                z-index: 35;
+                right: 0;
+                bottom: 0;
+                left: 0;
+                min-height: calc(var(--nav-h) + env(safe-area-inset-bottom, 0px));
+                padding: 6px max(6px, env(safe-area-inset-right, 0px)) env(safe-area-inset-bottom, 0px) max(6px, env(safe-area-inset-left, 0px));
+                display: grid;
+                grid-template-columns: repeat(5, minmax(0, 1fr));
+                align-items: end;
+                border-top: 1px solid var(--ws-border);
+                background: var(--ws-card);
+                box-shadow: 0 -8px 24px rgb(17 24 39 / 8%);
+            }
+
+            .ws-mobile-bottom-item {
+                min-width: 0;
+                min-height: 56px;
+                padding: 5px 2px 4px;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                gap: 3px;
+                border: 0;
+                border-radius: 12px;
+                background: transparent;
+                color: var(--ws-text-muted);
+                font-family: var(--ws-font-sans);
+                font-size: 9px;
+                font-weight: 600;
+                line-height: 12px;
+                text-align: center;
+                cursor: pointer;
+            }
+
+            .ws-mobile-bottom-item:hover,
+            .ws-mobile-bottom-item[aria-current="page"] {
+                background: #E7F1EE;
+                color: var(--ws-primary);
+            }
+
+            .ws-mobile-bottom-icon {
+                width: 24px;
+                height: 24px;
+                flex: 0 0 24px;
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+            }
+
+            .ws-mobile-bottom-icon svg {
+                width: 22px;
+                height: 22px;
+                stroke-width: 1.8;
+            }
+
+            .ws-mobile-bottom-label {
+                max-width: 100%;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+            }
+
+            .ws-mobile-bottom-item--create {
+                color: var(--ws-primary);
+            }
+
+            .ws-mobile-bottom-item--create:hover,
+            .ws-mobile-bottom-item--create[aria-current="page"] {
+                background: transparent;
+            }
+
+            .ws-mobile-bottom-item--create .ws-mobile-bottom-icon {
+                width: 48px;
+                height: 48px;
+                margin-top: -22px;
+                flex-basis: 48px;
+                border: 4px solid var(--ws-card);
+                border-radius: 999px;
+                background: var(--ws-primary);
+                color: var(--ws-primary-fg);
+                box-shadow: 0 6px 16px rgb(15 110 86 / 24%);
+            }
+
+            .ws-mobile-bottom-item--create .ws-mobile-bottom-icon svg {
+                width: 22px;
+                height: 22px;
+                stroke-width: 2.2;
+            }
+
+            .ws-main {
+                padding: 8px 16px 32px;
+                padding-bottom: calc(32px + var(--nav-h) + env(safe-area-inset-bottom, 0px));
+            }
+
+            .ws-dashboard-header {
+                margin-bottom: 10px;
+                align-items: center;
+                flex-direction: row;
+                gap: 10px;
+            }
+
+            .ws-dashboard-title {
+                display: none;
+            }
+
+            .ws-dashboard-header > div {
+                min-width: 0;
+                flex: 1;
+            }
+
+            .ws-dashboard-subtitle {
+                margin: 0;
+                font-family: var(--ws-font-sans);
+                font-size: 12px;
+                line-height: 18px;
+            }
+
+            .ws-dashboard-subtitle-prefix {
+                display: none;
+            }
+
+            .ws-dashboard-date {
+                display: block;
+            }
+
+            .ws-system-status {
+                display: none;
+            }
+
+            .ws-dashboard .ws-dashboard-controls {
+                margin-bottom: 14px;
+            }
+
+            .ws-dashboard .ws-dashboard-controls > .ws-primary-action {
+                display: none;
+            }
+
+            .ws-dashboard .ws-search-input {
+                height: 52px;
+                padding-left: 52px;
+                border-radius: 14px;
+                font-size: 14px;
+            }
+
+            .ws-dashboard .ws-search-submit {
+                top: 4px;
+                left: 4px;
+                width: 44px;
+                height: 44px;
+                border-radius: 10px;
+            }
+
+            /* Three metrics side by side in one short strip, not three tall
+               cards — the icon drops out, label and value tuck onto two
+               tight lines within a ~48px card. */
+            .ws-dashboard .ws-stat-grid {
+                grid-template-columns: repeat(3, minmax(0, 1fr));
+                margin-bottom: 20px;
+                gap: 8px;
+            }
+
+            .ws-dashboard .ws-stat-card {
+                min-height: 48px;
+                padding: 6px 10px;
+                grid-template-columns: minmax(0, 1fr);
+                gap: 0;
+                border-radius: 10px;
+            }
+
+            .ws-stat-icon {
+                display: none;
+            }
+
+            .ws-dashboard .ws-stat-label {
+                font-size: 9.5px;
+                line-height: 12px;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+            }
+
+            .ws-dashboard .ws-stat-row {
+                margin-top: 1px;
+            }
+
+            .ws-dashboard .ws-stat-value {
+                font-size: 17px;
+                line-height: 19px;
+            }
+
+            /* Duplicate of the vehicle strip above it — dropped on mobile so
+               the ΚΤΕΟ list and quick actions are reachable without an extra
+               scroll past the same open orders twice. */
+            .ws-dashboard-primary {
+                display: none;
+            }
+
+            /* ── Vehicle list, mobile ─────────────────────────────────
+               One ~70px, two-line row per vehicle instead of a card grid:
+                 row 1: plate ................ status
+                 row 2: model · customer ..... elapsed days
+               The status stripe is an inset ::before (not a border), so it
+               never touches the divider above/below and each row reads as
+               its own object. No progress rail and no big corner number —
+               there is no room for either at this height. `.ws-bay-main`
+               and `.ws-bay-foot` go `display: contents` here so their
+               children (plate, the merged text line, elapsed, the status
+               badge) become independently placeable grid items of `.ws-bay`
+               itself, instead of the two stacked sub-blocks the base/desktop
+               rules build them into. */
+            .ws-bay-grid {
+                display: block;
+                grid-template-columns: none;
+                border: 1px solid var(--ws-border);
+                border-radius: 12px;
+                background: var(--ws-card);
+                box-shadow: var(--shadow-sm);
+                overflow: hidden;
+            }
+
+            .ws-bay {
+                position: relative;
+                display: grid;
+                grid-template-columns: minmax(0, 1fr) auto;
+                grid-template-rows: auto auto;
+                align-items: center;
+                column-gap: 10px;
+                row-gap: 2px;
+                min-height: 70px;
+                height: auto;
+                padding: 8px 12px 8px 16px;
+                border: 0;
+                border-bottom: 1px solid var(--ws-border);
+                border-radius: 0;
+                box-shadow: none;
+            }
+
+            .ws-bay::before {
+                content: "";
+                position: absolute;
+                left: 0;
+                top: 8px;
+                bottom: 8px;
+                width: 4px;
+                border-radius: 2px;
+                background: var(--ws-bay-accent);
+            }
+
+            .ws-bay:last-child {
+                border-bottom: 0;
+            }
+
+            .ws-bay:hover {
+                transform: none;
+                box-shadow: none;
+            }
+
+            .ws-bay-number,
+            .ws-bay-rail {
+                display: none;
+            }
+
+            .ws-bay-main {
+                display: contents;
+            }
+
+            .ws-bay-main .ws-plate {
+                grid-column: 1;
+                grid-row: 1;
+                justify-self: start;
+            }
+
+            .ws-bay-main .ws-plate-band {
+                width: 12px;
+                flex: 0 0 12px;
+                padding-top: 3px;
+                font-size: 7px;
+            }
+
+            .ws-bay-main .ws-plate-number {
+                padding: 3px 6px;
+                font-size: 13px;
+                line-height: 16px;
+            }
+
+            .ws-bay-line-mobile {
+                grid-column: 1;
+                grid-row: 2;
+                display: block;
+                min-width: 0;
+                overflow: hidden;
+                white-space: nowrap;
+                text-overflow: ellipsis;
+            }
+
+            .ws-bay-line-mobile .ws-bay-vehicle,
+            .ws-bay-line-mobile .ws-bay-customer {
+                display: inline;
+                max-width: none;
+                margin: 0;
+                font-size: 12px;
+                line-height: 16px;
+            }
+
+            .ws-bay-line-mobile .ws-bay-vehicle {
+                color: var(--ws-text);
+                font-weight: 600;
+            }
+
+            .ws-bay-line-mobile .ws-bay-customer {
+                display: inline;
+                color: var(--ws-text-muted);
+                font-weight: 400;
+            }
+
+            .ws-bay-line-mobile .ws-bay-customer::before {
+                content: " · ";
+                color: var(--ws-text-faint);
+            }
+
+            /* The problem/reason text is part of the desktop card's line only
+               — the mobile row's second line is model · customer alone. */
+            .ws-bay-line-mobile .ws-bay-job {
+                display: none;
+            }
+
+            .ws-bay-foot {
+                display: contents;
+            }
+
+            .ws-bay-elapsed {
+                grid-column: 2;
+                grid-row: 2;
+                justify-self: end;
+                font-size: 11px;
+            }
+
+            .ws-bay-foot .ws-status-badge {
+                grid-column: 2;
+                grid-row: 1;
+                justify-self: end;
+                max-width: 130px;
+                padding: 0;
+                border: 0;
+                background: transparent;
+                color: var(--ws-bay-accent);
+                font-size: 11px;
+                font-weight: 600;
+            }
+
+            /* Access to every order already lives on the "Εργασίες" bottom
+               tab — the trailing link only doubled that path. */
+            .ws-bays-head .ws-eyebrow--quiet {
+                display: none;
+            }
+
+            .ws-dashboard-body {
+                gap: 24px;
+            }
+
+            .ws-dashboard .ws-section-header {
+                min-height: 44px;
+                margin-bottom: 8px;
+                gap: 12px;
+                flex-wrap: nowrap;
+            }
+
+            .ws-dashboard-primary .ws-section-header h2 {
+                min-width: 0;
+                white-space: nowrap;
+            }
+
+            .ws-dashboard-primary .ws-section-header a {
+                flex: 0 0 auto;
+                white-space: nowrap;
+            }
+
+            /* Only the trailing link shortens on a phone. The heading keeps
+               its one true name at every width. */
+            .ws-dashboard-primary .ws-section-header a .ws-section-label-desktop {
+                display: none;
+            }
+
+            .ws-dashboard-primary .ws-section-header a .ws-section-label-mobile {
+                display: inline;
+            }
+
+            .ws-dashboard .ws-section-header h2,
+            .ws-dashboard-section-title {
+                font-size: 18px;
+                line-height: 24px;
+            }
+
+            .ws-recent-order {
+                min-height: 72px;
+                padding: 12px 12px 12px 10px;
+                gap: 8px;
+            }
+
+            .ws-recent-order-number {
+                font-size: 12px;
+            }
+
+            .ws-recent-order-customer {
+                font-size: 14px;
+                line-height: 19px;
+            }
+
+            .ws-recent-order-meta {
+                margin-top: 1px;
+                font-size: 12px;
+                line-height: 16px;
+            }
+
+            .ws-recent-order-status {
+                max-width: 104px;
+            }
+
+            .ws-dashboard .ws-status-badge,
+            .ws-dashboard .ws-shop-flag {
+                padding: 2px 6px;
+                font-size: 9px;
+                line-height: 14px;
+                letter-spacing: 0;
+                text-transform: none;
+            }
+
+            .ws-recent-order-time {
+                font-size: 11px;
+                line-height: 14px;
+            }
+
+            .ws-main > .woc-toolbar,
+            .ws-main .wos-page > .ws-back-link {
+                display: none;
+            }
+
+            .ws-section-header a,
+            .ws-empty-action a,
+            .ws-back-link,
+            .ws-secondary-action {
+                min-height: 44px;
+            }
+
+            .ws-icon-action {
+                width: 44px;
+                height: 44px;
+            }
+
+
+            body.ws-drawer-open {
+                overflow: hidden;
+            }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after {
+                scroll-behavior: auto !important;
+                transition-duration: .01ms !important;
+                animation-duration: .01ms !important;
+                animation-iteration-count: 1 !important;
+            }
+        }
+
+
+
+/* from: resources/views/workshop/appointments/index.blade.php */
+    /* ── Page header ─────────────────────────────────────────── */
+    .ap-page-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.75rem;
+        padding: 0.25rem 0 1.25rem;
+        flex-wrap: wrap;
+    }
+    .ap-page-title {
+        margin: 0;
+        color: var(--ws-text);
+        font-size: 28px;
+        font-weight: 500;
+        line-height: 32px;
+    }
+    .ap-new-btn {
+        min-height: 44px;
+        padding: 8px 16px;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        border: 1px solid transparent;
+        border-radius: 8px;
+        background: var(--ws-primary);
+        color: var(--ws-primary-fg);
+        font-size: 13px;
+        font-weight: 500;
+        white-space: nowrap;
+        transition: opacity 120ms ease;
+    }
+    .ap-new-btn:hover { opacity: .92; }
+
+    .ap-success {
+        margin-bottom: 16px;
+        padding: 12px 16px;
+        border: 1px solid var(--ws-border);
+        border-radius: 8px;
+        background: var(--ws-status-ready-bg);
+        color: var(--ws-status-ready-fg);
+        font-size: 13px;
+        font-weight: 500;
+    }
+
+    /* ── Appointment card ────────────────────────────────────── */
+    .ap-list {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr);
+        align-items: stretch;
+        gap: 12px;
+    }
+    .ap-card {
+        min-width: 0;
+        min-height: 116px;
+        height: 100%;
+        padding: 14px;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        border: 1px solid var(--ws-border);
+        border-radius: 12px;
+        background: var(--ws-card);
+        box-shadow: var(--shadow-sm);
+        transition: border-color 120ms ease, background-color 120ms ease;
+    }
+    .ap-card:hover {
+        border-color: var(--ws-border-hover);
+        background: var(--ws-sunken);
+    }
+    .ap-card--today {
+        border-color: var(--ws-border-hover);
+    }
+    .ap-card-top {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 12px;
+    }
+    .ap-datetime {
+        min-width: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+    }
+    .ap-date {
+        overflow: hidden;
+        color: var(--ws-text);
+        font-size: 15px;
+        font-weight: 500;
+        line-height: 20px;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+    .ap-time {
+        color: var(--ws-text-muted);
+        font-size: 13px;
+        line-height: 18px;
+        font-variant-numeric: tabular-nums;
+    }
+    .ap-status {
+        max-width: 45%;
+        padding: 3px 9px;
+        display: inline-flex;
+        align-items: center;
+        overflow: hidden;
+        border-radius: 8px;
+        font-size: 12px;
+        font-weight: 500;
+        line-height: 18px;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+    .ap-status--scheduled {
+        background: var(--ws-status-progress-bg);
+        color: var(--ws-status-progress-fg);
+    }
+    .ap-status--in-progress {
+        background: var(--ws-status-awaiting-bg);
+        color: var(--ws-status-awaiting-fg);
+    }
+    .ap-status--completed {
+        background: var(--ws-status-ready-bg);
+        color: var(--ws-status-ready-fg);
+    }
+    .ap-status--cancelled {
+        background: var(--ws-status-expired-bg);
+        color: var(--ws-status-expired-fg);
+    }
+    .ap-status--default {
+        border: 1px solid var(--ws-border);
+        background: transparent;
+        color: var(--ws-text-muted);
+    }
+    .ap-card-main {
+        min-width: 0;
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+    }
+    .ap-card-customer {
+        overflow: hidden;
+        color: var(--ws-text);
+        font-size: 15px;
+        font-weight: 500;
+        line-height: 20px;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+    .ap-card-vehicle {
+        min-width: 0;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        color: var(--ws-text-muted);
+        font-size: 13px;
+        line-height: 18px;
+    }
+    .ap-card-vehicle-name {
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+    .ap-card-phone {
+        align-self: flex-start;
+        color: var(--ws-text-muted);
+        font-size: 13px;
+        line-height: 18px;
+    }
+    .ap-card-phone:hover {
+        color: var(--ws-text);
+        text-decoration: underline;
+    }
+    .ap-card-desc {
+        margin-top: 4px;
+        overflow: hidden;
+        color: var(--ws-text-muted);
+        font-size: 12px;
+        line-height: 16px;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    /* Empty state */
+    .ap-empty {
+        padding: 24px;
+        text-align: center;
+        border: 1px solid var(--ws-border);
+        border-radius: 12px;
+        background: var(--ws-card);
+        color: var(--ws-text-muted);
+    }
+    .ap-empty-title {
+        margin-bottom: 2px;
+        color: var(--ws-text);
+        font-size: 14px;
+        font-weight: 500;
+    }
+    .ap-empty-sub {
+        color: var(--ws-text-muted);
+        font-size: 13px;
+    }
+
+    @media (min-width: 1120px) {
+        .ap-list {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+    }
+
+/* from: resources/views/workshop/search.blade.php */
+    .sr-search-form {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-bottom: 20px;
+    }
+    .sr-search-input {
+        min-width: 0;
+        height: 44px;
+        flex: 1;
+        padding: 0 14px;
+        border: 1px solid var(--ws-border);
+        border-radius: 8px;
+        background: var(--ws-card);
+        color: var(--ws-text);
+        font-size: 14px;
+        transition: border-color 120ms ease;
+    }
+    .sr-search-input::placeholder { color: var(--ws-text-muted); }
+    .sr-search-input:hover { border-color: var(--ws-border-hover); }
+    .sr-search-input:focus {
+        border-color: var(--ws-primary);
+        outline: 2px solid var(--ws-primary);
+        outline-offset: 2px;
+    }
+    .sr-empty {
+        padding: 24px;
+        text-align: center;
+        border: 1px solid var(--ws-border);
+        border-radius: 12px;
+        background: var(--ws-card);
+        color: var(--ws-text-muted);
+    }
+    .sr-empty-title {
+        margin-bottom: 2px;
+        color: var(--ws-text);
+        font-size: 14px;
+        font-weight: 500;
+    }
+    .sr-empty-sub {
+        color: var(--ws-text-muted);
+        font-size: 13px;
+    }
+
+/* from: resources/views/workshop/kteo/index.blade.php */
+    /* ── Page header ─────────────────────────────────────────── */
+    .kt-page-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0.25rem 0 1.25rem;
+    }
+    .kt-page-title {
+        font-size: 1.375rem;
+        font-weight: 700;
+        letter-spacing: -0.03em;
+        line-height: 1.2;
+    }
+    .kt-count-badge {
+        background: var(--danger-dim);
+        color: var(--danger);
+        border: 1px solid rgba(248,81,73,0.25);
+        font-size: 0.75rem;
+        font-weight: 600;
+        padding: 0.2rem 0.6rem;
+        border-radius: 999px;
+    }
+    .kt-count-badge.kt-count-badge--ok {
+        background: var(--success-dim);
+        color: var(--success);
+        border-color: rgba(63,185,80,0.25);
+    }
+
+    /* ── List / card ─────────────────────────────────────────── */
+    .kt-list {
+        display: flex;
+        flex-direction: column;
+        gap: 0.625rem;
+    }
+
+    .kt-card {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: 1rem 1.125rem;
+        display: flex;
+        flex-direction: column;
+        gap: 0.625rem;
+    }
+
+    .kt-card-top {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.5rem;
+    }
+    .kt-plate {
+        display: inline-block;
+        background: var(--surface-2);
+        border: 1px solid var(--border);
+        border-radius: 5px;
+        padding: 0.1rem 0.4rem;
+        font-size: 0.75rem;
+        font-weight: 700;
+        letter-spacing: 0.06em;
+        color: var(--text);
+        font-family: monospace;
+    }
+
+    .kt-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.3rem;
+        font-size: 0.6875rem;
+        font-weight: 600;
+        padding: 0.2rem 0.55rem;
+        border-radius: 999px;
+        letter-spacing: 0.02em;
+        text-transform: uppercase;
+        white-space: nowrap;
+    }
+    .kt-badge::before {
+        content: '';
+        width: 5px;
+        height: 5px;
+        border-radius: 50%;
+        flex-shrink: 0;
+    }
+    .kt-badge--expired { background: var(--danger-dim); color: var(--danger); }
+    .kt-badge--expired::before { background: var(--danger); }
+    .kt-badge--soon { background: var(--accent-dim); color: var(--accent); }
+    .kt-badge--soon::before { background: var(--accent); }
+
+    .kt-card-main {
+        display: flex;
+        flex-direction: column;
+        gap: 0.2rem;
+    }
+    .kt-card-vehicle {
+        font-size: 0.9375rem;
+        font-weight: 600;
+        color: var(--text);
+        line-height: 1.3;
+    }
+    .kt-card-customer {
+        font-size: 0.8125rem;
+        color: var(--text-muted);
+    }
+    .kt-card-phone {
+        font-size: 0.8125rem;
+        color: var(--info);
+        text-decoration: none;
+    }
+    .kt-card-phone:hover { text-decoration: underline; }
+
+    .kt-card-divider {
+        height: 1px;
+        background: var(--border);
+        margin: 0.125rem 0;
+    }
+
+    .kt-card-footer {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.5rem;
+    }
+    .kt-card-date {
+        font-size: 0.75rem;
+        color: var(--text-faint);
+    }
+    .kt-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.4rem;
+        justify-content: flex-end;
+    }
+    .kt-btn-action {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+        font-size: 0.8125rem;
+        font-weight: 600;
+        color: var(--text-muted);
+        background: var(--surface-2);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-sm);
+        padding: 0.35rem 0.75rem;
+        transition: background 0.15s, border-color 0.15s, color 0.15s;
+        white-space: nowrap;
+        cursor: pointer;
+        font-family: inherit;
+    }
+    .kt-btn-action:hover {
+        color: var(--text);
+        border-color: var(--text-faint);
+        background: var(--surface-3);
+    }
+    .kt-btn-action svg { width: 13px; height: 13px; stroke-width: 2.5; flex-shrink: 0; }
+    .kt-btn-call { color: var(--success); border-color: rgba(63,185,80,.35); background: var(--success-dim); }
+    .kt-btn-call:hover { background: rgba(63,185,80,.22); }
+    .kt-btn-sms { color: var(--info); border-color: rgba(88,166,255,.35); background: var(--info-dim); }
+    .kt-btn-sms:hover { background: rgba(88,166,255,.22); }
+    .kt-btn-copy.is-copied {
+        color: var(--success);
+        border-color: rgba(63,185,80,.4);
+        background: var(--success-dim);
+    }
+    .kt-no-phone {
+        font-size: 0.75rem;
+        color: var(--text-faint);
+        font-style: italic;
+    }
+
+    /* Empty state */
+    .kt-empty {
+        text-align: center;
+        padding: 4rem 1rem;
+        color: var(--text-muted);
+    }
+    .kt-empty-icon {
+        width: 48px;
+        height: 48px;
+        margin: 0 auto 1rem;
+        color: var(--text-faint);
+    }
+    .kt-empty-title {
+        font-size: 1rem;
+        font-weight: 600;
+        color: var(--text);
+        margin-bottom: 0.25rem;
+    }
+    .kt-empty-sub {
+        font-size: 0.875rem;
+        color: var(--text-muted);
+    }
+
+    /* Desktop enhancements */
+    @media (min-width: 768px) {
+        .kt-page-title { font-size: 2rem; }
+
+        .kt-card {
+            flex-direction: row;
+            align-items: center;
+            gap: 1.25rem;
+            padding: 1.125rem 1.375rem;
+        }
+        .kt-card-top { flex-direction: column-reverse; align-items: flex-start; flex-shrink: 0; width: 130px; gap: 0.375rem; }
+        .kt-card-main { flex: 1; min-width: 0; }
+        .kt-card-divider { display: none; }
+        .kt-card-footer { flex-direction: column; align-items: flex-end; flex-shrink: 0; gap: 0.5rem; }
+    }
+
+/* from: resources/views/workshop/customers/index.blade.php */
+    .cu-search-form {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-bottom: 20px;
+    }
+    .cu-search-input {
+        min-width: 0;
+        height: 44px;
+        padding: 0 14px;
+        flex: 1 1 220px;
+        border: 1px solid var(--ws-border);
+        border-radius: 8px;
+        background: var(--ws-card);
+        color: var(--ws-text);
+        font-size: 14px;
+        transition: border-color 120ms ease;
+    }
+    .cu-search-input::placeholder { color: var(--ws-text-muted); }
+    .cu-search-input:hover { border-color: var(--ws-border-hover); }
+    .cu-search-clear {
+        display: inline-flex;
+        align-items: center;
+        min-height: 44px;
+        padding: 0 8px;
+        color: var(--ws-text-muted);
+        font-size: 13px;
+    }
+    .cu-search-clear:hover { color: var(--ws-text); }
+
+    .cu-card-email {
+        flex: 1 1 180px;
+        min-width: 0;
+    }
+
+    .cu-empty {
+        text-align: center;
+        padding: 4rem 1rem;
+        color: var(--ws-text-muted);
+    }
+    .cu-empty-icon {
+        width: 48px;
+        height: 48px;
+        margin: 0 auto 1rem;
+        color: var(--ws-text-muted);
+    }
+    .cu-empty-title {
+        font-size: 1rem;
+        font-weight: 600;
+        color: var(--ws-text);
+        margin-bottom: 0.25rem;
+    }
+    .cu-empty-sub {
+        font-size: 0.875rem;
+        color: var(--ws-text-muted);
+    }
+
+/* from: resources/views/workshop/work-orders/index.blade.php */
+    .wol-page,
+    .wol-grid,
+    .wol-card,
+    .wol-card-person,
+    .wol-card-problem {
+        min-width: 0;
+    }
+
+    .wol-grid {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr);
+        gap: 14px;
+        overflow: visible;
+        border: 0;
+        border-radius: 0;
+        background: transparent;
+        box-shadow: none;
+    }
+
+    .wol-section-heading {
+        min-height: 32px;
+        margin-bottom: 14px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+    }
+
+    .wol-card {
+        min-height: 260px;
+        padding: 18px;
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+    }
+
+    .wol-card-top,
+    .wol-card-meta,
+    .wol-card-footer {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 14px;
+    }
+
+    .wol-card-top .ws-status-badge {
+        max-width: 210px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .wol-card-person {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .wol-card-person .ws-recent-order-customer,
+    .wol-card-person .ws-recent-order-meta {
+        white-space: normal;
+        overflow-wrap: anywhere;
+    }
+
+    .wol-card-meta {
+        justify-content: flex-start;
+    }
+
+    .wol-card-problem {
+        padding-top: 14px;
+        flex: 1;
+        border-top: 1px solid var(--ws-border);
+    }
+
+    .wol-card-problem .ws-recent-order-meta {
+        white-space: normal;
+        display: -webkit-box;
+        -webkit-box-orient: vertical;
+        -webkit-line-clamp: 2;
+    }
+
+    .wol-card-footer {
+        margin-top: auto;
+        color: var(--ws-text-muted);
+    }
+
+    .wol-card-chevron {
+        width: 17px;
+        height: 17px;
+        flex: 0 0 17px;
+        color: var(--ws-text-faint);
+        stroke-width: 1.8;
+        transition: color 140ms ease, transform 140ms ease;
+    }
+
+    .wol-card:hover .wol-card-chevron,
+    .wol-card:focus-visible .wol-card-chevron {
+        color: var(--ws-primary);
+        transform: translateX(2px);
+    }
+
+    .wol-grid > .ws-empty-state {
+        min-height: 180px;
+    }
+
+    @media (min-width: 1024px) {
+        .wol-grid {
+            display: block;
+            overflow: hidden;
+            border: 1px solid var(--ws-border);
+            border-radius: 14px;
+            background: var(--ws-card);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .wol-card {
+            width: 100%;
+            height: 72px;
+            min-height: 72px;
+            padding: 0 16px;
+            display: grid;
+            grid-template-columns: 58px minmax(112px, 148px) 90px minmax(132px, .9fr) minmax(128px, 1.4fr) 78px 16px;
+            align-items: center;
+            gap: 10px;
+            border: 0;
+            border-bottom: 1px solid var(--ws-border);
+            border-radius: 0;
+            background: transparent;
+            box-shadow: none;
+        }
+
+        .wol-card:last-child {
+            border-bottom: 0;
+        }
+
+        .wol-card:hover {
+            border-color: var(--ws-border);
+            background: var(--ws-sunken);
+            box-shadow: none;
+            transform: none;
+        }
+
+        .wol-card:focus-visible {
+            position: relative;
+            z-index: 1;
+            border-color: var(--ws-primary);
+            outline: 2px solid var(--ws-primary);
+            outline-offset: -2px;
+        }
+
+        .wol-card-top,
+        .wol-card-footer {
+            display: contents;
+        }
+
+        .wol-card-top .ws-recent-order-number {
+            grid-area: auto;
+            grid-column: 1;
+            grid-row: 1;
+            align-self: center;
+        }
+
+        .wol-card-top .ws-status-badge {
+            padding: 3px 6px;
+            width: max-content;
+            max-width: 100%;
+            grid-column: 2;
+            grid-row: 1;
+            justify-self: start;
+            font-size: 11px;
+            white-space: nowrap;
+        }
+
+        .wol-card-meta {
+            grid-column: 3;
+            grid-row: 1;
+        }
+
+        .wol-card-person {
+            grid-column: 4;
+            grid-row: 1;
+        }
+
+        .wol-card-person .ws-recent-order-customer,
+        .wol-card-person .ws-recent-order-meta {
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .wol-card-problem {
+            padding: 0;
+            grid-column: 5;
+            grid-row: 1;
+            border-top: 0;
+        }
+
+        .wol-card-problem .ws-field-label {
+            display: none;
+        }
+
+        .wol-card-problem .ws-recent-order-meta {
+            display: block;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            -webkit-line-clamp: initial;
+        }
+
+        .wol-card-footer .ws-row-time {
+            grid-column: 6;
+            grid-row: 1;
+            white-space: nowrap;
+        }
+
+        .wol-card-footer .wol-card-chevron {
+            grid-column: 7;
+            grid-row: 1;
+        }
+    }
+
+    @media (max-width: 599px) {
+        .wol-page .ws-page-actions,
+        .wol-page .ws-page-actions .ws-primary-action {
+            width: 100%;
+        }
+
+        .wol-section-heading {
+            align-items: flex-end;
+        }
+
+        .wol-card {
+            min-height: 0;
+            padding: 16px;
+        }
+    }
+
+/* from: resources/views/workshop/work-orders/show.blade.php */
+    .wos-page,
+    .wos-layout,
+    .wos-panel,
+    .wos-copy-block,
+    .wos-parts {
+        min-width: 0;
+    }
+
+    /* ── Header ──────────────────────────────────────────────── */
+    .wos-head {
+        margin-bottom: 6px;
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 14px 18px;
+    }
+
+    .wos-title {
+        color: var(--ws-text);
+        font-family: var(--ws-font-display);
+        font-size: 34px;
+        font-weight: 700;
+        line-height: 1;
+    }
+
+    .wos-actions {
+        margin-left: auto;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 9px;
+    }
+
+    .wos-sub {
+        margin: 6px 0 22px;
+        color: var(--ws-text-muted);
+        font-size: 14px;
+        line-height: 1.5;
+        overflow-wrap: anywhere;
+    }
+
+    /* ── Layout ──────────────────────────────────────────────────
+       Two independent stacks, like the donor, so a tall side panel
+       never pushes the parts table down the page. */
+    .wos-layout {
+        display: flex;
+        flex-direction: column;
+        gap: 22px;
+    }
+
+    .wos-stack {
+        min-width: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 22px;
+    }
+
+    .wos-copy-list {
+        padding: 18px 20px 20px;
+        display: grid;
+        grid-template-columns: minmax(0, 1fr);
+        gap: 14px;
+    }
+
+    .wos-copy {
+        margin: 0;
+        color: var(--ws-text);
+        font-family: var(--ws-font-sans);
+        font-size: 14px;
+        line-height: 1.6;
+        white-space: pre-line;
+        overflow-wrap: anywhere;
+    }
+
+    .wos-copy--empty {
+        color: var(--ws-text-faint);
+    }
+
+    .wos-info-link {
+        color: var(--ws-text);
+        border-bottom: 1px solid var(--ws-border-hover);
+    }
+
+    .wos-info-link:hover {
+        border-bottom-color: var(--ws-text);
+    }
+
+    /* ── Status switcher ─────────────────────────────────────── */
+    .wos-status-body {
+        padding: 14px 20px 18px;
+        display: grid;
+        grid-template-columns: minmax(0, 1fr);
+        gap: 8px;
+    }
+
+    .wos-status-form {
+        display: contents;
+    }
+
+    .wos-status-locked {
+        margin: 2px 0 0;
+        color: var(--ws-text-muted);
+        font-family: var(--ws-font-sans);
+        font-size: 12px;
+        line-height: 1.5;
+    }
+
+    .wos-status-btn {
+        width: 100%;
+        min-height: 42px;
+        padding: 9px 12px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: flex-start;
+        gap: 9px;
+        border: 1px solid var(--ws-border);
+        border-radius: 8px;
+        background: var(--ws-card);
+        color: var(--ws-text-muted);
+        font-family: var(--ws-font-sans);
+        font-size: 13.5px;
+        font-weight: 500;
+        text-align: left;
+        cursor: pointer;
+        transition: border-color 140ms ease, background-color 140ms ease, color 140ms ease;
+    }
+
+    .wos-status-btn::before {
+        content: '';
+        width: 7px;
+        height: 7px;
+        flex: 0 0 7px;
+        border-radius: 999px;
+        background: currentColor;
+        opacity: .5;
+    }
+
+    .wos-status-btn:hover:not(.is-current) {
+        border-color: var(--ws-border-hover);
+        background: var(--ws-sunken);
+        color: var(--ws-text);
+    }
+
+    .wos-status-btn.is-current {
+        border-color: var(--ws-status-progress-fg);
+        background: var(--ws-status-progress-bg);
+        color: var(--ws-status-progress-fg);
+        font-weight: 600;
+        cursor: default;
+    }
+
+    .wos-status-btn--new.is-current {
+        border-color: var(--ws-status-new-fg);
+        background: var(--ws-status-new-bg);
+        color: var(--ws-status-new-fg);
+    }
+
+    .wos-status-btn--awaiting_parts.is-current {
+        border-color: var(--ws-status-awaiting-fg);
+        background: var(--ws-status-awaiting-bg);
+        color: var(--ws-status-awaiting-fg);
+    }
+
+    .wos-status-btn--ready.is-current {
+        border-color: var(--ws-status-ready-fg);
+        background: var(--ws-status-ready-bg);
+        color: var(--ws-status-ready-fg);
+    }
+
+    .wos-status-btn--completed.is-current,
+    .wos-status-btn--cancelled.is-current {
+        border-color: var(--ws-border-hover);
+        background: var(--ws-sunken);
+        color: var(--ws-text-muted);
+    }
+
+    .wos-status-btn.is-current::before {
+        opacity: 1;
+    }
+
+    /* ── Closure fields (Completed transition only) ─────────────── */
+    .wos-status-form--completion {
+        padding: 10px;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        border: 1px solid var(--ws-border);
+        border-radius: 8px;
+        background: var(--ws-sunken);
+    }
+
+    .wos-closure-label {
+        color: var(--ws-text-muted);
+        font-family: var(--ws-font-sans);
+        font-size: 12px;
+        font-weight: 600;
+    }
+
+    .wos-closure-select {
+        width: 100%;
+        min-height: 38px;
+        padding: 6px 10px;
+        border: 1px solid var(--ws-border);
+        border-radius: 6px;
+        background: var(--ws-card);
+        color: var(--ws-text);
+        font-family: var(--ws-font-sans);
+        font-size: 13.5px;
+    }
+
+    .wos-status-form--completion .wos-status-btn {
+        border-color: transparent;
+        background: var(--ws-status-ready-bg);
+        color: var(--ws-status-ready-fg);
+    }
+
+    /* ── Parts ───────────────────────────────────────────────── */
+    .wos-parts-table,
+    .wos-parts-table tbody,
+    .wos-parts-table tr,
+    .wos-parts-table td {
+        display: block;
+        width: 100%;
+    }
+
+    .wos-parts-table {
+        padding: 16px;
+        border-collapse: collapse;
+        font-family: var(--ws-font-sans);
+    }
+
+    .wos-parts-table thead {
+        display: none;
+    }
+
+    .wos-parts-table tbody {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr);
+        gap: 12px;
+    }
+
+    .wos-parts-table tr {
+        overflow: hidden;
+        border: 1px solid var(--ws-border);
+        border-radius: 10px;
+        background: var(--ws-card);
+    }
+
+    .wos-parts-table td {
+        padding: 10px 12px;
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 14px;
+        border-bottom: 1px solid var(--ws-border);
+        color: var(--ws-text);
+        font-size: 13px;
+        line-height: 18px;
+        text-align: right;
+    }
+
+    .wos-parts-table td:first-child {
+        padding: 13px 12px;
+        display: block;
+        text-align: left;
+    }
+
+    .wos-parts-table td:last-child {
+        border-bottom: 0;
+    }
+
+    .wos-part-cell-label {
+        flex: 0 0 auto;
+        color: var(--ws-text-faint);
+        font-size: 10.5px;
+        font-weight: 500;
+        letter-spacing: .13em;
+        text-transform: uppercase;
+    }
+
+    .wos-parts-table td:first-child .wos-part-cell-label {
+        margin-bottom: 5px;
+        display: block;
+    }
+
+    .wos-part-cell-content {
+        min-width: 0;
+        display: block;
+    }
+
+    .wos-part-name,
+    .wos-part-description,
+    .wos-part-note {
+        display: block;
+        overflow-wrap: anywhere;
+    }
+
+    .wos-part-name {
+        font-family: var(--ws-font-sans);
+        font-size: 14.5px;
+        font-weight: 500;
+        line-height: 20px;
+    }
+
+    .wos-part-description,
+    .wos-part-note {
+        margin-top: 2px;
+        color: var(--ws-text-faint);
+        font-size: 12.5px;
+        line-height: 17px;
+    }
+
+    .wos-part-source {
+        display: inline-flex;
+        align-items: center;
+        border-radius: 5px;
+        padding: 4px 8px;
+        background: var(--ws-status-completed-bg);
+        color: var(--ws-status-completed-fg);
+        font-size: 10.5px;
+        font-weight: 600;
+        line-height: 14px;
+        letter-spacing: .06em;
+        text-align: left;
+    }
+
+    .wos-part-source--from_stock {
+        background: var(--ws-status-progress-bg);
+        color: var(--ws-status-progress-fg);
+    }
+
+    .wos-part-source--customer_supplied {
+        background: var(--ws-status-new-bg);
+        color: var(--ws-status-new-fg);
+    }
+
+    .wos-part-source--purchased_for_job {
+        background: var(--ws-status-awaiting-bg);
+        color: var(--ws-status-awaiting-fg);
+    }
+
+    .wos-parts-empty {
+        min-height: 110px;
+        padding: 24px 20px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--ws-text-faint);
+        font-family: var(--ws-font-sans);
+        font-size: 13.5px;
+        text-align: center;
+    }
+
+    /* ── Totals ──────────────────────────────────────────────── */
+    .wos-totals {
+        padding: 14px 20px 18px;
+        border-top: 1px solid var(--ws-border);
+        background: var(--ws-sunken);
+    }
+
+    .wos-tot {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: 16px;
+        padding: 5px 0;
+        color: var(--ws-text-muted);
+        font-size: 14px;
+    }
+
+    .wos-tot-value {
+        font-family: var(--ws-font-mono);
+        font-variant-numeric: tabular-nums;
+        white-space: nowrap;
+    }
+
+    .wos-tot--grand {
+        margin-top: 8px;
+        padding-top: 12px;
+        border-top: 1px solid var(--ws-border-hover);
+        color: var(--ws-text);
+        font-family: var(--ws-font-display);
+        font-size: 20px;
+        font-weight: 700;
+    }
+
+    .wos-tot--grand .wos-tot-value {
+        font-size: 20px;
+        font-weight: 700;
+    }
+
+    @media (min-width: 600px) {
+        .wos-copy-list {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .wos-copy-block:first-child {
+            grid-column: 1 / -1;
+        }
+    }
+
+    @media (min-width: 1024px) {
+        .wos-parts-table {
+            width: 100%;
+            padding: 0;
+            display: table;
+            table-layout: fixed;
+        }
+
+        .wos-parts-table thead {
+            display: table-header-group;
+        }
+
+        .wos-parts-table tbody {
+            display: table-row-group;
+        }
+
+        .wos-parts-table tr {
+            display: table-row;
+            border: 0;
+            border-radius: 0;
+        }
+
+        .wos-parts-table th,
+        .wos-parts-table td {
+            padding: 12px 20px;
+            border-bottom: 1px solid var(--ws-border);
+            text-align: left;
+            vertical-align: top;
+        }
+
+        .wos-parts-table th {
+            background: var(--ws-card);
+            color: var(--ws-text-faint);
+            font-size: 10.5px;
+            font-weight: 500;
+            line-height: 14px;
+            letter-spacing: .13em;
+            text-transform: uppercase;
+        }
+
+        .wos-parts-table td {
+            display: table-cell;
+            width: auto;
+            font-size: 14px;
+            line-height: 20px;
+        }
+
+        .wos-parts-table td:first-child {
+            padding: 12px 20px;
+            display: table-cell;
+        }
+
+        .wos-parts-table tbody tr:not(:last-child) td:last-child {
+            border-bottom: 1px solid var(--ws-border);
+        }
+
+        .wos-parts-table tbody tr:last-child td {
+            border-bottom: 0;
+        }
+
+        .wos-parts-table th:nth-child(n + 3),
+        .wos-parts-table td:nth-child(n + 3) {
+            font-family: var(--ws-font-mono);
+            font-variant-numeric: tabular-nums;
+            text-align: right;
+            white-space: nowrap;
+        }
+
+        .wos-parts-table th:nth-child(n + 3) {
+            font-family: var(--ws-font-sans);
+        }
+
+        .wos-part-cell-label {
+            display: none !important;
+        }
+
+        .wos-parts-table col:nth-child(1) { width: 30%; }
+        .wos-parts-table col:nth-child(2) { width: 20%; }
+        .wos-parts-table col:nth-child(3) { width: 8%; }
+        .wos-parts-table col:nth-child(4) { width: 14%; }
+        .wos-parts-table col:nth-child(5) { width: 14%; }
+        .wos-parts-table col:nth-child(6) { width: 14%; }
+    }
+
+    @media (min-width: 1180px) {
+        .wos-layout {
+            display: grid;
+            grid-template-columns: minmax(0, 1.55fr) minmax(340px, .85fr);
+            align-items: start;
+            gap: 22px;
+        }
+    }
+
+    @media (max-width: 767px) {
+        .wos-title {
+            font-size: 26px;
+        }
+
+        .wos-actions {
+            margin-left: 0;
+            width: 100%;
+        }
+
+        .wos-actions .ws-secondary-action {
+            flex: 1;
+        }
+    }

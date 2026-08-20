@@ -87,19 +87,22 @@ class WorkshopIndexCardGridTest extends TestCase
 
     public function test_work_order_list_switches_from_stacked_cards_to_72px_operational_rows_at_1024px(): void
     {
+        // CSS moved out to resources/css/workshop.css; the markup-only
+        // check below still reads the page file itself.
+        $css = file_get_contents(resource_path('css/workshop.css'));
         $view = file_get_contents(resource_path('views/workshop/work-orders/index.blade.php'));
 
         $this->assertMatchesRegularExpression(
             '/\.wol-grid\s*\{[^}]*display:\s*grid;[^}]*grid-template-columns:\s*minmax\(0, 1fr\);[^}]*\}/s',
-            $view,
+            $css,
         );
         $this->assertMatchesRegularExpression(
             '/@media\s*\(min-width:\s*1024px\)\s*\{.*?\.wol-grid\s*\{[^}]*display:\s*block;[^}]*overflow:\s*hidden;[^}]*\}.*?\.wol-card\s*\{[^}]*height:\s*72px;[^}]*min-height:\s*72px;[^}]*display:\s*grid;[^}]*\}/s',
-            $view,
+            $css,
         );
         $this->assertMatchesRegularExpression(
             '/@media\s*\(min-width:\s*1024px\).*?\.wol-card-problem \.ws-field-label\s*\{[^}]*display:\s*none;[^}]*\}/s',
-            $view,
+            $css,
         );
         $this->assertStringNotContainsString('<table', $view);
     }
@@ -230,7 +233,9 @@ class WorkshopIndexCardGridTest extends TestCase
 
     public function test_customer_and_vehicle_indexes_share_the_1024px_operational_card_contract(): void
     {
-        $layout = file_get_contents(resource_path('views/layouts/workshop.blade.php'));
+        // /workshop CSS was extracted out of the layout's inline <style>
+        // block into its own stylesheet.
+        $layout = file_get_contents(resource_path('css/workshop.css'));
 
         $this->assertMatchesRegularExpression(
             '/\.ws-card-grid\s*\{[^}]*grid-template-columns:\s*minmax\(0, 1fr\);[^}]*\}/s',
@@ -289,7 +294,7 @@ class WorkshopIndexCardGridTest extends TestCase
         $this->assertCount(0, $pageThree->query('//a[@rel="next"]'));
         $this->assertCount(1, $pageThree->query('//*[@aria-disabled="true"]'));
 
-        $layout = file_get_contents(resource_path('views/layouts/workshop.blade.php'));
+        $layout = file_get_contents(resource_path('css/workshop.css'));
         $this->assertMatchesRegularExpression(
             '/\.ws-pagination svg\.w-5\.h-5\s*\{[^}]*width:\s*18px;[^}]*height:\s*18px;[^}]*\}/s',
             $layout,
@@ -346,7 +351,7 @@ class WorkshopIndexCardGridTest extends TestCase
 
     public function test_appointment_grid_keeps_its_existing_one_and_two_column_states(): void
     {
-        $appointmentView = file_get_contents(resource_path('views/workshop/appointments/index.blade.php'));
+        $appointmentView = file_get_contents(resource_path('css/workshop.css'));
 
         $this->assertMatchesRegularExpression(
             '/\.ap-list\s*\{[^}]*grid-template-columns:\s*minmax\(0, 1fr\);[^}]*\}/s',

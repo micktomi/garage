@@ -249,7 +249,7 @@ class WorkshopDashboardTest extends TestCase
             $this->assertCount(4, $xpath->query('.//*[contains(concat(" ", normalize-space(@class), " "), " ws-bay-rail-step ")]', $card));
         }
 
-        $layout = file_get_contents(resource_path('views/layouts/workshop.blade.php'));
+        $layout = file_get_contents(resource_path('css/workshop.css'));
 
         $this->assertMatchesRegularExpression(
             '/\.ws-bay-rail\s*\{[^}]*grid-template-columns:\s*repeat\(4, 1fr\);[^}]*\}/s',
@@ -417,7 +417,7 @@ class WorkshopDashboardTest extends TestCase
 
     public function test_open_work_order_grid_has_only_one_and_two_column_states(): void
     {
-        $layout = file_get_contents(resource_path('views/layouts/workshop.blade.php'));
+        $layout = file_get_contents(resource_path('css/workshop.css'));
 
         $this->assertMatchesRegularExpression(
             '/\.ws-work-order-grid\s*\{[^}]*grid-template-columns:\s*minmax\(0, 1fr\);[^}]*\}/s',
@@ -519,13 +519,13 @@ class WorkshopDashboardTest extends TestCase
 
     public function test_dashboard_next_port_palette_typography_and_truncation_contract(): void
     {
-        $layout = file_get_contents(resource_path('views/layouts/workshop.blade.php'));
+        $layout = file_get_contents(resource_path('css/workshop.css'));
 
-        $this->assertStringContainsString('--ws-page: #F7F4F0;', $layout);
-        $this->assertStringContainsString('--ws-nav: #661D0A;', $layout);
-        $this->assertStringContainsString('--ws-nav-active: #8C4330;', $layout);
-        $this->assertStringContainsString('--ws-primary: #C43813;', $layout);
-        $this->assertStringContainsString('--ws-signal: #C22412;', $layout);
+        $this->assertStringContainsString('--ws-page: #F1EFE8;', $layout);
+        $this->assertStringContainsString('--ws-nav: #0F6E56;', $layout);
+        $this->assertStringContainsString('--ws-nav-active: #0A4838;', $layout);
+        $this->assertStringContainsString('--ws-primary: #0F6E56;', $layout);
+        $this->assertStringContainsString('--ws-signal: #E24B4A;', $layout);
         $this->assertStringContainsString('--ws-plate-band: #0B3AA8;', $layout);
         $this->assertStringContainsString('--ws-font-sans:', $layout);
         $this->assertStringContainsString('--ws-font-display:', $layout);
@@ -556,7 +556,7 @@ class WorkshopDashboardTest extends TestCase
 
     public function test_dashboard_responsive_layout_has_mobile_tablet_and_desktop_states(): void
     {
-        $layout = file_get_contents(resource_path('views/layouts/workshop.blade.php'));
+        $layout = file_get_contents(resource_path('css/workshop.css'));
 
         // Three metrics at every width: two columns would orphan the third.
         $this->assertMatchesRegularExpression(

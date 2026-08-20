@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "953caedd19e9f2f58d82756087bb6640",
+    "content-hash": "137440c439291fa8b9ffdd3c160fa9d1",
     "packages": [
         {
             "name": "anourvalar/eloquent-serialize",
@@ -3223,11 +3223,17 @@
         },
         {
             "name": "micktomi/garage-aade-bridge",
-            "version": "dev-master",
+            "version": "v0.1.0",
+            "source": {
+                "type": "git",
+                "url": "git@github.com:micktomi/garage-aade-bridge.git",
+                "reference": "7f22b09188080d098b3082da19c750a6be753c5f"
+            },
             "dist": {
-                "type": "path",
-                "url": "../../working-projects/aade-bridge/garage-aade-bridge",
-                "reference": "40314fbd093591b174773b062cba440ce844227f"
+                "type": "zip",
+                "url": "https://api.github.com/repos/micktomi/garage-aade-bridge/zipball/7f22b09188080d098b3082da19c750a6be753c5f",
+                "reference": "7f22b09188080d098b3082da19c750a6be753c5f",
+                "shasum": ""
             },
             "require": {
                 "ext-dom": "*",
@@ -3290,9 +3296,7 @@
                 "mydata",
                 "tax"
             ],
-            "transport-options": {
-                "relative": true
-            }
+            "time": "2026-08-09T15:49:34+00:00"
         },
         {
             "name": "monolog/monolog",
@@ -10063,9 +10067,7 @@
     ],
     "aliases": [],
     "minimum-stability": "stable",
-    "stability-flags": {
-        "micktomi/garage-aade-bridge": 20
-    },
+    "stability-flags": [],
     "prefer-stable": true,
     "prefer-lowest": false,
     "platform": {

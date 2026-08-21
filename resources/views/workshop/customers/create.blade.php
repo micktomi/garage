@@ -97,7 +97,7 @@
     }
     .woc-input.is-invalid {
         border-color: var(--danger);
-        box-shadow: 0 0 0 3px rgba(248,81,73,0.12);
+        box-shadow: 0 0 0 3px rgba(226,75,74,0.12);
     }
     .woc-error {
         font-size: 0.75rem;
@@ -123,7 +123,7 @@
     /* ── Validation alert ────────────────────────────────────── */
     .woc-alert {
         background: var(--danger-dim);
-        border: 1px solid rgba(248,81,73,0.3);
+        border: 1px solid rgba(226,75,74,0.3);
         border-radius: var(--radius-sm);
         padding: 0.75rem 1rem;
         margin-bottom: 1rem;
@@ -136,7 +136,7 @@
     /* ── Success flash ───────────────────────────────────────── */
     .woc-success {
         display:flex;align-items:center;gap:0.625rem;
-        background:var(--success-dim);border:1px solid rgba(63,185,80,0.3);
+        background:var(--success-dim);border:1px solid rgba(99,153,34,0.3);
         border-radius:var(--radius-sm);padding:0.75rem 1rem;margin-bottom:1rem;
         font-size:0.875rem;color:var(--success);font-weight:500;
     }
@@ -168,16 +168,16 @@
         gap: 0.4rem;
         font-size: 0.875rem;
         font-weight: 700;
-        color: #0d1117;
+        color: var(--ws-primary-fg);
         background: var(--accent);
         border: none;
         border-radius: var(--radius-sm);
         padding: 0.55rem 1.375rem;
         cursor: pointer;
         transition: background 0.15s, transform 0.1s, box-shadow 0.15s;
-        box-shadow: 0 1px 6px rgba(245,158,11,0.25);
+        box-shadow: 0 1px 6px rgba(15,110,86,0.25);
     }
-    .woc-submit-btn:hover { background: #fbbf24; box-shadow: 0 2px 10px rgba(245,158,11,0.4); }
+    .woc-submit-btn:hover { background: var(--ws-primary-hover); box-shadow: 0 2px 10px rgba(15,110,86,0.4); }
     .woc-submit-btn:active { transform: scale(0.98); }
     .woc-submit-btn svg { width: 15px; height: 15px; stroke-width: 2.5; }
 

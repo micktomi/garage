@@ -2,8 +2,6 @@
 
 namespace App\Models;
 
-use App\Enums\ClosureDocument;
-use App\Enums\NonIssueReason;
 use App\Enums\WorkOrderStatus;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
@@ -38,8 +36,6 @@ class WorkOrder extends Model
         'in_shop',
         'checked_in_at',
         'checked_out_at',
-        'closure_document',
-        'non_issue_reason',
     ];
 
     /**
@@ -63,8 +59,6 @@ class WorkOrder extends Model
             'lock_version' => 'integer',
             'checked_in_at' => 'datetime',
             'checked_out_at' => 'datetime',
-            'closure_document' => ClosureDocument::class,
-            'non_issue_reason' => NonIssueReason::class,
         ];
     }
 
@@ -196,34 +190,6 @@ class WorkOrder extends Model
 
             if (! $workOrder->in_shop) {
                 $workOrder->checked_out_at ??= $workOrder->checked_in_at;
-            }
-        });
-
-        // non_issue_reason only means anything alongside closure_document=none
-        // — keep it null any other time regardless of which caller set
-        // closure_document.
-        static::saving(function (WorkOrder $workOrder) {
-            if ($workOrder->closure_document !== ClosureDocument::None) {
-                $workOrder->non_issue_reason = null;
-            }
-        });
-
-        // What document was issued on completion is a hard requirement here
-        // too, not just at the UI layer, and for both entry points (workshop
-        // controller + Filament) since both just call WorkOrder::update().
-        static::updating(function (WorkOrder $workOrder) {
-            if ($workOrder->isDirty('status') && $workOrder->status === WorkOrderStatus::Completed) {
-                if ($workOrder->closure_document === null) {
-                    throw ValidationException::withMessages([
-                        'closure_document' => 'Επιλέξτε παραστατικό ολοκλήρωσης πριν κλείσετε την εντολή.',
-                    ]);
-                }
-
-                if ($workOrder->closure_document === ClosureDocument::None && $workOrder->non_issue_reason === null) {
-                    throw ValidationException::withMessages([
-                        'non_issue_reason' => 'Επιλέξτε αιτιολογία μη έκδοσης παραστατικού.',
-                    ]);
-                }
             }
         });
 

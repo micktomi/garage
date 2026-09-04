@@ -47,9 +47,6 @@ class WorkOrderStatusTest extends TestCase
                 'lock_version' => $workOrder->fresh()->lock_version,
                 'status' => $status->value,
             ];
-            if ($status === WorkOrderStatus::Completed) {
-                $payload['closure_document'] = 'retail_receipt';
-            }
 
             $this->actingAs($user)->patch(
                 route('workshop.work-orders.status', $workOrder),
@@ -60,7 +57,7 @@ class WorkOrderStatusTest extends TestCase
         }
     }
 
-    public function test_status_endpoint_rejects_completion_without_closure_document(): void
+    public function test_status_endpoint_accepts_completion_with_no_closure_fields_at_all(): void
     {
         $user = User::factory()->create();
         $workOrder = $this->makeWorkOrder(WorkOrderStatus::ReadyForPickup);
@@ -68,38 +65,9 @@ class WorkOrderStatusTest extends TestCase
         $this->actingAs($user)->patch(
             route('workshop.work-orders.status', $workOrder),
             ['lock_version' => $workOrder->lock_version, 'status' => WorkOrderStatus::Completed->value],
-        )->assertSessionHasErrors('closure_document');
-
-        $this->assertSame(WorkOrderStatus::ReadyForPickup, $workOrder->fresh()->status);
-    }
-
-    public function test_status_endpoint_rejects_completion_with_none_and_no_reason(): void
-    {
-        $user = User::factory()->create();
-        $workOrder = $this->makeWorkOrder(WorkOrderStatus::ReadyForPickup);
-
-        $this->actingAs($user)->patch(
-            route('workshop.work-orders.status', $workOrder),
-            ['lock_version' => $workOrder->lock_version, 'status' => WorkOrderStatus::Completed->value, 'closure_document' => 'none'],
-        )->assertSessionHasErrors('non_issue_reason');
-
-        $this->assertSame(WorkOrderStatus::ReadyForPickup, $workOrder->fresh()->status);
-    }
-
-    public function test_status_endpoint_accepts_completion_with_none_and_a_reason(): void
-    {
-        $user = User::factory()->create();
-        $workOrder = $this->makeWorkOrder(WorkOrderStatus::ReadyForPickup);
-
-        $this->actingAs($user)->patch(
-            route('workshop.work-orders.status', $workOrder),
-            ['lock_version' => $workOrder->lock_version, 'status' => WorkOrderStatus::Completed->value, 'closure_document' => 'none', 'non_issue_reason' => 'warranty'],
         )->assertRedirect(route('workshop.work-orders.show', $workOrder));
 
-        $fresh = $workOrder->fresh();
-        $this->assertSame(WorkOrderStatus::Completed, $fresh->status);
-        $this->assertSame(\App\Enums\ClosureDocument::None, $fresh->closure_document);
-        $this->assertSame(\App\Enums\NonIssueReason::Warranty, $fresh->non_issue_reason);
+        $this->assertSame(WorkOrderStatus::Completed, $workOrder->fresh()->status);
     }
 
     public function test_status_endpoint_rejects_unknown_state(): void

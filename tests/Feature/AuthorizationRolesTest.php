@@ -2,7 +2,6 @@
 
 namespace Tests\Feature;
 
-use App\Enums\ClosureDocument;
 use App\Enums\UserRole;
 use App\Enums\WorkOrderStatus;
 use App\Filament\Resources\PartResource\Pages\EditPart;
@@ -23,13 +22,12 @@ use Tests\TestCase;
 /**
  * Until now every authenticated user was, in effect, the owner: any account
  * could bulk-delete fiscally significant work orders, rewrite purchase costs,
- * or re-issue the closure document of an order ΑΑΔΕ had already been told
- * about.
+ * or amend an order that had already been completed.
  *
  * Two roles, no package. Owner keeps everything it had — that is the
  * compatibility requirement, and why the column defaults to owner. Staff is
  * the day-to-day account: it can run the shop, but not destroy records, not
- * administer costs, and not amend an order that has already been filed.
+ * administer costs, and not amend an order that has already been completed.
  */
 class AuthorizationRolesTest extends TestCase
 {
@@ -186,7 +184,6 @@ class AuthorizationRolesTest extends TestCase
         $this->actingAs($staff)->patch(route('workshop.work-orders.status', $workOrder), [
             'lock_version' => $workOrder->lock_version,
             'status' => WorkOrderStatus::Completed->value,
-            'closure_document' => ClosureDocument::RetailReceipt->value,
         ])->assertRedirect();
 
         $this->assertSame(WorkOrderStatus::Completed, $workOrder->fresh()->status);
@@ -195,28 +192,21 @@ class AuthorizationRolesTest extends TestCase
     public function test_staff_may_not_amend_an_order_that_has_already_been_filed(): void
     {
         $workOrder = $this->makeWorkOrder(WorkOrderStatus::ReadyForPickup, 'ΡΟΛ-0007');
-        $workOrder->update([
-            'status' => WorkOrderStatus::Completed,
-            'closure_document' => ClosureDocument::RetailReceipt,
-        ]);
+        $workOrder->update(['status' => WorkOrderStatus::Completed]);
         $workOrder = $workOrder->fresh();
 
         $this->actingAs($this->staff())->patch(route('workshop.work-orders.status', $workOrder), [
             'lock_version' => $workOrder->lock_version,
-            'status' => WorkOrderStatus::Completed->value,
-            'closure_document' => ClosureDocument::Invoice->value,
+            'status' => WorkOrderStatus::InProgress->value,
         ])->assertForbidden();
 
-        $this->assertSame(ClosureDocument::RetailReceipt, $workOrder->fresh()->closure_document);
+        $this->assertSame(WorkOrderStatus::Completed, $workOrder->fresh()->status);
     }
 
     public function test_staff_is_not_offered_status_buttons_that_would_only_403(): void
     {
         $workOrder = $this->makeWorkOrder(WorkOrderStatus::ReadyForPickup, 'ΡΟΛ-0012');
-        $workOrder->update([
-            'status' => WorkOrderStatus::Completed,
-            'closure_document' => ClosureDocument::RetailReceipt,
-        ]);
+        $workOrder->update(['status' => WorkOrderStatus::Completed]);
 
         $staffPage = $this->actingAs($this->staff())
             ->get(route('workshop.work-orders.show', $workOrder))
@@ -243,35 +233,28 @@ class AuthorizationRolesTest extends TestCase
     public function test_the_owner_may_amend_an_order_that_has_already_been_filed(): void
     {
         $workOrder = $this->makeWorkOrder(WorkOrderStatus::ReadyForPickup, 'ΡΟΛ-0008');
-        $workOrder->update([
-            'status' => WorkOrderStatus::Completed,
-            'closure_document' => ClosureDocument::RetailReceipt,
-        ]);
+        $workOrder->update(['status' => WorkOrderStatus::Completed]);
         $workOrder = $workOrder->fresh();
 
         $this->actingAs($this->owner())->patch(route('workshop.work-orders.status', $workOrder), [
             'lock_version' => $workOrder->lock_version,
-            'status' => WorkOrderStatus::Completed->value,
-            'closure_document' => ClosureDocument::Invoice->value,
+            'status' => WorkOrderStatus::InProgress->value,
         ])->assertRedirect();
 
-        $this->assertSame(ClosureDocument::Invoice, $workOrder->fresh()->closure_document);
+        $this->assertSame(WorkOrderStatus::InProgress, $workOrder->fresh()->status);
     }
 
     public function test_filament_refuses_a_staff_amendment_of_a_filed_order(): void
     {
         $workOrder = $this->makeWorkOrder(WorkOrderStatus::ReadyForPickup, 'ΡΟΛ-0009');
-        $workOrder->update([
-            'status' => WorkOrderStatus::Completed,
-            'closure_document' => ClosureDocument::RetailReceipt,
-        ]);
+        $workOrder->update(['status' => WorkOrderStatus::Completed]);
 
         Livewire::actingAs($this->staff())
             ->test(EditWorkOrder::class, ['record' => $workOrder->id])
-            ->fillForm(['closure_document' => ClosureDocument::Invoice->value])
+            ->fillForm(['diagnosis' => 'Νέα διάγνωση'])
             ->call('save');
 
-        $this->assertSame(ClosureDocument::RetailReceipt, $workOrder->fresh()->closure_document);
+        $this->assertNull($workOrder->fresh()->diagnosis);
     }
 
     public function test_filament_still_lets_staff_edit_an_open_order(): void

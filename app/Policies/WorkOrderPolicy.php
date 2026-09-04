@@ -9,9 +9,8 @@ use App\Models\WorkOrder;
 class WorkOrderPolicy extends OwnerOnlyDestructivePolicy
 {
     /**
-     * Changing anything on an order that is already Completed means changing
-     * its recorded closure document — an accounting/tax decision, not a
-     * counter task.
+     * Changing anything on an order that is already Completed rewrites a
+     * closed record — a correction, not a counter task.
      *
      * Keyed on the *stored* status, never on the submitted one: completing an
      * open order is ordinary daily work and stays open to everyone.

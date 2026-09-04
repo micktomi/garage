@@ -2,8 +2,6 @@
 
 namespace Tests\Feature;
 
-use App\Enums\ClosureDocument;
-use App\Enums\NonIssueReason;
 use App\Enums\WorkOrderStatus;
 use App\Filament\Resources\WorkOrderResource\Pages\EditWorkOrder;
 use App\Models\Customer;
@@ -21,11 +19,11 @@ use Livewire\Livewire;
 use Tests\TestCase;
 
 /**
- * Two people, one work order. The counter closes it as an απόδειξη; a tab
- * opened before that still shows it as open and its owner clicks
- * "Ολοκληρωμένη — Τιμολόγιο". Before this, the second click won: the ΑΑΔΕ
- * closure document changed, the garage's books said one thing and the Digital
- * Client List another, and nobody was told anything had happened.
+ * Two people, one work order. The counter closes it out; a tab opened before
+ * that still shows it as open and its owner clicks a status button too.
+ * Before this, the second click won silently — whichever request happened to
+ * commit last overwrote the other's status with no one told anything had
+ * happened.
  *
  * The guarantee asserted here is narrow on purpose: a stale representation
  * must not be able to change the record *silently*. Being told, and retrying
@@ -66,7 +64,6 @@ class WorkOrderStaleEditTest extends TestCase
         // between re-reading $workOrder — the same shape a genuine race has.
         DB::table('work_orders')->where('id', $workOrder->id)->update([
             'status' => WorkOrderStatus::Completed->value,
-            'closure_document' => ClosureDocument::RetailReceipt->value,
             'lock_version' => $staleVersion + 1,
         ]);
 
@@ -81,7 +78,6 @@ class WorkOrderStaleEditTest extends TestCase
 
         $fresh = WorkOrder::find($workOrder->id);
         $this->assertSame(WorkOrderStatus::Completed, $fresh->status, 'The losing write must not overwrite the winning one.');
-        $this->assertSame(ClosureDocument::RetailReceipt, $fresh->closure_document);
         $this->assertSame($staleVersion + 1, $fresh->lock_version, 'A rejected write must not move the version either.');
     }
 
@@ -108,45 +104,13 @@ class WorkOrderStaleEditTest extends TestCase
         $this->assertSame($version + 1, $workOrder->fresh()->lock_version);
     }
 
-    public function test_a_stale_page_cannot_silently_change_the_closure_document(): void
-    {
-        $user = User::factory()->create();
-        $workOrder = $this->makeWorkOrder(WorkOrderStatus::ReadyForPickup);
-
-        // What the second browser tab still has in its DOM.
-        $staleVersion = $workOrder->lock_version;
-
-        // Someone else closes it first.
-        $this->actingAs($user)->patch(route('workshop.work-orders.status', $workOrder), [
-            'lock_version' => $staleVersion,
-            'status' => WorkOrderStatus::Completed->value,
-            'closure_document' => ClosureDocument::RetailReceipt->value,
-        ])->assertRedirect();
-
-        $this->assertSame(ClosureDocument::RetailReceipt, $workOrder->fresh()->closure_document);
-
-        // The stale tab now submits its own idea of the world.
-        $this->actingAs($user)->patch(route('workshop.work-orders.status', $workOrder), [
-            'lock_version' => $staleVersion,
-            'status' => WorkOrderStatus::Completed->value,
-            'closure_document' => ClosureDocument::Invoice->value,
-        ])->assertSessionHasErrors('lock_version');
-
-        $fresh = $workOrder->fresh();
-        $this->assertSame(ClosureDocument::RetailReceipt, $fresh->closure_document);
-        $this->assertSame(WorkOrderStatus::Completed, $fresh->status);
-    }
-
     public function test_a_stale_page_cannot_silently_reopen_a_completed_order(): void
     {
         $user = User::factory()->create();
         $workOrder = $this->makeWorkOrder(WorkOrderStatus::ReadyForPickup);
         $staleVersion = $workOrder->lock_version;
 
-        $workOrder->update([
-            'status' => WorkOrderStatus::Completed,
-            'closure_document' => ClosureDocument::Invoice,
-        ]);
+        $workOrder->update(['status' => WorkOrderStatus::Completed]);
 
         $this->actingAs($user)->patch(route('workshop.work-orders.status', $workOrder), [
             'lock_version' => $staleVersion,
@@ -156,28 +120,6 @@ class WorkOrderStaleEditTest extends TestCase
         $this->assertSame(WorkOrderStatus::Completed, $workOrder->fresh()->status);
     }
 
-    public function test_a_stale_page_cannot_silently_change_the_non_issue_reason(): void
-    {
-        $user = User::factory()->create();
-        $workOrder = $this->makeWorkOrder(WorkOrderStatus::ReadyForPickup);
-        $staleVersion = $workOrder->lock_version;
-
-        $workOrder->update([
-            'status' => WorkOrderStatus::Completed,
-            'closure_document' => ClosureDocument::None,
-            'non_issue_reason' => NonIssueReason::Warranty,
-        ]);
-
-        $this->actingAs($user)->patch(route('workshop.work-orders.status', $workOrder), [
-            'lock_version' => $staleVersion,
-            'status' => WorkOrderStatus::Completed->value,
-            'closure_document' => ClosureDocument::None->value,
-            'non_issue_reason' => NonIssueReason::SelfUse->value,
-        ])->assertSessionHasErrors('lock_version');
-
-        $this->assertSame(NonIssueReason::Warranty, $workOrder->fresh()->non_issue_reason);
-    }
-
     public function test_a_submission_carrying_no_version_at_all_is_refused(): void
     {
         $user = User::factory()->create();
@@ -185,7 +127,6 @@ class WorkOrderStaleEditTest extends TestCase
 
         $this->actingAs($user)->patch(route('workshop.work-orders.status', $workOrder), [
             'status' => WorkOrderStatus::Completed->value,
-            'closure_document' => ClosureDocument::Invoice->value,
         ])->assertSessionHasErrors('lock_version');
 
         $this->assertSame(WorkOrderStatus::ReadyForPickup, $workOrder->fresh()->status);
@@ -199,7 +140,6 @@ class WorkOrderStaleEditTest extends TestCase
         $this->actingAs($user)->patch(route('workshop.work-orders.status', $workOrder), [
             'lock_version' => $workOrder->lock_version,
             'status' => WorkOrderStatus::Completed->value,
-            'closure_document' => ClosureDocument::Invoice->value,
         ])->assertRedirect(route('workshop.work-orders.show', $workOrder));
 
         $this->assertSame(WorkOrderStatus::Completed, $workOrder->fresh()->status);
@@ -252,27 +192,24 @@ class WorkOrderStaleEditTest extends TestCase
         $this->assertSame($version, $workOrder->fresh()->lock_version);
     }
 
-    public function test_filament_refuses_to_save_a_stale_closure_document(): void
+    public function test_filament_refuses_to_save_a_stale_diagnosis(): void
     {
         $user = User::factory()->create();
         $workOrder = $this->makeWorkOrder(WorkOrderStatus::ReadyForPickup);
 
         $page = Livewire::actingAs($user)->test(EditWorkOrder::class, ['record' => $workOrder->id]);
 
-        // Someone else closes it while this edit form is open.
-        $workOrder->update([
-            'status' => WorkOrderStatus::Completed,
-            'closure_document' => ClosureDocument::RetailReceipt,
-        ]);
+        // Someone else edits it while this edit form is open.
+        $workOrder->update(['diagnosis' => 'Μπουζί']);
 
         $page->fillForm([
-            'status' => WorkOrderStatus::Completed->value,
-            'closure_document' => ClosureDocument::Invoice->value,
+            'status' => WorkOrderStatus::ReadyForPickup->value,
+            'diagnosis' => 'Τακάκια',
         ])->call('save');
 
         $this->assertSame(
-            ClosureDocument::RetailReceipt,
-            $workOrder->fresh()->closure_document,
+            'Μπουζί',
+            $workOrder->fresh()->diagnosis,
             'Filament let a form opened before the change overwrite it.',
         );
     }
@@ -285,13 +222,13 @@ class WorkOrderStaleEditTest extends TestCase
         Livewire::actingAs($user)
             ->test(EditWorkOrder::class, ['record' => $workOrder->id])
             ->fillForm([
-                'status' => WorkOrderStatus::Completed->value,
-                'closure_document' => ClosureDocument::Invoice->value,
+                'status' => WorkOrderStatus::ReadyForPickup->value,
+                'diagnosis' => 'Τακάκια',
             ])
             ->call('save')
             ->assertHasNoFormErrors();
 
-        $this->assertSame(ClosureDocument::Invoice, $workOrder->fresh()->closure_document);
+        $this->assertSame('Τακάκια', $workOrder->fresh()->diagnosis);
     }
 
     private function makeWorkOrder(WorkOrderStatus $status, string $plate = 'ΣΤΛ-0001'): WorkOrder

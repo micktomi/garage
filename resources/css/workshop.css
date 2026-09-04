@@ -4105,7 +4105,7 @@
         opacity: 1;
     }
 
-    /* ── Closure fields (Completed transition only) ─────────────── */
+    /* ── Completion transition (visually distinct, no closure fields) ── */
     .wos-status-form--completion {
         padding: 10px;
         display: flex;
@@ -4114,25 +4114,6 @@
         border: 1px solid var(--ws-border);
         border-radius: 8px;
         background: var(--ws-sunken);
-    }
-
-    .wos-closure-label {
-        color: var(--ws-text-muted);
-        font-family: var(--ws-font-sans);
-        font-size: 12px;
-        font-weight: 600;
-    }
-
-    .wos-closure-select {
-        width: 100%;
-        min-height: 38px;
-        padding: 6px 10px;
-        border: 1px solid var(--ws-border);
-        border-radius: 6px;
-        background: var(--ws-card);
-        color: var(--ws-text);
-        font-family: var(--ws-font-sans);
-        font-size: 13.5px;
     }
 
     .wos-status-form--completion .wos-status-btn {

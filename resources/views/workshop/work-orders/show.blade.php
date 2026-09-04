@@ -252,41 +252,6 @@
                                     <input type="hidden" name="lock_version" value="{{ $workOrder->lock_version }}">
                                     <input type="hidden" name="status" value="{{ $status->value }}">
 
-                                    <label class="wos-closure-label" for="wos-closure-document-{{ $workOrder->id }}">Παραστατικό</label>
-                                    <select
-                                        id="wos-closure-document-{{ $workOrder->id }}"
-                                        name="closure_document"
-                                        class="wos-closure-select"
-                                        onchange="document.getElementById('wos-non-issue-reason-{{ $workOrder->id }}').hidden = (this.value !== 'none')"
-                                    >
-                                        @foreach(\App\Enums\ClosureDocument::cases() as $option)
-                                            <option value="{{ $option->value }}" @selected($option === \App\Enums\ClosureDocument::RetailReceipt)>{{ $option->label() }}</option>
-                                        @endforeach
-                                    </select>
-
-                                    <div id="wos-non-issue-reason-{{ $workOrder->id }}" hidden>
-                                        <label class="wos-closure-label" for="wos-non-issue-reason-select-{{ $workOrder->id }}">Αιτιολογία μη έκδοσης</label>
-                                        {{-- Το κενό option είναι επιλεγμένο εξ ορισμού για δύο
-                                             λόγους: όσο το παραστατικό δεν είναι «Χωρίς
-                                             παραστατικό» το control υποβάλλει κενή τιμή αντί για
-                                             αυθαίρετη φορολογική αιτιολογία (το `hidden` κρύβει,
-                                             δεν εμποδίζει την υποβολή), και όταν είναι, η
-                                             αιτιολογία επιλέγεται ρητά αντί να προεπιλέγεται.
-                                             Σκόπιμα HTML και όχι `disabled` μέσω του onchange: θα
-                                             έκανε την ολοκλήρωση χωρίς παραστατικό να εξαρτάται
-                                             από το να τρέξει το script. --}}
-                                        <select
-                                            id="wos-non-issue-reason-select-{{ $workOrder->id }}"
-                                            name="non_issue_reason"
-                                            class="wos-closure-select"
-                                        >
-                                            <option value="" selected>Επιλέξτε αιτιολογία…</option>
-                                            @foreach(\App\Enums\NonIssueReason::cases() as $option)
-                                                <option value="{{ $option->value }}">{{ $option->label() }}</option>
-                                            @endforeach
-                                        </select>
-                                    </div>
-
                                     <button type="submit" class="wos-status-btn wos-status-btn--{{ $status->value }}">
                                         {{ $status->label() }}
                                     </button>

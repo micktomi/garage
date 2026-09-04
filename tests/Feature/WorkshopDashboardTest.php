@@ -164,7 +164,7 @@ class WorkshopDashboardTest extends TestCase
         $this->assertNotNull($order->checked_in_at);
         $this->assertNull($order->checked_out_at);
 
-        $order->update(['status' => WorkOrderStatus::Completed, 'closure_document' => 'retail_receipt']);
+        $order->update(['status' => WorkOrderStatus::Completed]);
 
         $this->assertFalse($order->fresh()->in_shop);
         $this->assertNotNull($order->fresh()->checked_out_at);

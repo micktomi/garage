@@ -4,8 +4,6 @@ namespace App\Http\Controllers;
 
 use App\Actions\CreateAppointmentAction;
 use App\Actions\CreateWorkOrderAction;
-use App\Enums\ClosureDocument;
-use App\Enums\NonIssueReason;
 use App\Enums\WorkOrderStatus;
 use App\Models\Appointment;
 use App\Models\Customer;
@@ -293,17 +291,12 @@ class WorkshopController extends Controller
 
     public function workOrdersUpdateStatus(Request $request, WorkOrder $workOrder)
     {
-        $completing = $request->input('status') === WorkOrderStatus::Completed->value;
-        $closureIsNone = $request->input('closure_document') === ClosureDocument::None->value;
-
         $validated = $request->validate([
             // Required, not optional: an omitted token is a page rendered
             // before this guard existed, which is the same stale
             // representation the guard is here to refuse.
             'lock_version' => ['required', 'integer'],
             'status' => ['required', Rule::enum(WorkOrderStatus::class)],
-            'closure_document' => [Rule::requiredIf($completing), 'nullable', Rule::enum(ClosureDocument::class)],
-            'non_issue_reason' => [Rule::requiredIf($completing && $closureIsNone), 'nullable', Rule::enum(NonIssueReason::class)],
         ], [
             'lock_version.required' => 'Ανανεώστε τη σελίδα και δοκιμάστε ξανά.',
         ]);
@@ -320,8 +313,6 @@ class WorkshopController extends Controller
         // the identical session error.
         $workOrder->updateWithExpectedVersion($validated['lock_version'], [
             'status' => $status,
-            'closure_document' => $validated['closure_document'] ?? $workOrder->closure_document,
-            'non_issue_reason' => $validated['non_issue_reason'] ?? null,
         ]);
 
         return redirect()

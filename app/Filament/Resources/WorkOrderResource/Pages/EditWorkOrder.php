@@ -55,10 +55,9 @@ class EditWorkOrder extends EditRecord
     }
 
     /**
-     * An order that is already Completed carries a closure document that
-     * reflects a tax/accounting decision; editing it re-issues that decision.
-     * That is an owner's call. Read from the database, not from the
-     * in-memory record, for the same reason as the version check.
+     * An order that is already Completed is a closed record; editing it is a
+     * correction, which is an owner's call. Read from the database, not from
+     * the in-memory record, for the same reason as the version check.
      */
     private function refuseStaffAmendmentOfFiledOrder(): void
     {

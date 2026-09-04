@@ -41,8 +41,7 @@ abstract class OwnerOnlyDestructivePolicy
 
     /**
      * Deleting a customer, vehicle, work order or appointment takes fiscal
-     * history with it — including the link this app uses to close the
-     * matching ΑΑΔΕ entry.
+     * history with it.
      */
     public function delete(User $user, Model $model): bool
     {

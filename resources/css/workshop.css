@@ -1673,40 +1673,6 @@
             stroke-width: 2.2;
         }
 
-        /* Ίδια γλώσσα με τα feedback banners, αλλά μόνιμο state του
-           πίνακα (όχι flash message): εμφανίζεται όσο υπάρχει εκκρεμότητα. */
-        .ws-aade-alert {
-            margin-bottom: 18px;
-            padding: 12px 14px;
-            display: flex;
-            align-items: flex-start;
-            gap: 10px;
-            border: 1px solid var(--ws-status-expired-fg);
-            border-radius: 10px;
-            background: var(--ws-status-expired-bg);
-            color: var(--ws-status-expired-fg);
-            font-family: var(--ws-font-sans);
-            font-size: 13px;
-        }
-
-        .ws-aade-alert svg {
-            width: 17px;
-            height: 17px;
-            flex: 0 0 17px;
-            margin-top: 1px;
-            stroke-width: 2.2;
-        }
-
-        .ws-aade-alert-body {
-            display: flex;
-            flex-direction: column;
-            gap: 3px;
-        }
-
-        .ws-aade-alert-body b {
-            font-weight: 700;
-        }
-
         .ws-feedback-error {
             min-height: 48px;
             margin-bottom: 18px;

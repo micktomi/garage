@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "137440c439291fa8b9ffdd3c160fa9d1",
+    "content-hash": "87c54019ebe6ba60e9143a15d5002504",
     "packages": [
         {
             "name": "anourvalar/eloquent-serialize",
@@ -3220,83 +3220,6 @@
                 "source": "https://github.com/Masterminds/html5-php/tree/2.10.0"
             },
             "time": "2025-07-25T09:04:22+00:00"
-        },
-        {
-            "name": "micktomi/garage-aade-bridge",
-            "version": "v0.1.0",
-            "source": {
-                "type": "git",
-                "url": "git@github.com:micktomi/garage-aade-bridge.git",
-                "reference": "7f22b09188080d098b3082da19c750a6be753c5f"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://api.github.com/repos/micktomi/garage-aade-bridge/zipball/7f22b09188080d098b3082da19c750a6be753c5f",
-                "reference": "7f22b09188080d098b3082da19c750a6be753c5f",
-                "shasum": ""
-            },
-            "require": {
-                "ext-dom": "*",
-                "ext-libxml": "*",
-                "illuminate/console": "^11.0|^12.0",
-                "illuminate/database": "^11.0|^12.0",
-                "illuminate/http": "^11.0|^12.0",
-                "illuminate/support": "^11.0|^12.0",
-                "php": "^8.3"
-            },
-            "require-dev": {
-                "larastan/larastan": "^2.9|^3.0",
-                "laravel/pint": "^1.16",
-                "orchestra/testbench": "^9.0|^10.0",
-                "pestphp/pest": "^2.34|^3.0",
-                "pestphp/pest-plugin-laravel": "^2.4|^3.0"
-            },
-            "type": "library",
-            "extra": {
-                "laravel": {
-                    "providers": [
-                        "Micktomi\\GarageAadeBridge\\AadeDclServiceProvider"
-                    ],
-                    "aliases": {
-                        "AadeDcl": "Micktomi\\GarageAadeBridge\\Facades\\AadeDcl"
-                    }
-                }
-            },
-            "autoload": {
-                "psr-4": {
-                    "Micktomi\\GarageAadeBridge\\": "src/"
-                }
-            },
-            "autoload-dev": {
-                "psr-4": {
-                    "Micktomi\\GarageAadeBridge\\Tests\\": "tests/",
-                    "Micktomi\\GarageAadeBridge\\Tests\\Workbench\\": "tests/workbench/app/"
-                }
-            },
-            "scripts": {
-                "test": [
-                    "vendor/bin/pest"
-                ],
-                "stan": [
-                    "vendor/bin/phpstan analyse"
-                ],
-                "format": [
-                    "vendor/bin/pint"
-                ]
-            },
-            "license": [
-                "MIT"
-            ],
-            "description": "Laravel package for reporting vehicle-service clients to the AADE Digital Client List (Ψηφιακό Πελατολόγιο) — Συνεργεία Οχημάτων scope only.",
-            "keywords": [
-                "aade",
-                "digital-client-list",
-                "greece",
-                "laravel",
-                "mydata",
-                "tax"
-            ],
-            "time": "2026-08-09T15:49:34+00:00"
         },
         {
             "name": "monolog/monolog",

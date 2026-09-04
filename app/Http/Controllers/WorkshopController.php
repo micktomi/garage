@@ -13,7 +13,6 @@ use App\Models\Part;
 use App\Models\Vehicle;
 use App\Models\VehicleModel;
 use App\Models\WorkOrder;
-use App\Support\Aade\OutboxHealth;
 use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
@@ -23,7 +22,7 @@ use Illuminate\Validation\Rule;
 
 class WorkshopController extends Controller
 {
-    public function dashboard(OutboxHealth $outboxHealth)
+    public function dashboard()
     {
         $today = Carbon::today();
         $kteoHorizon = $today->copy()->addDays(30);
@@ -69,11 +68,6 @@ class WorkshopController extends Controller
             ->take(5)
             ->get();
 
-        // Stuck ΑΑΔΕ entries surface here as well as on the Filament
-        // dashboard, because this is the page the shop actually keeps open.
-        // Counts only — the decision to resend is never a dashboard button.
-        $aadeAlerts = $outboxHealth->counts();
-
         $todayLabel = Str::ucfirst($today->locale('el')->translatedFormat('l, j F Y'));
 
         return view('workshop.index', compact(
@@ -87,7 +81,6 @@ class WorkshopController extends Controller
             'expiredKteoVehicles',
             'expiringKteo',
             'expiringKteoVehicles',
-            'aadeAlerts',
             'todayLabel',
         ));
     }

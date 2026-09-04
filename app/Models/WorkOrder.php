@@ -5,12 +5,9 @@ namespace App\Models;
 use App\Enums\ClosureDocument;
 use App\Enums\NonIssueReason;
 use App\Enums\WorkOrderStatus;
-use App\Services\Aade\WorkOrderAadeSync;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
-use Throwable;
 
 class WorkOrder extends Model
 {
@@ -202,29 +199,18 @@ class WorkOrder extends Model
             }
         });
 
-        // The vehicle is physically here only when in_shop actually ended up
-        // true (excludes seeded/imported records created already closed) —
-        // that is the real "entered the shop" signal, not creation itself.
-        static::created(function (WorkOrder $workOrder) {
-            if ($workOrder->in_shop) {
-                app(WorkOrderAadeSync::class)->handleCheckedIn($workOrder);
-            }
-        });
-
         // non_issue_reason only means anything alongside closure_document=none
-        // (ΑΑΔΕ forbids sending it otherwise) — keep it null any other time
-        // regardless of which caller set closure_document.
+        // — keep it null any other time regardless of which caller set
+        // closure_document.
         static::saving(function (WorkOrder $workOrder) {
             if ($workOrder->closure_document !== ClosureDocument::None) {
                 $workOrder->non_issue_reason = null;
             }
         });
 
-        // Completing a work order is what triggers the ΑΑΔΕ UpdateClient
-        // (entryCompletion=true) call, which requires knowing what document
-        // was issued — so it's a hard requirement here too, not just at the
-        // UI layer, and for both entry points (workshop controller +
-        // Filament) since both just call WorkOrder::update().
+        // What document was issued on completion is a hard requirement here
+        // too, not just at the UI layer, and for both entry points (workshop
+        // controller + Filament) since both just call WorkOrder::update().
         static::updating(function (WorkOrder $workOrder) {
             if ($workOrder->isDirty('status') && $workOrder->status === WorkOrderStatus::Completed) {
                 if ($workOrder->closure_document === null) {
@@ -263,63 +249,5 @@ class WorkOrder extends Model
                 }
             }
         });
-
-        // Cancelling or deleting a work order has to close its ΑΑΔΕ entry too.
-        // Both paths swallow their own failures (unlike the completion hook,
-        // which predates this): the user has already cancelled or deleted the
-        // order, and a broken ΑΑΔΕ outbox must not roll that back — nor skip
-        // the stock restoration registered above.
-        static::updated(function (WorkOrder $workOrder) {
-            if (
-                $workOrder->wasChanged('status') &&
-                $workOrder->status === WorkOrderStatus::Cancelled &&
-                $workOrder->getRawOriginal('status') !== WorkOrderStatus::Cancelled->value
-            ) {
-                self::syncCancellationToAade($workOrder);
-            }
-        });
-
-        static::deleted(function (WorkOrder $workOrder) {
-            self::syncCancellationToAade($workOrder);
-        });
-
-        // Fires on a genuine open -> Completed transition *and* on any later
-        // correction of what ΑΑΔΕ was told was issued. Filament allows editing
-        // a completed order, so a closure_document/non_issue_reason change
-        // that never left the building would silently desync the Digital
-        // Client List from the garage's own books.
-        //
-        // Re-sends are safe to attempt unconditionally: an unchanged closure
-        // state produces an identical payload checksum, so
-        // OutboxManager::enqueue() returns the existing entry instead of
-        // queueing a second submission.
-        static::updated(function (WorkOrder $workOrder) {
-            if ($workOrder->status !== WorkOrderStatus::Completed) {
-                return;
-            }
-
-            $justCompleted = $workOrder->wasChanged('status')
-                && $workOrder->getRawOriginal('status') !== WorkOrderStatus::Completed->value;
-
-            $closureCorrected = $workOrder->wasChanged('closure_document')
-                || $workOrder->wasChanged('non_issue_reason');
-
-            if ($justCompleted || $closureCorrected) {
-                app(WorkOrderAadeSync::class)->handleCompleted($workOrder);
-            }
-        });
-    }
-
-    private static function syncCancellationToAade(WorkOrder $workOrder): void
-    {
-        try {
-            app(WorkOrderAadeSync::class)->handleCancelled($workOrder);
-        } catch (Throwable $exception) {
-            Log::error('ΑΑΔΕ CancelClient enqueue failed. The work order was still cancelled/deleted locally; its ΑΑΔΕ entry has to be closed by hand.', [
-                'work_order_id' => $workOrder->id,
-                'exception_class' => $exception::class,
-                'exception_message' => $exception->getMessage(),
-            ]);
-        }
     }
 }

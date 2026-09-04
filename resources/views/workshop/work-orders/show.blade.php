@@ -234,7 +234,7 @@
                             >
                                 {{ $workOrder->status->label() }}
                             </span>
-                            <p class="wos-status-locked">Η εντολή έχει δηλωθεί στην ΑΑΔΕ. Η τροποποίησή της γίνεται μόνο από τον ιδιοκτήτη.</p>
+                            <p class="wos-status-locked">Η εντολή έχει ολοκληρωθεί. Η τροποποίησή της γίνεται μόνο από τον ιδιοκτήτη.</p>
                         @else
                         @foreach($statusOptions as $status)
                             @if($status === $workOrder->status)

@@ -2,7 +2,6 @@
 
 namespace App\Providers\Filament;
 
-use App\Filament\Widgets\AadeOutboxHealthWidget;
 use App\Filament\Widgets\GarageStatsOverview;
 use App\Filament\Widgets\KteoRemindersWidget;
 // use App\Filament\Widgets\QuickVehicleSearchWidget;
@@ -44,9 +43,6 @@ class AdminPanelProvider extends PanelProvider
             ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\Filament\Widgets')
             ->widgets([
 //                 QuickVehicleSearchWidget::class,
-                // First on the dashboard: a stuck ΑΑΔΕ entry is the only
-                // thing here that gets worse the longer nobody looks.
-                AadeOutboxHealthWidget::class,
                 GarageStatsOverview::class,
                 KteoRemindersWidget::class,
                 WorkOrdersByStatusChart::class,

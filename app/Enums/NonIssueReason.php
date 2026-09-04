@@ -4,10 +4,7 @@ namespace App\Enums;
 
 /**
  * Why no invoice/receipt was issued, when {@see ClosureDocument::None} is
- * chosen. Values correspond 1:1 to garage-aade-bridge's
- * Micktomi\GarageAadeBridge\Enums\ReasonNonIssueType — kept as a separate
- * local enum (rather than reusing the package's) because this is a
- * garage-manager domain choice, not a package concern.
+ * chosen.
  */
 enum NonIssueReason: string
 {

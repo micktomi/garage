@@ -10,14 +10,11 @@ use App\Models\WorkOrder;
 use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Schema;
-use Micktomi\GarageAadeBridge\Outbox\Models\OutboxEntry;
 use Tests\TestCase;
 
 /**
  * A double-clicked or re-POSTed create form must not produce a second work
- * order. The ΑΑΔΕ outbox cannot help here: two work orders are two different
- * local_entity_ids, so its idempotency check sees two legitimate submissions
- * and opens two Digital Client List entries for the same car.
+ * order.
  */
 class WorkOrderIdempotencyTest extends TestCase
 {
@@ -37,23 +34,6 @@ class WorkOrderIdempotencyTest extends TestCase
         $workOrder = WorkOrder::sole();
         $first->assertRedirect(route('workshop.work-orders.show', $workOrder));
         $second->assertRedirect(route('workshop.work-orders.show', $workOrder));
-    }
-
-    public function test_a_replayed_submission_does_not_open_a_second_aade_entry(): void
-    {
-        $user = User::factory()->create();
-        $vehicle = $this->makeVehicle('ΔΙΠ-2000');
-        $payload = $this->payload($vehicle, 'tok-replay-0000000000000000000002');
-
-        $this->actingAs($user)->post(route('workshop.work-orders.store'), $payload);
-        $this->actingAs($user)->post(route('workshop.work-orders.store'), $payload);
-
-        $sendClientEntries = OutboxEntry::query()
-            ->where('local_entity_type', 'work_order')
-            ->where('operation', 'send_client')
-            ->count();
-
-        $this->assertSame(1, $sendClientEntries);
     }
 
     public function test_a_replayed_submission_does_not_consume_stock_twice(): void

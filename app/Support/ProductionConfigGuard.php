@@ -8,17 +8,14 @@ use RuntimeException;
  * Fail-fast check for configuration that is harmless in development and
  * dangerous the moment APP_ENV=production.
  *
- * Both checks exist because .env is copied from .env.example and then edited
- * by hand: the two values below are exactly the ones whose *development*
- * setting produces no visible symptom in production. Debug pages look like a
- * normal error page until someone reads the stack trace; ΑΑΔΕ's test host
- * accepts every submission and returns success, so the garage looks compliant
- * while filing nothing.
+ * The check exists because .env is copied from .env.example and then edited
+ * by hand: APP_DEBUG is exactly the kind of value whose *development* setting
+ * produces no visible symptom in production. Debug pages look like a normal
+ * error page until someone reads the stack trace.
  *
  * Deliberately no escape hatch: an environment variable that switches the
  * guard off is a variable someone can set by accident, which is the failure
- * mode this class exists to remove. A staging box that genuinely wants the
- * ΑΑΔΕ test host runs under APP_ENV=staging, not production.
+ * mode this class exists to remove.
  */
 final class ProductionConfigGuard
 {
@@ -27,7 +24,6 @@ final class ProductionConfigGuard
         $violations = self::violations(
             (string) config('app.env'),
             (bool) config('app.debug'),
-            config('aade-dcl.environment'),
         );
 
         if ($violations === []) {
@@ -45,7 +41,7 @@ final class ProductionConfigGuard
      *
      * @return list<string>
      */
-    public static function violations(string $appEnv, bool $debug, mixed $aadeEnvironment): array
+    public static function violations(string $appEnv, bool $debug): array
     {
         if ($appEnv !== 'production') {
             return [];
@@ -55,13 +51,6 @@ final class ProductionConfigGuard
 
         if ($debug) {
             $violations[] = 'APP_DEBUG must be false in production: debug error pages expose ΑΦΜ, plate numbers, customer data and credentials in stack traces.';
-        }
-
-        if ($aadeEnvironment !== 'production') {
-            $violations[] = sprintf(
-                'AADE_DCL_ENV must be "production" when APP_ENV=production, got %s: the ΑΑΔΕ test host accepts and acknowledges every submission, so the Digital Client List would silently stay empty.',
-                is_string($aadeEnvironment) ? '"'.$aadeEnvironment.'"' : var_export($aadeEnvironment, true),
-            );
         }
 
         return $violations;

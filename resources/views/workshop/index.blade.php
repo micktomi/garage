@@ -18,29 +18,6 @@
             </span>
         </header>
 
-        {{-- Μόνο όταν υπάρχει πραγματική εκκρεμότητα: failed/ambiguous δεν
-             λύνονται από καμία προγραμματισμένη εργασία, άρα χρειάζονται
-             άνθρωπο. Δεν προσφέρεται κουμπί επαναποστολής — η απόφαση για
-             αμφίβολη εγγραφή απαιτεί έλεγχο στην ΑΑΔΕ. --}}
-        @if(($aadeAlerts['ambiguous'] ?? 0) + ($aadeAlerts['failed'] ?? 0) > 0)
-            <div class="ws-aade-alert" role="alert">
-                <svg aria-hidden="true" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 3.75h.008v.008H12v-.008Z" />
-                </svg>
-                <div class="ws-aade-alert-body">
-                    <b>Εκκρεμότητες ΑΑΔΕ</b>
-                    <span>
-                        @if(($aadeAlerts['ambiguous'] ?? 0) > 0)
-                            {{ $aadeAlerts['ambiguous'] }} αμφίβολες εγγραφές — χρειάζονται έλεγχο στην ΑΑΔΕ πριν σταλούν ξανά.
-                        @endif
-                        @if(($aadeAlerts['failed'] ?? 0) > 0)
-                            {{ $aadeAlerts['failed'] }} αποτυχημένες αποστολές — δεν θα ξαναδοκιμαστούν μόνες τους.
-                        @endif
-                    </span>
-                </div>
-            </div>
-        @endif
-
         <div class="ws-dashboard-controls">
             <form action="{{ route('workshop.search') }}" method="GET" class="ws-search-form" role="search">
                 <label for="workshop-search" class="ws-sr-only">Αναζήτηση συνεργείου</label>

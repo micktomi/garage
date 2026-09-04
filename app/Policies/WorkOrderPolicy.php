@@ -10,8 +10,8 @@ class WorkOrderPolicy extends OwnerOnlyDestructivePolicy
 {
     /**
      * Changing anything on an order that is already Completed means changing
-     * what ΑΑΔΕ was told — a correction re-sends UpdateClient with a new
-     * closure document, which is a tax decision, not a counter task.
+     * its recorded closure document — an accounting/tax decision, not a
+     * counter task.
      *
      * Keyed on the *stored* status, never on the submitted one: completing an
      * open order is ordinary daily work and stays open to everyone.

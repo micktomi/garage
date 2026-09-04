@@ -9,8 +9,7 @@
         "php": "^8.2",
         "filament/filament": "^3.2",
         "laravel/framework": "^11.31",
-        "laravel/tinker": "^2.9",
-        "micktomi/garage-aade-bridge": "0.1.0"
+        "laravel/tinker": "^2.9"
     },
     "require-dev": {
         "fakerphp/faker": "^1.23",
@@ -70,12 +69,5 @@
         }
     },
     "minimum-stability": "stable",
-    "prefer-stable": true,
-    "repositories": {
-        "garage-aade-bridge": {
-            "type": "vcs",
-            "url": "git@github.com:micktomi/garage-aade-bridge.git",
-            "no-api": true
-        }
-    }
+    "prefer-stable": true
 }

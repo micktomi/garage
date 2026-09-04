@@ -12,14 +12,7 @@ class PurgeBusinessData extends Command
     protected $description = 'Διαγράφει όλα τα επιχειρησιακά δεδομένα (customers, vehicles, work orders κ.λπ.). ΔΕΝ πειράζει users/migrations/sessions.';
 
     // Σειρά διαγραφής: πρώτα τα child tables, μετά τα parent.
-    //
-    // Το ΑΑΔΕ outbox/transmissions ΠΡΕΠΕΙ να καθαρίζονται μαζί: τα entries
-    // δείχνουν σε work orders μέσω local_entity_id (χωρίς foreign key), οπότε
-    // αν μείνουν πίσω, ένα μελλοντικό work order μπορεί να «κληρονομήσει» το
-    // dclId ενός διαγραμμένου μέσω OutboxManager::resolveDclId().
     private array $tables = [
-        'aade_dcl_transmissions',
-        'aade_dcl_outbox',
         'work_order_parts',
         'work_orders',
         'appointments',
@@ -56,9 +49,6 @@ class PurgeBusinessData extends Command
             }
 
             // ΔΕΝ γίνεται reset των auto-increment counters (sqlite_sequence).
-            // Τα ids δεν επιτρέπεται να ξαναχρησιμοποιηθούν: ένα work order id
-            // είναι ταυτόχρονα το local_entity_id προς την ΑΑΔΕ, οπότε reused
-            // id σημαίνει ότι νέα εντολή μπορεί να συνδεθεί με παλιό dclId.
             // Το AUTOINCREMENT της SQLite κρατά το high-water mark από μόνο του
             // όσο η γραμμή του πίνακα μένει ανέπαφη.
 

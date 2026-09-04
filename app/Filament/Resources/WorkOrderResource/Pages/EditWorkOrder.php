@@ -55,10 +55,10 @@ class EditWorkOrder extends EditRecord
     }
 
     /**
-     * An order that is already Completed has been filed with ΑΑΔΕ; editing it
-     * re-sends UpdateClient with whatever the form now says. That is an
-     * owner's decision. Read from the database, not from the in-memory
-     * record, for the same reason as the version check.
+     * An order that is already Completed carries a closure document that
+     * reflects a tax/accounting decision; editing it re-issues that decision.
+     * That is an owner's call. Read from the database, not from the
+     * in-memory record, for the same reason as the version check.
      */
     private function refuseStaffAmendmentOfFiledOrder(): void
     {
@@ -71,7 +71,7 @@ class EditWorkOrder extends EditRecord
         Notification::make()
             ->danger()
             ->persistent()
-            ->title('Η εντολή έχει ήδη δηλωθεί στην ΑΑΔΕ')
+            ->title('Η εντολή έχει ήδη ολοκληρωθεί')
             ->body('Οι ολοκληρωμένες εντολές τροποποιούνται μόνο από τον ιδιοκτήτη. Δεν αποθηκεύτηκε τίποτα.')
             ->send();
 

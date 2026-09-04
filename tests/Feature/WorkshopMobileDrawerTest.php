@@ -41,7 +41,7 @@ class WorkshopMobileDrawerTest extends TestCase
         $this->assertSame('flex', $this->styles($css, '.ws-mobile-header', self::MOBILE)['display'] ?? null);
         $this->assertSame('inline-flex', $this->styles($css, '.ws-drawer-close', self::MOBILE)['display'] ?? null);
         $mobileHeader = $this->styles($css, '.ws-mobile-header', self::MOBILE);
-        $this->assertSame('var(--ws-primary)', $mobileHeader['background'] ?? null);
+        $this->assertSame('var(--ws-nav)', $mobileHeader['background'] ?? null);
         $this->assertSame('var(--ws-nav-text-hi)', $mobileHeader['color'] ?? null);
         $this->assertSame('1px solid rgba(255, 255, 255, 0.14)', $mobileHeader['border-bottom'] ?? null);
         $bottomNav = $this->styles($css, '.ws-mobile-bottom-nav', self::MOBILE);
@@ -55,7 +55,7 @@ class WorkshopMobileDrawerTest extends TestCase
         $this->assertSame('#E7F1EE', $activeBottomItem['background'] ?? null);
         $this->assertSame('var(--ws-primary)', $activeBottomItem['color'] ?? null);
         $tokens = $this->styles($css, ':root', self::MOBILE);
-        $this->assertSame('#F1EFE8', $tokens['--ws-page'] ?? null);
+        $this->assertSame('#F6F5F2', $tokens['--ws-page'] ?? null);
         $this->assertSame('#FFFFFF', $tokens['--ws-card'] ?? null);
         $this->assertSame('var(--ws-card)', $this->styles($css, '.ws-dashboard .ws-stat-card', self::MOBILE)['background'] ?? null);
 
@@ -139,7 +139,7 @@ class WorkshopMobileDrawerTest extends TestCase
 
             $this->assertSame('inline-flex', $this->styles($css, '.ws-system-status', $viewport)['display'] ?? null);
             $this->assertArrayNotHasKey('display', $this->styles($css, '.ws-dashboard-subtitle-prefix', $viewport));
-            $this->assertSame('#F1EFE8', $this->styles($css, ':root', $viewport)['--ws-page'] ?? null);
+            $this->assertSame('#F6F5F2', $this->styles($css, ':root', $viewport)['--ws-page'] ?? null);
             $this->assertSame('#FFFFFF', $this->styles($css, ':root', $viewport)['--ws-card'] ?? null);
             // Nowhere is ALL CAPS except the one section-eyebrow style.
             $this->assertArrayNotHasKey('text-transform', $this->styles($css, '.ws-dashboard .ws-stat-label', $viewport));

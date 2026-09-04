@@ -89,8 +89,8 @@ class WorkshopSidebarTest extends TestCase
             '/<div class="ws-shell">.*?<x-workshop\.shell\.sidebar\s*\/>/s',
             $layout,
         );
-        $this->assertStringContainsString('--ws-nav: #0F6E56;', $css);
-        $this->assertStringContainsString('--ws-nav-active: #0A4838;', $css);
+        $this->assertStringContainsString('--ws-nav: #1B1F27;', $css);
+        $this->assertStringContainsString('--ws-nav-active: #232935;', $css);
 
         $this->assertMatchesRegularExpression(
             '/\.ws-sidebar\s*\{[^}]*position:\s*sticky;[^}]*width:\s*224px;[^}]*flex:\s*0 0 224px;[^}]*background:\s*var\(--ws-nav\);[^}]*border-right:\s*1px solid var\(--ws-border\);[^}]*\}/s',

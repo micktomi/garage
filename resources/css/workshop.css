@@ -64,10 +64,12 @@
         }
 
         :root {
-            /* Surfaces — warm neutral canvas, not the old sage/teal tint. */
-            --ws-page: #F1EFE8;
+            /* Surfaces — light neutral canvas (redesign v2): lighter and less
+               saturated than the old warm-beige tint, still a hint warm so it
+               doesn't read as clinical white. */
+            --ws-page: #F6F5F2;
             --ws-card: #FFFFFF;
-            --ws-sunken: #F0ECE6;
+            --ws-sunken: #EFEDE7;
 
             /* Text — warm ink, not teal-black. */
             --ws-text: #231D18;
@@ -80,24 +82,29 @@
             --ws-border: rgba(0, 0, 0, 0.08);
             --ws-border-hover: #D3CABB;
 
-            /* Sidebar — same primary green as the header, not a separate
-               terracotta surface. Hover is a lighter step, active is a
-               darker step (both same hue/saturation as --ws-primary, only
-               lightness moved) so the current page reads as "pressed" into
-               the rail rather than lifted off it. White text clears 6.2:1 on
-               the resting surface and 10.5:1 on active; the muted label tone
-               clears 4.75:1 on rest and 8.7:1 on active — all verified
-               computationally, not eyeballed. */
-            --ws-nav: #0F6E56;
-            --ws-nav-hover: #117E63;
-            --ws-nav-active: #0A4838;
-            --ws-nav-accent: #1DD1A3;
-            --ws-nav-text: #C9E8DD;
+            /* Sidebar — charcoal/slate (redesign v2), the one deliberately
+               dark surface on the page. The primary teal-green used to fill
+               this whole rail; now it is reserved for the active-item accent
+               bar + icon only, so it reads as a highlight rather than a
+               second background colour. White text clears 16.5:1 on the
+               resting surface; the muted label tone clears 6.3:1 — verified
+               computationally, not eyeballed. --ws-nav-accent is the same
+               hue as --ws-primary, only lightened enough to still clear the
+               3:1 non-text contrast minimum against the charcoal surfaces
+               it sits on (a plain --ws-primary icon only reaches ~2.3:1
+               there). */
+            --ws-nav: #1B1F27;
+            --ws-nav-hover: #262B36;
+            --ws-nav-active: #232935;
+            --ws-nav-accent: #159A78;
+            --ws-nav-text: #9AA1AC;
             --ws-nav-text-hi: #FFFFFF;
-            --ws-nav-divider: #0C5845;
+            --ws-nav-divider: rgba(255, 255, 255, 0.08);
 
-            /* Primary — deep teal-green. Header, FAB, the active-nav accent
-               and links all read from this one colour. */
+            /* Primary — deep teal-green, the single accent colour. Used
+               sparingly: CTAs, active/focus states, and small highlights —
+               never as a large fill (see the sidebar and dashboard header
+               above/below). */
             --ws-primary: #0F6E56;
             --ws-primary-hover: #1D9E75;
             --ws-primary-fg: #FFFFFF;
@@ -110,7 +117,7 @@
             /* Signal is a dedicated danger red for ΚΤΕΟ/expiry alerts,
                matching the status red below so a lapsed inspection reads as
                the same colour everywhere it appears. */
-            --ws-signal: #E24B4A;
+            --ws-signal: #CF2221;
 
             /* Greek registration plate band — real-world EU colours, untouched. */
             --ws-plate-band: #0B3AA8;
@@ -126,26 +133,31 @@
 
             /* Work-order statuses — five genuinely distinct hues. A status
                colour is only ever used as small text/a badge/a thin accent
-               stripe — never as a card's own fill — so each fg is the given
-               brand hex at full strength, with pale/mid tints derived from it
-               for the badge pill. */
+               stripe — never as a card's own fill. Each -fg below is a
+               darkened step of the original brand hue (kept in -border,
+               where it still gives each pill a distinct outline): the
+               original -fg values read fine on a plain white card but drop
+               to 2.0–3.7:1 against their own pale badge tint, under the
+               4.5:1 AA floor for the 11.5px badge text that actually sits on
+               it — recomputed against the exact -bg each one pairs with,
+               not eyeballed. */
             --ws-status-new-bg: #E7F1FB;
-            --ws-status-new-fg: #378ADD;
+            --ws-status-new-fg: #206DBA;
             --ws-status-new-border: #91BFEC;
             --ws-status-progress-bg: #F0EFFB;
-            --ws-status-progress-fg: #7F77DD;
+            --ws-status-progress-fg: #6359D6;
             --ws-status-progress-border: #B9B4EC;
             --ws-status-awaiting-bg: #FDF3E5;
-            --ws-status-awaiting-fg: #EF9F27;
+            --ws-status-awaiting-fg: #9B620C;
             --ws-status-awaiting-border: #F6CA88;
             --ws-status-ready-bg: #ECF3E4;
-            --ws-status-ready-fg: #639922;
+            --ws-status-ready-fg: #4D771B;
             --ws-status-ready-border: #A9C785;
             --ws-status-completed-bg: #EDEBE6;
             --ws-status-completed-fg: #5B564C;
             --ws-status-completed-border: #D6D0C5;
             --ws-status-expired-bg: #FCE9E9;
-            --ws-status-expired-fg: #E24B4A;
+            --ws-status-expired-fg: #CF2221;
             --ws-status-expired-border: #EF9C9B;
 
             /* Dashboard signals — appointments card keeps the secondary
@@ -172,9 +184,9 @@
             --danger-dim: var(--ws-status-expired-bg);
             --info: var(--ws-status-progress-fg);
             --info-dim: var(--ws-status-progress-bg);
-            --radius: 10px;
-            --radius-sm: 8px;
-            --radius-xs: 8px;
+            --radius: 14px;
+            --radius-sm: 10px;
+            --radius-xs: 10px;
             --header-h: 56px;
             --nav-h: 0px;
             --shadow-sm: 0 1px 2px rgb(35 29 24 / 5%), 0 10px 28px -18px rgb(35 29 24 / 30%);
@@ -279,7 +291,7 @@
             align-items: center;
             justify-content: flex-start;
             gap: 11px;
-            border-radius: 8px;
+            border-radius: 12px;
             color: var(--ws-nav-text-hi);
             font-family: var(--ws-font-sans);
             font-size: 14px;
@@ -299,7 +311,7 @@
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            border-radius: 8px;
+            border-radius: 10px;
             background: var(--ws-nav-accent);
             color: #FFFFFF;
             font-family: var(--ws-font-display);
@@ -370,7 +382,7 @@
             align-items: center;
             justify-content: flex-start;
             gap: 11px;
-            border-radius: 8px;
+            border-radius: 10px;
             color: var(--ws-nav-text);
             font-family: var(--ws-font-sans);
             font-size: 14px;
@@ -523,7 +535,7 @@
             align-items: center;
             justify-content: center;
             border: 0;
-            border-radius: 8px;
+            border-radius: 10px;
             background: transparent;
             color: var(--ws-text-muted);
             cursor: pointer;
@@ -546,7 +558,7 @@
             height: 52px;
             padding: 0 16px 0 44px;
             border: 1px solid var(--ws-border);
-            border-radius: 10px;
+            border-radius: 14px;
             background: var(--ws-card);
             color: var(--ws-text);
             font-size: 15px;
@@ -577,7 +589,7 @@
             justify-content: center;
             gap: 9px;
             border: 1px solid transparent;
-            border-radius: 10px;
+            border-radius: 14px;
             background: var(--ws-primary);
             color: var(--ws-primary-fg);
             font-size: 15px;
@@ -613,7 +625,7 @@
             flex-direction: column;
             justify-content: space-between;
             gap: 8px;
-            border-radius: 8px;
+            border-radius: 10px;
             background: var(--ws-sunken);
         }
 
@@ -879,10 +891,10 @@
         .ws-status-badge,
         .ws-shop-flag {
             max-width: 220px;
-            padding: 5px 9px;
+            padding: 5px 10px;
             display: inline-flex;
             align-items: center;
-            border-radius: 5px;
+            border-radius: 999px;
             font-family: var(--ws-font-sans);
             font-size: 11.5px;
             font-weight: 600;
@@ -946,7 +958,7 @@
             align-items: center;
             justify-content: center;
             border: 1px solid var(--ws-border);
-            border-radius: 8px;
+            border-radius: 10px;
             background: var(--ws-card);
             color: var(--ws-text-muted);
             transition: color 120ms ease, border-color 120ms ease, background-color 120ms ease;
@@ -980,7 +992,7 @@
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            border-radius: 8px;
+            border-radius: 10px;
             background: var(--ws-sunken);
             color: var(--ws-text-muted);
         }
@@ -1037,33 +1049,27 @@
         }
 
         .ws-dashboard-header {
-            margin-bottom: 32px;
-            padding: 28px 32px;
+            margin-bottom: 24px;
+            padding: 0;
             display: flex;
-            align-items: center;
+            align-items: flex-start;
             justify-content: space-between;
             gap: 24px;
-            border-radius: 16px;
-            /* Header band reads from the primary colour alone, not the
-               (unrelated) sidebar hue — a header, per the palette, is a
-               primary-coloured surface. */
-            background: linear-gradient(120deg, var(--ws-primary) 0%, var(--ws-primary-hover) 100%);
-            box-shadow: var(--shadow-md);
         }
 
         .ws-dashboard-title {
             margin: 0;
-            color: #FFFFFF;
+            color: var(--ws-text);
             font-family: var(--ws-font-display);
-            font-size: 34px;
+            font-size: 30px;
             font-weight: 700;
-            line-height: 1;
+            line-height: 1.05;
             letter-spacing: -.2px;
         }
 
         .ws-dashboard-subtitle {
-            margin: 7px 0 0;
-            color: rgba(255, 255, 255, 0.9);
+            margin: 6px 0 0;
+            color: var(--ws-text-muted);
             font-family: var(--ws-font-sans);
             font-size: 13.5px;
             line-height: 1.5;
@@ -1104,14 +1110,14 @@
         }
 
         .ws-dashboard .ws-search-input {
-            border-radius: 10px;
+            border-radius: 14px;
             box-shadow: var(--shadow-sm);
             font-family: var(--ws-font-sans);
         }
 
         .ws-dashboard .ws-primary-action {
             min-width: 168px;
-            border-radius: 10px;
+            border-radius: 14px;
             background: var(--ws-primary);
             box-shadow: var(--shadow-sm);
             font-family: var(--ws-font-sans);
@@ -1142,7 +1148,7 @@
             gap: 13px;
             overflow: hidden;
             border: 1px solid var(--ws-border);
-            border-radius: 10px;
+            border-radius: 14px;
             background: var(--ws-card);
             box-shadow: var(--shadow-sm);
             transition: border-color 160ms ease, box-shadow 160ms ease;
@@ -1188,7 +1194,7 @@
             align-items: center;
             justify-content: center;
             border: 1px solid var(--ws-stat-border, var(--ws-border));
-            border-radius: 10px;
+            border-radius: 11px;
             background: #FFFFFF;
             color: var(--ws-stat-accent, var(--ws-text-muted));
             box-shadow: 0 5px 14px -10px currentColor;
@@ -1284,7 +1290,7 @@
            object. Four per row on desktop is set explicitly below. */
         .ws-bay-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(224px, 280px));
+            grid-template-columns: repeat(auto-fill, minmax(240px, 300px));
             justify-content: start;
             align-items: stretch;
             gap: 14px;
@@ -1304,7 +1310,7 @@
             overflow: hidden;
             border: 1px solid var(--ws-border);
             border-top: 4px solid var(--ws-bay-accent);
-            border-radius: 10px;
+            border-radius: 14px;
             background: var(--ws-card);
             box-shadow: 0 2px 4px rgb(35 29 24 / 7%), 0 18px 36px -26px rgb(35 29 24 / 50%);
             transition: transform 160ms ease, border-color 160ms ease, box-shadow 160ms ease;
@@ -1337,17 +1343,19 @@
             outline-offset: -2px;
         }
 
+        /* Decorative only (aria-hidden in the markup) — a small quiet corner
+           tag rather than the old oversized ghost numeral, which added
+           visual weight without conveying anything the plate/status/elapsed
+           time below it don't already say. */
         .ws-bay-number {
             position: absolute;
-            top: 8px;
-            right: 12px;
-            color: var(--ws-bay-accent);
-            font-family: var(--ws-font-display);
-            font-size: 40px;
-            font-weight: 700;
+            top: 12px;
+            right: 14px;
+            color: var(--ws-text-faint);
+            font-family: var(--ws-font-mono);
+            font-size: 11px;
+            font-weight: 500;
             line-height: 1;
-            letter-spacing: -1px;
-            opacity: .12;
         }
 
         /* Pure grouping spans for the mobile row layout below — display:
@@ -1518,7 +1526,7 @@
             min-width: 0;
             overflow: hidden;
             border: 1px solid var(--ws-border);
-            border-radius: 10px;
+            border-radius: 14px;
             background: var(--ws-card);
             box-shadow: var(--shadow-sm);
         }
@@ -1530,6 +1538,14 @@
 
         .ws-dashboard .ws-panel > .ws-section-header {
             background: linear-gradient(90deg, #FBF9F5 0%, var(--ws-card) 72%);
+        }
+
+        .ws-dashboard-kteo.ws-panel {
+            border-color: var(--ws-border);
+        }
+
+        .ws-dashboard-kteo.ws-panel > .ws-section-header {
+            background: transparent;
         }
 
         /* Shared page-composition primitives for workshop screens. */
@@ -1587,7 +1603,7 @@
         .ws-page-actions .ws-primary-action {
             min-width: 168px;
             min-height: 44px;
-            border-radius: 10px;
+            border-radius: 14px;
             background: var(--ws-primary);
             box-shadow: var(--shadow-sm);
             font-family: var(--ws-font-sans);
@@ -1606,7 +1622,7 @@
             justify-content: center;
             gap: 8px;
             border: 1px solid var(--ws-border);
-            border-radius: 10px;
+            border-radius: 12px;
             background: var(--ws-card);
             color: var(--ws-text);
             box-shadow: var(--shadow-sm);
@@ -1892,7 +1908,7 @@
             padding: 3px 8px;
             overflow: hidden;
             border: 1px solid var(--ws-border);
-            border-radius: 8px;
+            border-radius: 10px;
             color: var(--ws-text-muted);
             font-family: var(--ws-font-sans);
             font-size: 12px;
@@ -1968,7 +1984,7 @@
             justify-content: center;
             gap: 5px;
             border: 1px solid var(--ws-border);
-            border-radius: 8px;
+            border-radius: 10px;
             background: var(--ws-card);
             color: var(--ws-text-muted);
             font-family: var(--ws-font-sans);
@@ -2043,7 +2059,7 @@
             align-items: center;
             justify-content: center;
             border: 1px solid var(--ws-border);
-            border-radius: 8px;
+            border-radius: 10px;
             background: var(--ws-card);
             color: var(--ws-text-muted);
             white-space: nowrap;
@@ -2307,7 +2323,7 @@
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            border-radius: 9px;
+            border-radius: 10px;
             background: #F1ECE4;
             color: var(--ws-text);
         }
@@ -2332,10 +2348,23 @@
             display: none;
         }
 
+        /* Visually secondary to "Ανοιχτές εντολές" — a sunken card and a
+           quieter title, so the two panels don't compete for attention. */
+        .ws-dashboard-kteo {
+            background: var(--ws-sunken);
+            box-shadow: none;
+        }
+
+        .ws-dashboard-kteo .ws-section-header h2 {
+            color: var(--ws-text-muted);
+            font-size: 16px;
+        }
+
         .ws-dashboard-kteo .ws-list {
             overflow: hidden;
             border: 0;
             border-radius: 0;
+            background: transparent;
             box-shadow: none;
         }
 
@@ -2460,7 +2489,7 @@
                 display: flex;
                 align-items: center;
                 gap: 12px;
-                background: var(--ws-primary);
+                background: var(--ws-nav);
                 color: var(--ws-nav-text-hi);
             }
 
@@ -2535,7 +2564,7 @@
                 align-items: center;
                 justify-content: center;
                 border: 0;
-                border-radius: 8px;
+                border-radius: 10px;
                 background: transparent;
                 color: var(--ws-nav-text-hi);
                 cursor: pointer;
@@ -3196,7 +3225,7 @@
         align-items: center;
         gap: 0.4rem;
         border: 1px solid transparent;
-        border-radius: 8px;
+        border-radius: 14px;
         background: var(--ws-primary);
         color: var(--ws-primary-fg);
         font-size: 13px;
@@ -3210,7 +3239,7 @@
         margin-bottom: 16px;
         padding: 12px 16px;
         border: 1px solid var(--ws-border);
-        border-radius: 8px;
+        border-radius: 12px;
         background: var(--ws-status-ready-bg);
         color: var(--ws-status-ready-fg);
         font-size: 13px;
@@ -3222,18 +3251,18 @@
         display: grid;
         grid-template-columns: minmax(0, 1fr);
         align-items: stretch;
-        gap: 12px;
+        gap: 18px;
     }
     .ap-card {
         min-width: 0;
-        min-height: 116px;
+        min-height: 330px;
         height: 100%;
-        padding: 14px;
+        padding: 18px;
         display: flex;
         flex-direction: column;
-        gap: 10px;
+        gap: 14px;
         border: 1px solid var(--ws-border);
-        border-radius: 12px;
+        border-radius: 14px;
         background: var(--ws-card);
         box-shadow: var(--shadow-sm);
         transition: border-color 120ms ease, background-color 120ms ease;
@@ -3274,11 +3303,11 @@
     }
     .ap-status {
         max-width: 45%;
-        padding: 3px 9px;
+        padding: 3px 10px;
         display: inline-flex;
         align-items: center;
         overflow: hidden;
-        border-radius: 8px;
+        border-radius: 999px;
         font-size: 12px;
         font-weight: 500;
         line-height: 18px;
@@ -3311,7 +3340,8 @@
         flex: 1;
         display: flex;
         flex-direction: column;
-        gap: 2px;
+        justify-content: center;
+        gap: 6px;
     }
     .ap-card-customer {
         overflow: hidden;
@@ -3362,7 +3392,7 @@
         padding: 24px;
         text-align: center;
         border: 1px solid var(--ws-border);
-        border-radius: 12px;
+        border-radius: 14px;
         background: var(--ws-card);
         color: var(--ws-text-muted);
     }
@@ -3377,9 +3407,18 @@
         font-size: 13px;
     }
 
-    @media (min-width: 1120px) {
+    /* Desktop-first: compact appointment cards in a grid — 2-up on smaller
+       desktop/tablet, 3-up on a large desktop monitor, matching the work
+       order and customer/vehicle card grids. */
+    @media (min-width: 1024px) {
         .ap-list {
             grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+    }
+
+    @media (min-width: 1440px) {
+        .ap-list {
+            grid-template-columns: repeat(3, minmax(0, 1fr));
         }
     }
 
@@ -3396,7 +3435,7 @@
         flex: 1;
         padding: 0 14px;
         border: 1px solid var(--ws-border);
-        border-radius: 8px;
+        border-radius: 12px;
         background: var(--ws-card);
         color: var(--ws-text);
         font-size: 14px;
@@ -3413,7 +3452,7 @@
         padding: 24px;
         text-align: center;
         border: 1px solid var(--ws-border);
-        border-radius: 12px;
+        border-radius: 14px;
         background: var(--ws-card);
         color: var(--ws-text-muted);
     }
@@ -3426,6 +3465,32 @@
     .sr-empty-sub {
         color: var(--ws-text-muted);
         font-size: 13px;
+    }
+
+    /* Desktop-first: compact vehicle cards in a grid, matching the customer
+       card treatment — a taller floor than the shared .ws-operational-card
+       default plus a centered body, so the extra height reads as
+       intentional whitespace near the ~1.2–1.5:1 target instead of a long,
+       shallow strip. */
+    .sr-card {
+        min-height: 330px;
+    }
+
+    .sr-card .ws-operational-card__body {
+        justify-content: center;
+    }
+
+    @media (min-width: 1024px) {
+        .sr-list {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 18px;
+        }
+    }
+
+    @media (min-width: 1440px) {
+        .sr-list {
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+        }
     }
 
 /* from: resources/views/workshop/kteo/index.blade.php */
@@ -3650,7 +3715,7 @@
         padding: 0 14px;
         flex: 1 1 220px;
         border: 1px solid var(--ws-border);
-        border-radius: 8px;
+        border-radius: 12px;
         background: var(--ws-card);
         color: var(--ws-text);
         font-size: 14px;
@@ -3671,6 +3736,34 @@
     .cu-card-email {
         flex: 1 1 180px;
         min-width: 0;
+    }
+
+    /* Desktop-first: compact customer cards in a grid, never two
+       overly-wide cards — each customer reads as its own object, with a
+       taller floor than the shared .ws-operational-card default so the
+       card lands near the ~1.2–1.5:1 width/height target instead of a
+       long, shallow strip. Centering the body vertically (rather than
+       stacking it flush under the header) is what makes that extra height
+       read as intentional whitespace instead of an empty gap. */
+    .cu-card {
+        min-height: 330px;
+    }
+
+    .cu-card .ws-operational-card__body {
+        justify-content: center;
+    }
+
+    @media (min-width: 1024px) {
+        .cu-list {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 18px;
+        }
+    }
+
+    @media (min-width: 1440px) {
+        .cu-list {
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+        }
     }
 
     .cu-empty {
@@ -3707,7 +3800,7 @@
     .wol-grid {
         display: grid;
         grid-template-columns: minmax(0, 1fr);
-        gap: 14px;
+        gap: 18px;
         overflow: visible;
         border: 0;
         border-radius: 0;
@@ -3725,7 +3818,7 @@
     }
 
     .wol-card {
-        min-height: 260px;
+        min-height: 330px;
         padding: 18px;
         display: flex;
         flex-direction: column;
@@ -3796,122 +3889,23 @@
     }
 
     .wol-grid > .ws-empty-state {
+        grid-column: 1 / -1;
         min-height: 180px;
     }
 
+    /* Desktop-first: a compact card grid, never a full-width row list — each
+       order reads as its own object. 2-up on smaller desktop/tablet, 3-up
+       once a large desktop monitor gives each card enough width to still
+       land near the ~1.2–1.5:1 width/height target. */
     @media (min-width: 1024px) {
         .wol-grid {
-            display: block;
-            overflow: hidden;
-            border: 1px solid var(--ws-border);
-            border-radius: 14px;
-            background: var(--ws-card);
-            box-shadow: var(--shadow-sm);
+            grid-template-columns: repeat(2, minmax(0, 1fr));
         }
+    }
 
-        .wol-card {
-            width: 100%;
-            height: 72px;
-            min-height: 72px;
-            padding: 0 16px;
-            display: grid;
-            grid-template-columns: 58px minmax(112px, 148px) 90px minmax(132px, .9fr) minmax(128px, 1.4fr) 78px 16px;
-            align-items: center;
-            gap: 10px;
-            border: 0;
-            border-bottom: 1px solid var(--ws-border);
-            border-radius: 0;
-            background: transparent;
-            box-shadow: none;
-        }
-
-        .wol-card:last-child {
-            border-bottom: 0;
-        }
-
-        .wol-card:hover {
-            border-color: var(--ws-border);
-            background: var(--ws-sunken);
-            box-shadow: none;
-            transform: none;
-        }
-
-        .wol-card:focus-visible {
-            position: relative;
-            z-index: 1;
-            border-color: var(--ws-primary);
-            outline: 2px solid var(--ws-primary);
-            outline-offset: -2px;
-        }
-
-        .wol-card-top,
-        .wol-card-footer {
-            display: contents;
-        }
-
-        .wol-card-top .ws-recent-order-number {
-            grid-area: auto;
-            grid-column: 1;
-            grid-row: 1;
-            align-self: center;
-        }
-
-        .wol-card-top .ws-status-badge {
-            padding: 3px 6px;
-            width: max-content;
-            max-width: 100%;
-            grid-column: 2;
-            grid-row: 1;
-            justify-self: start;
-            font-size: 11px;
-            white-space: nowrap;
-        }
-
-        .wol-card-meta {
-            grid-column: 3;
-            grid-row: 1;
-        }
-
-        .wol-card-person {
-            grid-column: 4;
-            grid-row: 1;
-        }
-
-        .wol-card-person .ws-recent-order-customer,
-        .wol-card-person .ws-recent-order-meta {
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-        }
-
-        .wol-card-problem {
-            padding: 0;
-            grid-column: 5;
-            grid-row: 1;
-            border-top: 0;
-        }
-
-        .wol-card-problem .ws-field-label {
-            display: none;
-        }
-
-        .wol-card-problem .ws-recent-order-meta {
-            display: block;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-            -webkit-line-clamp: initial;
-        }
-
-        .wol-card-footer .ws-row-time {
-            grid-column: 6;
-            grid-row: 1;
-            white-space: nowrap;
-        }
-
-        .wol-card-footer .wol-card-chevron {
-            grid-column: 7;
-            grid-row: 1;
+    @media (min-width: 1440px) {
+        .wol-grid {
+            grid-template-columns: repeat(3, minmax(0, 1fr));
         }
     }
 

@@ -521,11 +521,11 @@ class WorkshopDashboardTest extends TestCase
     {
         $layout = file_get_contents(resource_path('css/workshop.css'));
 
-        $this->assertStringContainsString('--ws-page: #F1EFE8;', $layout);
-        $this->assertStringContainsString('--ws-nav: #0F6E56;', $layout);
-        $this->assertStringContainsString('--ws-nav-active: #0A4838;', $layout);
+        $this->assertStringContainsString('--ws-page: #F6F5F2;', $layout);
+        $this->assertStringContainsString('--ws-nav: #1B1F27;', $layout);
+        $this->assertStringContainsString('--ws-nav-active: #232935;', $layout);
         $this->assertStringContainsString('--ws-primary: #0F6E56;', $layout);
-        $this->assertStringContainsString('--ws-signal: #E24B4A;', $layout);
+        $this->assertStringContainsString('--ws-signal: #CF2221;', $layout);
         $this->assertStringContainsString('--ws-plate-band: #0B3AA8;', $layout);
         $this->assertStringContainsString('--ws-font-sans:', $layout);
         $this->assertStringContainsString('--ws-font-display:', $layout);
@@ -533,7 +533,7 @@ class WorkshopDashboardTest extends TestCase
         $this->assertStringNotContainsString('fonts.googleapis.com', $layout);
 
         $this->assertMatchesRegularExpression(
-            '/\.ws-dashboard-title\s*\{[^}]*font-family:\s*var\(--ws-font-display\);[^}]*font-size:\s*34px;[^}]*\}/s',
+            '/\.ws-dashboard-title\s*\{[^}]*font-family:\s*var\(--ws-font-display\);[^}]*font-size:\s*30px;[^}]*\}/s',
             $layout,
         );
         $this->assertMatchesRegularExpression(
@@ -541,7 +541,7 @@ class WorkshopDashboardTest extends TestCase
             $layout,
         );
         $this->assertMatchesRegularExpression(
-            '/\.ws-dashboard \.ws-stat-card\s*\{[^}]*border:\s*1px solid var\(--ws-border\);[^}]*border-radius:\s*10px;[^}]*background:\s*var\(--ws-card\);[^}]*box-shadow:\s*var\(--shadow-sm\);[^}]*\}/s',
+            '/\.ws-dashboard \.ws-stat-card\s*\{[^}]*border:\s*1px solid var\(--ws-border\);[^}]*border-radius:\s*14px;[^}]*background:\s*var\(--ws-card\);[^}]*box-shadow:\s*var\(--shadow-sm\);[^}]*\}/s',
             $layout,
         );
         $this->assertMatchesRegularExpression(

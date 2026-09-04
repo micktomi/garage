@@ -85,10 +85,12 @@ class WorkshopIndexCardGridTest extends TestCase
         $response->assertSee('Δεν υπάρχουν ανοιχτές εντολές');
     }
 
-    public function test_work_order_list_switches_from_stacked_cards_to_72px_operational_rows_at_1024px(): void
+    public function test_work_order_list_stays_a_card_grid_and_widens_to_2_then_3_columns_on_desktop(): void
     {
-        // CSS moved out to resources/css/workshop.css; the markup-only
-        // check below still reads the page file itself.
+        // Desktop-first: never a full-width row list — .wol-card keeps its
+        // stacked-card shape at every width, .wol-grid only ever gains more
+        // columns. CSS moved out to resources/css/workshop.css; the
+        // markup-only check below still reads the page file itself.
         $css = file_get_contents(resource_path('css/workshop.css'));
         $view = file_get_contents(resource_path('views/workshop/work-orders/index.blade.php'));
 
@@ -97,11 +99,15 @@ class WorkshopIndexCardGridTest extends TestCase
             $css,
         );
         $this->assertMatchesRegularExpression(
-            '/@media\s*\(min-width:\s*1024px\)\s*\{.*?\.wol-grid\s*\{[^}]*display:\s*block;[^}]*overflow:\s*hidden;[^}]*\}.*?\.wol-card\s*\{[^}]*height:\s*72px;[^}]*min-height:\s*72px;[^}]*display:\s*grid;[^}]*\}/s',
+            '/\.wol-card\s*\{[^}]*min-height:\s*330px;[^}]*display:\s*flex;[^}]*flex-direction:\s*column;[^}]*\}/s',
             $css,
         );
         $this->assertMatchesRegularExpression(
-            '/@media\s*\(min-width:\s*1024px\).*?\.wol-card-problem \.ws-field-label\s*\{[^}]*display:\s*none;[^}]*\}/s',
+            '/@media\s*\(min-width:\s*1024px\)\s*\{\s*\.wol-grid\s*\{[^}]*grid-template-columns:\s*repeat\(2, minmax\(0, 1fr\)\);[^}]*\}\s*\}/s',
+            $css,
+        );
+        $this->assertMatchesRegularExpression(
+            '/@media\s*\(min-width:\s*1440px\)\s*\{\s*\.wol-grid\s*\{[^}]*grid-template-columns:\s*repeat\(3, minmax\(0, 1fr\)\);[^}]*\}\s*\}/s',
             $css,
         );
         $this->assertStringNotContainsString('<table', $view);
@@ -349,7 +355,7 @@ class WorkshopIndexCardGridTest extends TestCase
             ->assertSee('Έλεγχος και προγραμματισμένη συντήρηση');
     }
 
-    public function test_appointment_grid_keeps_its_existing_one_and_two_column_states(): void
+    public function test_appointment_grid_widens_to_2_then_3_columns_on_desktop(): void
     {
         $appointmentView = file_get_contents(resource_path('css/workshop.css'));
 
@@ -358,10 +364,13 @@ class WorkshopIndexCardGridTest extends TestCase
             $appointmentView,
         );
         $this->assertMatchesRegularExpression(
-            '/@media\s*\(min-width:\s*1120px\)\s*\{\s*\.ap-list\s*\{[^}]*grid-template-columns:\s*repeat\(2, minmax\(0, 1fr\)\);[^}]*\}/s',
+            '/@media\s*\(min-width:\s*1024px\)\s*\{\s*\.ap-list\s*\{[^}]*grid-template-columns:\s*repeat\(2, minmax\(0, 1fr\)\);[^}]*\}\s*\}/s',
             $appointmentView,
         );
-        $this->assertDoesNotMatchRegularExpression('/\.ap-list\s*\{[^}]*repeat\(3,/s', $appointmentView);
+        $this->assertMatchesRegularExpression(
+            '/@media\s*\(min-width:\s*1440px\)\s*\{\s*\.ap-list\s*\{[^}]*grid-template-columns:\s*repeat\(3, minmax\(0, 1fr\)\);[^}]*\}\s*\}/s',
+            $appointmentView,
+        );
     }
 
     private function xpath(string $html): DOMXPath

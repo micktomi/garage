@@ -15,23 +15,54 @@ class GeminiClient
         string $stage = 'initial_request',
         ?string $toolName = null,
     ): array {
+        return $this->send([
+            'systemInstruction' => [
+                'parts' => [['text' => $this->systemInstruction()]],
+            ],
+            'contents' => $contents,
+            'tools' => [['functionDeclarations' => $declarations]],
+            'generationConfig' => [
+                'temperature' => 0.1,
+                'maxOutputTokens' => 1200,
+            ],
+        ], $stage, $toolName);
+    }
+
+    public function generateStructured(
+        array $contents,
+        array $schema,
+        string $systemInstruction,
+        string $stage = 'structured_request',
+    ): array {
+        return $this->send([
+            'systemInstruction' => [
+                'parts' => [['text' => $systemInstruction]],
+            ],
+            'contents' => $contents,
+            'generationConfig' => [
+                'thinkingConfig' => [
+                    'thinkingLevel' => 'low',
+                ],
+                'maxOutputTokens' => 400,
+                'responseMimeType' => 'application/json',
+                'responseSchema' => $schema,
+            ],
+        ], $stage, timeoutSeconds: 45);
+    }
+
+    private function send(
+        array $payload,
+        string $stage,
+        ?string $toolName = null,
+        ?int $timeoutSeconds = null,
+    ): array {
         $model = trim((string) config('garage-assistant.gemini.model'));
         $baseUrl = rtrim((string) config('garage-assistant.gemini.base_url'), '/');
 
         try {
-            $response = $this->request()->post(
+            $response = $this->request($timeoutSeconds)->post(
                 $baseUrl.'/models/'.rawurlencode($model).':generateContent',
-                [
-                    'systemInstruction' => [
-                        'parts' => [['text' => $this->systemInstruction()]],
-                    ],
-                    'contents' => $contents,
-                    'tools' => [['functionDeclarations' => $declarations]],
-                    'generationConfig' => [
-                        'temperature' => 0.1,
-                        'maxOutputTokens' => 1200,
-                    ],
-                ],
+                $payload,
             );
 
             $response->throw();
@@ -46,9 +77,11 @@ class GeminiClient
                 'http_status' => $response?->status(),
                 'gemini_code' => $error['code'] ?? null,
                 'gemini_status' => $error['status'] ?? null,
-                'gemini_message' => $this->sanitizeErrorMessage($error['message'] ?? null),
+                'gemini_message' => $stage === 'registration_extraction'
+                    ? null
+                    : $this->sanitizeErrorMessage($error['message'] ?? null),
                 'model' => $model,
-                'stage' => in_array($stage, ['initial_request', 'function_response_request'], true) ? $stage : 'unknown',
+                'stage' => in_array($stage, ['initial_request', 'function_response_request', 'registration_extraction'], true) ? $stage : 'unknown',
                 'tool' => $toolName,
             ]);
 
@@ -56,13 +89,13 @@ class GeminiClient
         }
     }
 
-    private function request(): PendingRequest
+    private function request(?int $timeoutSeconds = null): PendingRequest
     {
         return Http::acceptJson()
             ->asJson()
             ->withHeaders(['x-goog-api-key' => (string) config('garage-assistant.gemini.api_key')])
             ->connectTimeout((int) config('garage-assistant.gemini.connect_timeout', 5))
-            ->timeout((int) config('garage-assistant.gemini.timeout', 20));
+            ->timeout($timeoutSeconds ?? (int) config('garage-assistant.gemini.timeout', 20));
     }
 
     private function sanitizeErrorMessage(mixed $message): ?string

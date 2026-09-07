@@ -13,6 +13,9 @@ class Vehicle extends Model
         'make',
         'model',
         'year',
+        'fuel',
+        'engine_cc',
+        'first_registered_at',
         'kteo_expires_at',
         'mileage',
         'vin',
@@ -20,6 +23,7 @@ class Vehicle extends Model
     ];
 
     protected $casts = [
+        'first_registered_at' => 'date',
         'kteo_expires_at' => 'date',
     ];
 

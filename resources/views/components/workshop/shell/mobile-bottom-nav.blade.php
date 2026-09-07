@@ -61,7 +61,7 @@
         aria-expanded="false"
         x-bind:aria-expanded="open ? 'true' : 'false'"
         x-on:click="openDrawer($el)"
-        @if(request()->routeIs('workshop.customers.*', 'workshop.search', 'workshop.vehicles.*', 'workshop.kteo')) aria-current="page" @endif
+        @if(request()->routeIs('workshop.customers.*', 'workshop.search', 'workshop.vehicles.*', 'workshop.registration-scan.*', 'workshop.kteo')) aria-current="page" @endif
     >
         <span class="ws-mobile-bottom-icon" aria-hidden="true">
             <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">

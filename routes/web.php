@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\VehicleRegistrationScanController;
 use App\Http\Controllers\WorkshopController;
 use App\Models\WorkOrder;
 use Illuminate\Support\Facades\Route;
@@ -22,6 +23,12 @@ Route::middleware('auth')->prefix('workshop')->name('workshop.')->group(function
     Route::post('/vehicles', [WorkshopController::class, 'vehiclesStore'])->name('vehicles.store');
     Route::get('/vehicles/{vehicle}/edit', [WorkshopController::class, 'vehiclesEdit'])->name('vehicles.edit');
     Route::put('/vehicles/{vehicle}', [WorkshopController::class, 'vehiclesUpdate'])->name('vehicles.update');
+
+    Route::get('/registration-scan', [VehicleRegistrationScanController::class, 'show'])->name('registration-scan.show');
+    Route::post('/registration-scan/extract', [VehicleRegistrationScanController::class, 'extract'])
+        ->middleware('throttle:6,1')
+        ->name('registration-scan.extract');
+    Route::post('/registration-scan', [VehicleRegistrationScanController::class, 'store'])->name('registration-scan.store');
 
     Route::get('/kteo', [WorkshopController::class, 'kteoIndex'])->name('kteo');
 

@@ -95,6 +95,18 @@
                     </svg>
                 </x-slot:icon>
             </x-workshop.shell.nav-item>
+
+            <x-workshop.shell.nav-item
+                :href="route('workshop.registration-scan.show')"
+                label="Σάρωση Άδειας"
+                :active="request()->routeIs('workshop.registration-scan.*')"
+            >
+                <x-slot:icon>
+                    <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 7.5V5.25a.75.75 0 0 1 .75-.75H7.5m9 0h2.25a.75.75 0 0 1 .75.75V7.5m0 9v2.25a.75.75 0 0 1-.75.75H16.5m-9 0H5.25a.75.75 0 0 1-.75-.75V16.5M8.25 9.75h7.5v4.5h-7.5v-4.5Z"/>
+                    </svg>
+                </x-slot:icon>
+            </x-workshop.shell.nav-item>
         </div>
 
         <div class="ws-sidebar-footer">

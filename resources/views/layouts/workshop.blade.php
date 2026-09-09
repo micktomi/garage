@@ -9,6 +9,7 @@
     @stack('styles')
 </head>
 <body
+    class="@yield('body-class')"
     x-data="{
         open: false,
         drawerTrigger: null,

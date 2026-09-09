@@ -20,9 +20,13 @@ class WorkshopSearchAndAppointmentsTest extends TestCase
         $response = $this->actingAs($user)->get(route('workshop.dashboard'));
 
         $response->assertOk()
-            ->assertSee('<form action="'.route('workshop.search').'" method="GET" class="ws-search-form" role="search">', false)
+            ->assertSee('action="'.route('workshop.search').'"', false)
+            ->assertSee('method="GET"', false)
+            ->assertSee('class="ws-search-form"', false)
+            ->assertSee('role="search"', false)
             ->assertSee('name="q"', false)
-            ->assertSee('type="submit"', false);
+            ->assertSee('type="submit"', false)
+            ->assertSee('aria-label="Καθαρισμός αναζήτησης"', false);
     }
 
     public function test_search_finds_vehicle_by_full_plate(): void

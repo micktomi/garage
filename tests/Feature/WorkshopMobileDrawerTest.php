@@ -63,31 +63,24 @@ class WorkshopMobileDrawerTest extends TestCase
         // moves into the sticky app header instead.
         $this->assertSame('none', $this->styles($css, '.ws-dashboard-header', self::MOBILE)['display'] ?? null);
 
-        // Three metrics stay side by side at every width, in a compact strip
-        // short enough to leave room for the vehicle list below it.
-        $metricGrid = $this->styles($css, '.ws-dashboard .ws-stat-grid', self::MOBILE);
-        $this->assertSame('repeat(3, minmax(0, 1fr))', $metricGrid['grid-template-columns'] ?? null);
-        $this->assertSame('48px', $this->styles($css, '.ws-dashboard .ws-stat-card', self::MOBILE)['min-height'] ?? null);
+        // Daily figures become compact rows in one day board on mobile.
+        $this->assertSame('block', $this->styles($css, '.ws-ops-list', self::MOBILE)['display'] ?? null);
+        $this->assertSame('54px', $this->styles($css, '.ws-ops-item', self::MOBILE)['min-height'] ?? null);
 
         // The vehicle strip becomes a single-column list of compact,
-        // two-line rows on a phone — no card grid, no per-status fill. The
-        // accent stripe is an inset ::before (top/bottom offset) rather than
-        // a border, so it never touches the divider above/below and each
-        // row still reads as its own object.
+        // two-line rows on a phone. Its status stripe becomes a direct left
+        // edge so each work item still scans clearly inside the dark floor.
         $bayGrid = $this->styles($css, '.ws-bay-grid', self::MOBILE);
         $this->assertSame('block', $bayGrid['display'] ?? null);
         $bayRow = $this->styles($css, '.ws-bay', self::MOBILE);
-        $this->assertSame('70px', $bayRow['min-height'] ?? null);
-        $this->assertArrayNotHasKey('border-left', $bayRow);
+        $this->assertSame('0', $bayRow['min-height'] ?? null);
+        $this->assertSame('5px solid var(--ws-bay-accent)', $bayRow['border-left'] ?? null);
         $bayStripe = $this->styles($css, '.ws-bay::before', self::MOBILE);
-        $this->assertSame('8px', $bayStripe['top'] ?? null);
-        $this->assertSame('8px', $bayStripe['bottom'] ?? null);
-        $this->assertSame('4px', $bayStripe['width'] ?? null);
-        $this->assertSame('var(--ws-bay-accent)', $bayStripe['background'] ?? null);
+        $this->assertSame('none', $bayStripe['display'] ?? null);
         $this->assertSame('none', $this->styles($css, '.ws-bay-rail', self::MOBILE)['display'] ?? null);
         $this->assertSame('none', $this->styles($css, '.ws-bay-number', self::MOBILE)['display'] ?? null);
         $this->assertSame(
-            'repeat(4, minmax(0, 1fr))',
+            'repeat(auto-fill, minmax(238px, 1fr))',
             $this->styles($css, '.ws-bay-grid', self::WIDE)['grid-template-columns'] ?? null,
         );
 
@@ -302,6 +295,7 @@ class WorkshopMobileDrawerTest extends TestCase
     /**
      * The /workshop stylesheet as authored. Extracted out of the layout's
      * inline <style> block into resources/css/workshop.css and loaded via
+     *
      * @vite — every /workshop page shares this one file now, so it no
      * longer needs to be pulled out of any single page's rendered HTML.
      */

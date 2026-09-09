@@ -61,7 +61,7 @@ class WorkshopDashboardTest extends TestCase
             ->assertSee('Αναμονή ανταλλακτικών')
             ->assertSee('Νέα εντολή')
             ->assertSee('Σύστημα ενεργό')
-            ->assertSee('Γρήγορες Ενέργειες')
+            ->assertSee('Γρήγορη καταχώρηση')
             ->assertSee('Αναμονή ανταλλακτικού');
     }
 
@@ -90,7 +90,7 @@ class WorkshopDashboardTest extends TestCase
         $xpath = $this->xpath($response->getContent());
 
         $metricLabels = [];
-        foreach ($xpath->query('//*[contains(concat(" ", normalize-space(@class), " "), " ws-stat-label ")]') as $label) {
+        foreach ($xpath->query('//*[contains(concat(" ", normalize-space(@class), " "), " ws-ops-label ")]') as $label) {
             $metricLabels[] = trim($label->textContent);
         }
 
@@ -307,19 +307,15 @@ class WorkshopDashboardTest extends TestCase
         $response = $this->actingAs($user)->get(route('workshop.dashboard'))->assertOk();
         $xpath = $this->xpath($response->getContent());
 
-        $kteoCards = $xpath->query(
-            '//*[contains(concat(" ", normalize-space(@class), " "), " ws-stat-card ")]'
-            .'[.//*[contains(concat(" ", normalize-space(@class), " "), " ws-stat-label ")'
+        $kteoRows = $xpath->query(
+            '//*[contains(concat(" ", normalize-space(@class), " "), " ws-ops-item--danger ")]'
+            .'[.//*[contains(concat(" ", normalize-space(@class), " "), " ws-ops-label ")'
             .' and normalize-space(.)="ΚΤΕΟ έληξαν"]]',
         );
 
-        $this->assertCount(1, $kteoCards);
-        $this->assertCount(1, $xpath->query(
-            './/*[contains(concat(" ", normalize-space(@class), " "), " ws-stat-value--danger ")]',
-            $kteoCards->item(0),
-        ));
-        $this->assertCount(1, $xpath->query('//*[@class and contains(concat(" ", normalize-space(@class), " "), " ws-stat-value--danger ")]'));
-        $this->assertStringNotContainsString('danger', $kteoCards->item(0)->getAttribute('class'));
+        $this->assertCount(1, $kteoRows);
+        $this->assertCount(1, $xpath->query('./strong', $kteoRows->item(0)));
+        $this->assertCount(1, $xpath->query('//*[contains(concat(" ", normalize-space(@class), " "), " ws-ops-item--danger ")]'));
     }
 
     public function test_new_and_in_progress_orders_use_distinct_badge_presentations(): void
@@ -517,7 +513,7 @@ class WorkshopDashboardTest extends TestCase
         }
     }
 
-    public function test_dashboard_next_port_palette_typography_and_truncation_contract(): void
+    public function test_dashboard_production_floor_palette_typography_and_truncation_contract(): void
     {
         $layout = file_get_contents(resource_path('css/workshop.css'));
 
@@ -552,19 +548,24 @@ class WorkshopDashboardTest extends TestCase
             '/\.ws-recent-order-customer,\s*\.ws-recent-order-meta\s*\{[^}]*overflow:\s*hidden;[^}]*text-overflow:\s*ellipsis;[^}]*white-space:\s*nowrap;[^}]*\}/s',
             $layout,
         );
+        $this->assertStringContainsString('--gm-graphite: #1B2027;', $layout);
+        $this->assertMatchesRegularExpression(
+            '/\.ws-dashboard-page\s*\{[^}]*background-image:\s*none;/s',
+            $layout,
+        );
+        $this->assertMatchesRegularExpression(
+            '/\.ws-dashboard \.ws-status-badge,\s*\.ws-dashboard \.ws-shop-flag\s*\{[^}]*border:\s*0;[^}]*background:\s*transparent;/s',
+            $layout,
+        );
     }
 
     public function test_dashboard_responsive_layout_has_mobile_tablet_and_desktop_states(): void
     {
         $layout = file_get_contents(resource_path('css/workshop.css'));
 
-        // Three metrics at every width: two columns would orphan the third.
+        // The three daily figures are rows inside one day board, not separate KPI cards.
         $this->assertMatchesRegularExpression(
-            '/\.ws-dashboard \.ws-stat-grid\s*\{[^}]*grid-template-columns:\s*repeat\(3, minmax\(0, 1fr\)\);[^}]*\}/s',
-            $layout,
-        );
-        $this->assertMatchesRegularExpression(
-            '/@media\s*\(min-width:\s*1024px\).*?\.ws-dashboard \.ws-stat-grid\s*\{[^}]*repeat\(3, minmax\(0, 1fr\)\)/s',
+            '/\.ws-ops-item\s*\{[^}]*grid-template-columns:\s*32px minmax\(0, 1fr\) auto;/s',
             $layout,
         );
         $this->assertMatchesRegularExpression(

@@ -13,6 +13,7 @@
 
 @push('styles')
 <style>
+    .ws-sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
     .scan-page { max-width: 760px; margin: 0 auto; display: grid; gap: 1rem; }
     .scan-heading { font-size: clamp(1.45rem, 5vw, 2rem); font-weight: 750; letter-spacing: -.035em; }
     .scan-lead { color: var(--text-muted); line-height: 1.55; }

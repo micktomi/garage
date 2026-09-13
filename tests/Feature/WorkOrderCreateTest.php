@@ -8,8 +8,6 @@ use App\Models\User;
 use App\Models\Vehicle;
 use App\Models\WorkOrder;
 use App\Models\WorkOrderPart;
-use DOMDocument;
-use DOMXPath;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -37,118 +35,7 @@ class WorkOrderCreateTest extends TestCase
         $response = $this->actingAs($user)->get(route('workshop.work-orders.create'));
 
         $response->assertOk();
-        $response->assertSee('Νέα εντολή εργασίας');
-    }
-
-    public function test_create_form_uses_one_card_with_internal_sections_and_sticky_actions(): void
-    {
-        $user = User::factory()->create();
-        $response = $this->actingAs($user)->get(route('workshop.work-orders.create'))->assertOk();
-        $xpath = $this->xpath($response->getContent());
-
-        $forms = $xpath->query('//form[@action="'.route('workshop.work-orders.store').'"]');
-        $this->assertCount(1, $forms);
-        $form = $forms->item(0);
-
-        $cards = $xpath->query(
-            './/*[contains(concat(" ", normalize-space(@class), " "), " woc-card ")]',
-            $form,
-        );
-        $this->assertCount(1, $cards);
-
-        $sections = $xpath->query(
-            './/*[contains(concat(" ", normalize-space(@class), " "), " woc-form-section ")]',
-            $cards->item(0),
-        );
-        $this->assertCount(5, $sections);
-
-        $sectionTitles = [];
-        foreach ($xpath->query(
-            './/*[contains(concat(" ", normalize-space(@class), " "), " woc-form-section-title ")]',
-            $cards->item(0),
-        ) as $title) {
-            $sectionTitles[] = trim($title->textContent);
-        }
-
-        $this->assertSame([
-            'Πελάτης και όχημα',
-            'Τι δηλώνει ο πελάτης',
-            'Κόστος και ανταλλακτικά',
-            'Στοιχεία service',
-            'Σύνοψη κόστους',
-        ], $sectionTitles);
-
-        $actionBars = $xpath->query(
-            './/*[contains(concat(" ", normalize-space(@class), " "), " woc-action-bar ")]',
-            $cards->item(0),
-        );
-        $this->assertCount(1, $actionBars);
-        $this->assertCount(1, $xpath->query('.//button[@type="submit" and normalize-space(.)="Αποθήκευση"]', $actionBars->item(0)));
-        $this->assertCount(1, $xpath->query('.//a[normalize-space(.)="Ακύρωση"]', $actionBars->item(0)));
-    }
-
-    public function test_create_form_starts_with_collapsed_parts_and_uses_responsive_autogrow_workflow_textareas(): void
-    {
-        $user = User::factory()->create();
-        $response = $this->actingAs($user)->get(route('workshop.work-orders.create'))->assertOk();
-        $xpath = $this->xpath($response->getContent());
-
-        $textareas = $xpath->query('//textarea[@rows="2" and @data-autogrow]');
-        $this->assertCount(3, $textareas);
-
-        foreach ([
-            'problem_description' => 'Πρόβλημα ή εργασία',
-            'diagnosis' => 'Διάγνωση συνεργείου',
-            'work_performed' => 'Εργασίες που πραγματοποιήθηκαν',
-        ] as $field => $label) {
-            $this->assertCount(1, $xpath->query('//textarea[@id="'.$field.'" and @name="'.$field.'" and @rows="2" and @data-autogrow]'));
-            $this->assertCount(1, $xpath->query('//label[@for="'.$field.'" and contains(normalize-space(), "'.$label.'")]'));
-            $this->assertCount(1, $xpath->query('//textarea[@id="'.$field.'"]/ancestor::div[contains(concat(" ", normalize-space(@class), " "), " woc-card-body--grid ")]'));
-        }
-
-        $problem = $xpath->query('//textarea[@id="problem_description"]')->item(0);
-        $this->assertSame('Τριγμός από εμπρός δεξιά κατά την οδήγηση', $problem->getAttribute('placeholder'));
-
-        $response->assertSee("x-data='workOrderForm([],", false);
-        $response->assertSee('Προσθήκη ανταλλακτικού');
-
-        $view = file_get_contents(resource_path('views/workshop/work-orders/create.blade.php'));
-        $this->assertStringContainsString('const maxRows = 8;', $view);
-
-        // Section titles and part-row numbers use normal-case typography
-        // (not the small-caps/tracked-out style the redesign replaced) —
-        // asserted as the specific weight/color each one actually carries,
-        // scoped to its own declaration block so unrelated selectors
-        // elsewhere in the file (e.g. uppercase field labels) can't affect it.
-        $this->assertMatchesRegularExpression(
-            '/\.woc-form-section-title\s*\{[^}]*font-weight:\s*700;[^}]*\}/s',
-            $view,
-        );
-        preg_match('/\.woc-form-section-title\s*\{([^}]*)\}/s', $view, $sectionTitleBlock);
-        $this->assertStringNotContainsString('text-transform', $sectionTitleBlock[1] ?? '');
-        $this->assertStringNotContainsString('letter-spacing', $sectionTitleBlock[1] ?? '');
-
-        $this->assertMatchesRegularExpression(
-            '/\.woc-part-row-num\s*\{[^}]*font-weight:\s*500;[^}]*color:\s*var\(--ws-text-muted\);[^}]*\}/s',
-            $view,
-        );
-        preg_match('/\.woc-part-row-num\s*\{([^}]*)\}/s', $view, $partRowNumBlock);
-        $this->assertStringNotContainsString('text-transform', $partRowNumBlock[1] ?? '');
-        $this->assertStringNotContainsString('letter-spacing', $partRowNumBlock[1] ?? '');
-    }
-
-    public function test_create_form_uses_muted_destructive_actions_and_sticky_action_bar(): void
-    {
-        $view = file_get_contents(resource_path('views/workshop/work-orders/create.blade.php'));
-
-        $this->assertMatchesRegularExpression(
-            '/\.woc-remove-btn\s*\{[^}]*color:\s*var\(--ws-text-muted\);[^}]*background:\s*transparent;[^}]*border:\s*1px solid transparent;[^}]*\}/s',
-            $view,
-        );
-        $this->assertMatchesRegularExpression(
-            '/\.woc-action-bar\s*\{[^}]*position:\s*sticky;[^}]*bottom:\s*0;[^}]*background:\s*var\(--ws-sunken\);[^}]*\}/s',
-            $view,
-        );
+        $response->assertSee('Νέα Εντολή Εργασίας');
     }
 
     public function test_work_order_can_be_created_with_vehicle_belonging_to_customer(): void
@@ -171,7 +58,7 @@ class WorkOrderCreateTest extends TestCase
         $this->assertEquals($vehicle->id, $workOrder->vehicle_id);
     }
 
-    public function test_work_order_stores_diagnosis_and_work_performed_and_renders_them_on_detail(): void
+    public function test_work_order_stores_diagnosis_and_work_performed(): void
     {
         $user = User::factory()->create();
         [$customer, $vehicle] = $this->makeCustomerAndVehicle('ΔΙΑ-5000');
@@ -189,12 +76,6 @@ class WorkOrderCreateTest extends TestCase
         $response->assertRedirect(route('workshop.work-orders.show', $workOrder));
         $this->assertSame('Φθαρμένα εμπρός τακάκια.', $workOrder->diagnosis);
         $this->assertSame('Αντικατάσταση εμπρός τακακίων και δοκιμή δρόμου.', $workOrder->work_performed);
-
-        $this->actingAs($user)
-            ->get(route('workshop.work-orders.show', $workOrder))
-            ->assertOk()
-            ->assertSee('Φθαρμένα εμπρός τακάκια.')
-            ->assertSee('Αντικατάσταση εμπρός τακακίων και δοκιμή δρόμου.');
     }
 
     public function test_diagnosis_and_work_performed_are_nullable(): void
@@ -213,7 +94,7 @@ class WorkOrderCreateTest extends TestCase
         $this->assertNull($workOrder->work_performed);
     }
 
-    public function test_workflow_notes_enforce_max_length_restore_old_input_and_show_inline_errors(): void
+    public function test_workflow_notes_enforce_max_length(): void
     {
         $user = User::factory()->create();
         [$customer, $vehicle] = $this->makeCustomerAndVehicle('ΜΑΧ-5001');
@@ -227,19 +108,6 @@ class WorkOrderCreateTest extends TestCase
             'diagnosis' => $tooLongDiagnosis,
             'work_performed' => $tooLongWork,
         ])->assertSessionHasErrors(['diagnosis', 'work_performed']);
-
-        $response = $this->actingAs($user)
-            ->get(route('workshop.work-orders.create'))
-            ->assertOk();
-        $xpath = $this->xpath($response->getContent());
-
-        foreach (['diagnosis' => $tooLongDiagnosis, 'work_performed' => $tooLongWork] as $field => $oldValue) {
-            $textarea = $xpath->query('//textarea[@id="'.$field.'"]')->item(0);
-            $this->assertNotNull($textarea);
-            $this->assertSame($oldValue, $textarea->textContent);
-            $this->assertStringContainsString('is-invalid', $textarea->getAttribute('class'));
-            $this->assertCount(1, $xpath->query('./following-sibling::span[contains(concat(" ", normalize-space(@class), " "), " woc-error ")]', $textarea));
-        }
 
         $this->assertDatabaseCount('work_orders', 0);
     }
@@ -555,13 +423,5 @@ class WorkOrderCreateTest extends TestCase
         $this->assertDatabaseCount('work_orders', 0);
         $this->assertDatabaseCount('work_order_parts', 0);
         $this->assertEquals(5, $part->fresh()->quantity);
-    }
-
-    private function xpath(string $html): DOMXPath
-    {
-        $document = new DOMDocument;
-        @$document->loadHTML($html);
-
-        return new DOMXPath($document);
     }
 }

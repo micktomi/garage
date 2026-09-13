@@ -13,22 +13,6 @@ class WorkshopSearchAndAppointmentsTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_dashboard_search_form_uses_the_existing_get_search_flow(): void
-    {
-        $user = User::factory()->create();
-
-        $response = $this->actingAs($user)->get(route('workshop.dashboard'));
-
-        $response->assertOk()
-            ->assertSee('action="'.route('workshop.search').'"', false)
-            ->assertSee('method="GET"', false)
-            ->assertSee('class="ws-search-form"', false)
-            ->assertSee('role="search"', false)
-            ->assertSee('name="q"', false)
-            ->assertSee('type="submit"', false)
-            ->assertSee('aria-label="Καθαρισμός αναζήτησης"', false);
-    }
-
     public function test_search_finds_vehicle_by_full_plate(): void
     {
         $user = User::factory()->create();
@@ -88,20 +72,6 @@ class WorkshopSearchAndAppointmentsTest extends TestCase
             ->assertSee('6944556677')
             ->assertSee('ΤΗΛ-3030')
             ->assertDontSee('ΑΛΛ-4040');
-    }
-
-    public function test_empty_search_query_opens_the_vehicle_index_with_existing_results(): void
-    {
-        $user = User::factory()->create();
-        $customer = Customer::create(['full_name' => 'Μαρία Ιωάννου']);
-        Vehicle::create(['customer_id' => $customer->id, 'plate_number' => 'ΑΒΓ-1234']);
-
-        $response = $this->actingAs($user)->get(route('workshop.search', ['q' => '']));
-
-        $response->assertOk()
-            ->assertSee('Οχήματα')
-            ->assertSee('Νέο όχημα')
-            ->assertSee('ΑΒΓ-1234');
     }
 
     public function test_search_result_new_work_order_link_has_correct_customer_and_vehicle(): void

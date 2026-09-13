@@ -1,8 +1,7 @@
 @extends('layouts.workshop')
 
-@section('title', 'Νέα εντολή εργασίας — Συνεργείο')
-@section('header-title', 'Νέα εντολή')
-@section('header-back', route('workshop.work-orders.index'))
+@section('title', 'Νέα Εντολή Εργασίας — Συνεργείο')
+@section('header-title', 'Νέα Εντολή')
 
 @push('styles')
 <style>
@@ -33,80 +32,32 @@
 
     /* ── Page title ──────────────────────────────────────────── */
     .woc-page-title {
-        margin: 0;
-        color: var(--ws-text);
-        font-family: var(--ws-font-display);
-        font-size: 34px;
+        font-size: 1.375rem;
         font-weight: 700;
-        line-height: 1;
-    }
-    .woc-page-sub {
-        margin: 7px 0 24px;
-        color: var(--ws-text-muted);
-        font-size: 13.5px;
-        line-height: 1.5;
-    }
-
-    /* ── Two-column composition: the form card and the summary rail ── */
-    .woc-layout {
-        display: grid;
-        grid-template-columns: minmax(0, 1fr);
-        align-items: start;
-        gap: 18px;
+        letter-spacing: -0.03em;
+        line-height: 1.2;
+        margin-bottom: 1.375rem;
     }
 
     /* ── Form card ───────────────────────────────────────────── */
     .woc-card {
-        min-width: 0;
-        margin-bottom: 0;
-        border: 1px solid var(--ws-border);
-        border-radius: 10px;
-        background: var(--ws-card);
-        box-shadow: var(--shadow-sm);
-        overflow: visible;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        overflow: hidden;
+        margin-bottom: 0.875rem;
     }
-    .woc-form-section {
-        padding: 0 0 20px;
-    }
-    .woc-form-section + .woc-form-section {
-        border-top: 1px solid var(--ws-border);
-    }
-    .woc-form-section-head {
-        min-height: 52px;
-        padding: 15px 20px 13px;
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        border-bottom: 1px solid var(--ws-border);
-    }
-    .woc-step {
-        width: 22px;
-        height: 22px;
-        flex: 0 0 22px;
-        display: grid;
-        place-items: center;
-        border-radius: 6px;
-        background: var(--ws-sunken);
-        color: var(--ws-text-muted);
-        font-family: var(--ws-font-mono);
-        font-size: 11px;
+    .woc-card-title {
+        font-size: 0.6875rem;
         font-weight: 600;
-    }
-    .woc-form-section-title {
-        margin: 0;
-        color: var(--ws-text);
-        font-family: var(--ws-font-display);
-        font-size: 18px;
-        font-weight: 700;
-        line-height: 24px;
-    }
-    .woc-form-section-body {
-        padding: 18px 20px 0;
-        display: flex;
-        flex-direction: column;
-        gap: 1rem;
+        letter-spacing: 0.07em;
+        text-transform: uppercase;
+        color: var(--text-faint);
+        padding: 0.75rem 1.125rem 0.5rem;
+        border-bottom: 1px solid var(--border);
     }
     .woc-card-body {
+        padding: 1rem 1.125rem;
         display: flex;
         flex-direction: column;
         gap: 1rem;
@@ -116,73 +67,55 @@
     .woc-field {
         display: flex;
         flex-direction: column;
-        gap: 6px;
+        gap: 0.375rem;
     }
     .woc-label {
-        color: var(--ws-text-faint);
-        font-family: var(--ws-font-sans);
-        font-size: 11px;
-        font-weight: 500;
-        line-height: 15px;
-        letter-spacing: .12em;
-        text-transform: uppercase;
+        font-size: 0.8125rem;
+        font-weight: 600;
+        color: var(--text-muted);
     }
-    .woc-label .woc-req { color: var(--ws-signal); margin-left: 2px; }
+    .woc-label .woc-req { color: var(--danger); margin-left: 2px; }
 
     .woc-input,
     .woc-select,
     .woc-textarea {
         width: 100%;
-        min-height: 44px;
-        padding: 0.6rem 0.8125rem;
-        border: 1px solid var(--ws-border);
-        border-radius: 8px;
-        background: var(--ws-card);
-        color: var(--ws-text);
-        font-size: 15px;
+        background: var(--surface-3);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-sm);
+        padding: 0.65rem 0.875rem;
+        font-size: 0.9375rem;
+        color: var(--text);
+        outline: none;
         transition: border-color 0.15s, box-shadow 0.15s;
         -webkit-appearance: none;
         font-family: inherit;
     }
-    .woc-input,
-    .woc-select {
-        height: 44px;
-    }
     .woc-select {
         cursor: pointer;
-        background-image: url("data:image/svg+xml;charset=utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%234A6360' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%238b949e' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
         background-repeat: no-repeat;
-        background-position: right 0.6875rem center;
-        background-size: 16px;
-        padding-right: 2.25rem;
+        background-position: right 0.75rem center;
+        padding-right: 2.5rem;
     }
     .woc-textarea {
-        min-height: 82px;
-        max-height: calc(8 * 1.25rem + 1.2rem);
         resize: vertical;
-        overflow-y: hidden;
-        line-height: 1.25rem;
+        min-height: 110px;
+        line-height: 1.6;
     }
     .woc-input::placeholder,
-    .woc-textarea::placeholder { color: var(--ws-text-faint); }
+    .woc-textarea::placeholder { color: var(--text-faint); }
     .woc-input:focus,
     .woc-select:focus,
     .woc-textarea:focus {
-        border-color: var(--ws-text);
-        outline: none;
-        box-shadow: 0 0 0 3px rgb(13 42 47 / 10%);
-    }
-    .woc-input:focus-visible,
-    .woc-select:focus-visible,
-    .woc-textarea:focus-visible {
-        outline: 2px solid var(--ws-text);
-        outline-offset: 2px;
+        border-color: var(--accent);
+        box-shadow: 0 0 0 3px var(--accent-dim);
     }
     .woc-input.is-invalid,
     .woc-select.is-invalid,
     .woc-textarea.is-invalid {
         border-color: var(--danger);
-        box-shadow: none;
+        box-shadow: 0 0 0 3px rgba(248,81,73,0.12);
     }
     .woc-error {
         font-size: 0.75rem;
@@ -196,9 +129,9 @@
         display: inline-flex;
         width: 14px; height: 14px;
         background: var(--danger);
-        color: var(--ws-primary-fg);
+        color: #fff;
         font-size: 0.625rem;
-        font-weight: 500;
+        font-weight: 800;
         border-radius: 50%;
         align-items: center;
         justify-content: center;
@@ -232,13 +165,13 @@
 
     /* ── Validation alert ────────────────────────────────────── */
     .woc-alert {
-        background: var(--ws-status-expired-bg);
-        border: 1px solid var(--ws-status-expired-fg);
-        border-radius: 8px;
+        background: var(--danger-dim);
+        border: 1px solid rgba(248,81,73,0.3);
+        border-radius: var(--radius-sm);
         padding: 0.75rem 1rem;
         margin-bottom: 1rem;
-        font-size: 13.5px;
-        color: var(--ws-status-expired-fg);
+        font-size: 0.8125rem;
+        color: var(--danger);
     }
     .woc-alert ul { margin: 0.375rem 0 0 1rem; }
     .woc-alert li { margin-bottom: 0.2rem; }
@@ -249,120 +182,31 @@
         flex-wrap: wrap;
         gap: 0.5rem;
     }
-    /* The real radio stays in the accessibility tree and the tab order —
-       it is only moved out of sight, never display:none. */
     .woc-source-pill {
-        position: absolute;
-        width: 1px;
-        height: 1px;
-        margin: -1px;
-        padding: 0;
-        overflow: hidden;
-        clip: rect(0, 0, 0, 0);
-        white-space: nowrap;
-        border: 0;
+        display: none; /* hide the real radio */
     }
     .woc-source-label {
-        min-height: 40px;
         display: inline-flex;
         align-items: center;
         gap: 0.4rem;
-        font-size: 14px;
-        padding: 0.5rem 0.9375rem;
-        border: 1px solid var(--ws-border);
+        font-size: 0.8125rem;
+        font-weight: 500;
+        padding: 0.45rem 0.875rem;
+        border: 1px solid var(--border);
         border-radius: 999px;
-        background: var(--ws-card);
         cursor: pointer;
-        color: var(--ws-text-muted);
-        transition: color 0.13s, background 0.13s, border-color 0.13s;
+        color: var(--text-muted);
+        transition: color 0.12s, background 0.12s, border-color 0.12s;
         user-select: none;
     }
     .woc-source-label:hover {
-        border-color: var(--ws-border-hover);
-        background: var(--ws-sunken);
+        color: var(--text);
+        border-color: var(--text-faint);
     }
-    .woc-source-pill:focus-visible + .woc-source-label {
-        outline: 2px solid var(--ws-text);
-        outline-offset: 2px;
-    }
-    .woc-source-pill:checked + .woc-source-label {
-        background: var(--ws-primary);
-        border-color: var(--ws-primary);
-        color: var(--ws-primary-fg);
-    }
-
-    /* ── Repeater row ────────────────────────────────────────── */
-    .woc-parts-block {
-        margin-top: 1.25rem;
-        padding-top: 1.25rem;
-        display: flex;
-        flex-direction: column;
-        gap: 1.25rem;
-        border-top: 1px solid var(--ws-border);
-    }
-    .woc-part-row {
-        display: flex;
-        flex-direction: column;
-        gap: 0.75rem;
-        padding-bottom: 1.25rem;
-        border-bottom: 1px solid var(--border-soft, var(--border));
-    }
-    .woc-part-row:last-of-type {
-        padding-bottom: 0;
-        border-bottom: none;
-    }
-    .woc-part-row-head {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-    }
-    .woc-part-row-num {
-        font-size: 0.75rem;
-        font-weight: 500;
-        color: var(--ws-text-muted);
-    }
-    .woc-remove-btn {
-        min-height: 36px;
-        display: inline-flex;
-        align-items: center;
-        gap: 0.3rem;
-        font-size: 0.75rem;
-        font-weight: 500;
-        color: var(--ws-text-muted);
-        background: transparent;
-        border: 1px solid transparent;
-        border-radius: 8px;
-        padding: 0.3rem 0.6rem;
-        cursor: pointer;
-        transition: color 0.15s, background 0.15s, border-color 0.15s;
-    }
-    .woc-remove-btn:hover {
-        color: var(--danger);
-        background: var(--danger-dim);
-        border-color: var(--ws-border);
-    }
-    .woc-remove-btn svg { width: 12px; height: 12px; stroke-width: 2.5; }
-    .woc-add-btn {
-        min-height: 36px;
-        display: inline-flex;
-        align-items: center;
-        gap: 0.4rem;
-        align-self: flex-start;
-        font-size: 0.8125rem;
-        font-weight: 500;
-        color: var(--ws-text);
-        background: transparent;
-        border: 1px solid var(--ws-border);
-        border-radius: 8px;
-        padding: 0.5rem 0.875rem;
-        cursor: pointer;
-        transition: background 0.15s, border-color 0.15s;
-    }
-    .woc-add-btn:hover {
-        background: var(--ws-sunken);
-        border-color: var(--ws-border-hover);
-    }
-    .woc-add-btn svg { width: 14px; height: 14px; stroke-width: 2.5; }
+    /* checked states per source */
+    .woc-source-pill[value="from_stock"]:checked    + .woc-source-label { background: var(--accent-dim);  border-color: rgba(245,158,11,.4); color: var(--accent); }
+    .woc-source-pill[value="customer_supplied"]:checked + .woc-source-label { background: var(--success-dim); border-color: rgba(63,185,80,.4);  color: var(--success); }
+    .woc-source-pill[value="purchased_for_job"]:checked  + .woc-source-label { background: var(--info-dim);    border-color: rgba(88,166,255,.4); color: var(--info); }
 
     /* ── Conditional fields grid ─────────────────────────────── */
     .woc-part-fields {
@@ -393,215 +237,83 @@
         padding-top: 0.375rem;
     }
     .woc-line-total-val {
-        font-weight: 500;
+        font-weight: 700;
         font-variant-numeric: tabular-nums;
         color: var(--text);
         min-width: 90px;
         text-align: right;
         font-size: 0.9375rem;
     }
-    .woc-line-total-input {
-        background: var(--ws-sunken);
-        color: var(--ws-text);
-        font-weight: 500;
-        cursor: default;
-    }
 
     /* ── Summary ─────────────────────────────────────────────── */
     .woc-summary {
-        background: var(--ws-sunken);
-        border: 1px solid var(--ws-border);
-        border-radius: 8px;
+        background: var(--surface-2);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-sm);
         overflow: hidden;
     }
     .woc-sum-row {
         display: flex;
         justify-content: space-between;
-        align-items: baseline;
-        gap: 16px;
+        align-items: center;
         padding: 0.55rem 1rem;
-        font-size: 14px;
-        color: var(--ws-text-muted);
-        border-bottom: 1px solid var(--ws-border);
+        font-size: 0.875rem;
+        color: var(--text-muted);
+        border-bottom: 1px solid var(--border);
     }
     .woc-sum-row:last-child { border-bottom: none; }
     .woc-sum-row--grand {
-        color: var(--ws-text);
-        background: var(--ws-card);
-        font-family: var(--ws-font-display);
-        font-size: 20px;
         font-weight: 700;
+        font-size: 0.9375rem;
+        color: var(--text);
+        background: var(--surface);
     }
-    .woc-sum-val {
-        font-family: var(--ws-font-mono);
-        font-variant-numeric: tabular-nums;
-        white-space: nowrap;
-    }
-    .woc-sum-row--grand .woc-sum-val {
-        color: var(--ws-text);
-        font-size: 20px;
-        font-weight: 700;
-    }
+    .woc-sum-val { font-weight: 600; font-variant-numeric: tabular-nums; }
+    .woc-sum-row--grand .woc-sum-val { color: var(--accent); }
 
-    /* ── Summary rail ────────────────────────────────────────── */
-    .woc-rail {
-        min-width: 0;
-    }
-    .woc-rail-panel {
-        min-width: 0;
-        overflow: hidden;
-        border: 1px solid var(--ws-border);
-        border-radius: 10px;
-        background: var(--ws-card);
-        box-shadow: var(--shadow-sm);
-    }
-    .woc-rail-head {
-        min-height: 52px;
-        padding: 15px 20px 13px;
-        border-bottom: 1px solid var(--ws-border);
-        color: var(--ws-text);
-        font-family: var(--ws-font-display);
-        font-size: 18px;
-        font-weight: 700;
-        line-height: 24px;
-    }
-    .woc-rail-body {
-        padding: 16px 20px 18px;
-    }
-    .woc-rail-title {
-        margin: 14px 0 3px;
-        color: var(--ws-text);
-        font-size: 16px;
-        font-weight: 500;
-        line-height: 22px;
-        overflow-wrap: anywhere;
-    }
-    .woc-rail-title.is-placeholder {
-        color: var(--ws-text-faint);
-        font-weight: 400;
-    }
-    .woc-rail-meta {
-        color: var(--ws-text-muted);
-        font-size: 13px;
-        line-height: 18px;
-        overflow-wrap: anywhere;
-    }
-    .woc-rail-kv {
-        margin: 16px 0 0;
-        padding-top: 12px;
-        border-top: 1px solid var(--ws-border);
-    }
-    .woc-rail-kv > div {
-        display: flex;
-        justify-content: space-between;
-        gap: 12px;
-        padding: 6px 0;
-        font-size: 13.5px;
-    }
-    .woc-rail-kv dt {
-        margin: 0;
-        color: var(--ws-text-faint);
-    }
-    .woc-rail-kv dd {
-        margin: 0;
-        font-weight: 500;
-        text-align: right;
-    }
-    .woc-rail-total {
-        margin-top: 12px;
-        padding-top: 12px;
-        display: flex;
-        align-items: baseline;
-        justify-content: space-between;
-        gap: 12px;
-        border-top: 1px solid var(--ws-border-hover);
-    }
-    .woc-rail-total b {
-        font-family: var(--ws-font-display);
-        font-size: 24px;
-        font-weight: 700;
-        font-variant-numeric: tabular-nums;
-    }
-    .woc-rail-plate--empty {
-        display: inline-flex;
-        align-items: center;
-        padding: 8px 14px;
-        border: 1.5px dashed var(--ws-border-hover);
-        border-radius: 5px;
-        color: var(--ws-text-faint);
-        font-family: var(--ws-font-mono);
-        font-size: 19px;
-        font-weight: 600;
-        letter-spacing: .06em;
-    }
-
-    /* ── Sticky action bar ───────────────────────────────────── */
-    .woc-action-bar {
-        position: sticky;
-        bottom: 0;
-        z-index: 10;
-        min-height: 64px;
-        padding: 0.75rem 1.25rem;
+    /* ── Submit row ──────────────────────────────────────────── */
+    .woc-submit-row {
         display: flex;
         align-items: center;
-        justify-content: space-between;
+        justify-content: flex-end;
         gap: 0.75rem;
-        border-top: 1px solid var(--ws-border);
-        border-radius: 0 0 10px 10px;
-        background: var(--ws-sunken);
-    }
-    .woc-action-summary {
-        color: var(--ws-text-muted);
-        font-size: 13.5px;
-    }
-    .woc-action-summary strong {
-        margin-left: 0.375rem;
-        color: var(--ws-text);
-        font-family: var(--ws-font-mono);
-        font-size: 15px;
-        font-weight: 600;
-        font-variant-numeric: tabular-nums;
-    }
-    .woc-action-actions {
-        display: flex;
-        align-items: center;
-        gap: 0.75rem;
+        padding-top: 0.25rem;
     }
     .woc-cancel-btn {
-        min-height: 46px;
         display: inline-flex;
         align-items: center;
-        justify-content: center;
-        font-size: 15px;
-        color: var(--ws-text);
+        font-size: 0.875rem;
+        font-weight: 500;
+        color: var(--text-muted);
         padding: 0.55rem 1.125rem;
-        border: 1px solid var(--ws-border);
-        border-radius: 8px;
-        background: var(--ws-card);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-sm);
         transition: color 0.15s, border-color 0.15s, background 0.15s;
     }
-    .woc-cancel-btn:hover { border-color: var(--ws-border-hover); background: var(--ws-sunken); }
+    .woc-cancel-btn:hover { color: var(--text); border-color: var(--text-faint); background: var(--surface-2); }
     .woc-submit-btn {
-        min-height: 46px;
         display: inline-flex;
         align-items: center;
-        justify-content: center;
-        gap: 0.5rem;
-        font-size: 15px;
-        font-weight: 500;
-        color: var(--ws-primary-fg);
-        background: var(--ws-primary);
-        border: 1px solid var(--ws-primary);
-        border-radius: 8px;
+        gap: 0.4rem;
+        font-size: 0.875rem;
+        font-weight: 700;
+        color: #0d1117;
+        background: var(--accent);
+        border: none;
+        border-radius: var(--radius-sm);
         padding: 0.55rem 1.375rem;
         cursor: pointer;
-        transition: background-color 0.15s;
+        transition: background 0.15s, transform 0.1s, box-shadow 0.15s;
+        box-shadow: 0 1px 6px rgba(245,158,11,0.25);
     }
-    .woc-submit-btn:hover { background: var(--ws-primary-hover); }
+    .woc-submit-btn:hover { background: #fbbf24; box-shadow: 0 2px 10px rgba(245,158,11,0.4); }
+    .woc-submit-btn:active { transform: scale(0.98); }
     .woc-submit-btn svg { width: 15px; height: 15px; stroke-width: 2.5; }
 
     /* ── Desktop ─────────────────────────────────────────────── */
     @media (min-width: 768px) {
+        .woc-page-title { font-size: 2rem; }
+        .woc-card-body { padding: 1.25rem 1.375rem; }
         .woc-card-body--grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -613,17 +325,6 @@
         }
         .woc-part-grid .span2 { grid-column: span 2; }
         .woc-part-grid .span4 { grid-column: span 4; }
-    }
-
-    @media (min-width: 1180px) {
-        .woc-layout {
-            grid-template-columns: minmax(0, 1.6fr) minmax(320px, .75fr);
-            gap: 22px;
-        }
-        .woc-rail {
-            position: sticky;
-            top: 26px;
-        }
     }
 </style>
 @endpush
@@ -639,8 +340,7 @@
     </a>
 </div>
 
-<h1 class="woc-page-title">Νέα εντολή εργασίας</h1>
-<p class="woc-page-sub">Διάλεξε πελάτη και όχημα — τα χιλιόμετρα συμπληρώνονται από την τελευταία καταγραφή.</p>
+<h1 class="woc-page-title">Νέα Εντολή Εργασίας</h1>
 
 @if($errors->any())
     <div class="woc-alert">
@@ -653,36 +353,13 @@
     </div>
 @endif
 
-@php
-    $oldParts = old('parts');
-    $blankPartRow = [
-        'source' => '', 'part_id' => '', 'description' => '',
-        'quantity' => '1', 'unit_cost' => '', 'unit_price' => '', 'note' => '',
-    ];
-    $initialParts = is_array($oldParts) && count($oldParts) > 0
-        ? array_map(fn ($row) => array_merge($blankPartRow, is_array($row) ? $row : []), array_values($oldParts))
-        : [];
-    $partsCatalog = $parts->mapWithKeys(fn ($p) => [$p->id => [
-        'purchase_price' => $p->purchase_price,
-        'sale_price'     => $p->sale_price,
-    ]]);
-    // Single-quoted HTML attribute + HEX flags: @json() output always
-    // contains double quotes (JSON string delimiters), which would
-    // otherwise prematurely terminate a double-quoted x-data="...".
-    $jsonFlags = JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP | JSON_HEX_TAG;
-@endphp
-
-<form method="POST" action="{{ route('workshop.work-orders.store') }}" novalidate
-    x-data='workOrderForm(@json($initialParts, $jsonFlags), @json($partsCatalog, $jsonFlags), {{ (float) old('labor_cost', 0) }}, @json($errors->messages(), $jsonFlags))'>
+<form method="POST" action="{{ route('workshop.work-orders.store') }}" novalidate>
     @csrf
-
-    {{-- Replay guard: kept stable across validation re-renders via old(), so a
-         corrected resubmit is still the same logical submission. --}}
     <input type="hidden" name="idempotency_key" value="{{ old('idempotency_key', (string) Str::uuid()) }}">
 
-    <div class="woc-layout">
-    <div class="woc-card" data-work-order-form-card>
-        <x-workshop.form.section title="Πελάτης και όχημα" step="1">
+    {{-- ── Πελάτης & Όχημα ────────────────────────────────────── --}}
+    <div class="woc-card">
+        <div class="woc-card-title">Πελάτης &amp; Όχημα</div>
         <div class="woc-card-body woc-card-body--grid">
 
             <div class="woc-field">
@@ -710,298 +387,219 @@
             </div>
 
         </div>
-        </x-workshop.form.section>
-        <x-workshop.form.section title="Τι δηλώνει ο πελάτης">
-        <div class="woc-card-body woc-card-body--grid">
-            <div class="woc-field span2">
+    </div>
+
+    {{-- ── Πρόβλημα / Εργασία ──────────────────────────────────── --}}
+    <div class="woc-card">
+        <div class="woc-card-title">Περιγραφή Εργασίας</div>
+        <div class="woc-card-body">
+            <div class="woc-field">
                 <label for="problem_description" class="woc-label">
-                    Πρόβλημα ή εργασία <span class="woc-req">*</span>
+                    Πρόβλημα / Εργασία <span class="woc-req">*</span>
                 </label>
-                <textarea id="problem_description" name="problem_description" rows="2" data-autogrow
+                <textarea id="problem_description" name="problem_description" rows="4"
                     class="woc-textarea {{ $errors->has('problem_description') ? 'is-invalid' : '' }}"
-                    placeholder="Τριγμός από εμπρός δεξιά κατά την οδήγηση">{{ old('problem_description') }}</textarea>
+                    placeholder="Περιγράψτε το πρόβλημα ή την εργασία που θα εκτελεστεί…">{{ old('problem_description') }}</textarea>
                 @error('problem_description') <span class="woc-error">{{ $message }}</span> @enderror
             </div>
-
-            <div class="woc-field">
-                <label for="diagnosis" class="woc-label">Διάγνωση συνεργείου</label>
-                <textarea id="diagnosis" name="diagnosis" rows="2" data-autogrow
-                    class="woc-textarea {{ $errors->has('diagnosis') ? 'is-invalid' : '' }}"
-                    placeholder="Καταγράψτε τα ευρήματα του ελέγχου">{{ old('diagnosis') }}</textarea>
-                @error('diagnosis') <span class="woc-error">{{ $message }}</span> @enderror
-            </div>
-
-            <div class="woc-field">
-                <label for="work_performed" class="woc-label">Εργασίες που πραγματοποιήθηκαν</label>
-                <textarea id="work_performed" name="work_performed" rows="2" data-autogrow
-                    class="woc-textarea {{ $errors->has('work_performed') ? 'is-invalid' : '' }}"
-                    placeholder="Καταγράψτε τις εργασίες που ολοκληρώθηκαν">{{ old('work_performed') }}</textarea>
-                @error('work_performed') <span class="woc-error">{{ $message }}</span> @enderror
-            </div>
         </div>
-        </x-workshop.form.section>
+    </div>
 
-        <x-workshop.form.section title="Κόστος και ανταλλακτικά">
+    {{-- ── Κόστος Εργασίας ─────────────────────────────────────── --}}
+    <div class="woc-card">
+        <div class="woc-card-title">Κόστος Εργασίας</div>
         <div class="woc-card-body">
             <div class="woc-field" style="max-width:220px;">
                 <label for="labor_cost" class="woc-label">Αμοιβή εργασίας</label>
                 <div class="woc-eur">
                     <input type="number" id="labor_cost" name="labor_cost"
                         class="woc-input {{ $errors->has('labor_cost') ? 'is-invalid' : '' }}"
-                        x-model.number="laborCost"
-                        step="0.01" placeholder="0,00" lang="el">
+                        value="{{ old('labor_cost', '0') }}"
+                        min="0" step="0.01" placeholder="0.00"
+                        oninput="recalc()">
                     <span class="woc-eur-sym">€</span>
                 </div>
                 @error('labor_cost') <span class="woc-error">{{ $message }}</span> @enderror
             </div>
         </div>
-        <div class="woc-parts-block">
+    </div>
 
-            <template x-for="(row, index) in parts" :key="row._key">
-                <div class="woc-part-row">
+    {{-- ── Ανταλλακτικό / Υλικό ────────────────────────────────── --}}
+    <div class="woc-card">
+        <div class="woc-card-title">Ανταλλακτικό / Υλικό</div>
+        <div class="woc-card-body">
 
-                    <div class="woc-part-row-head">
-                        <span class="woc-part-row-num" x-text="'Γραμμή ' + (index + 1)"></span>
-                        <button type="button" class="woc-remove-btn" @click="removeRow(index)">
-                            <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397M4.772 5.79c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0"/>
-                            </svg>
-                            <span x-text="parts.length === 1 ? 'Καθαρισμός' : 'Αφαίρεση'"></span>
-                        </button>
-                    </div>
+            {{-- Source radio pills --}}
+            <div class="woc-field">
+                <label class="woc-label">Προέλευση</label>
+                <div class="woc-source-wrap">
 
-                    {{-- Source radio pills --}}
+                    <input type="radio" name="part[source]" id="src-stock"
+                           class="woc-source-pill" value="from_stock"
+                           {{ old('part.source') === 'from_stock' ? 'checked' : '' }}>
+                    <label for="src-stock" class="woc-source-label">
+                        <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round"
+                                  d="M20.25 7.5l-.625 10.632a2.25 2.25 0 0 1-2.247 2.118H6.622a2.25 2.25 0 0 1-2.247-2.118L3.75 7.5M10 11.25h4M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125Z"/>
+                        </svg>
+                        Από απόθεμα
+                    </label>
+
+                    <input type="radio" name="part[source]" id="src-cust"
+                           class="woc-source-pill" value="customer_supplied"
+                           {{ old('part.source') === 'customer_supplied' ? 'checked' : '' }}>
+                    <label for="src-cust" class="woc-source-label">
+                        <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round"
+                                  d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z"/>
+                        </svg>
+                        Το έφερε ο πελάτης
+                    </label>
+
+                    <input type="radio" name="part[source]" id="src-job"
+                           class="woc-source-pill" value="purchased_for_job"
+                           {{ old('part.source') === 'purchased_for_job' ? 'checked' : '' }}>
+                    <label for="src-job" class="woc-source-label">
+                        <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round"
+                                  d="M2.25 3h1.386c.51 0 .955.343 1.087.835l.383 1.437M7.5 14.25a3 3 0 0 0-3 3h15.75m-12.75-3h11.218c1.121-2.3 2.1-4.684 2.924-7.138a60.114 60.114 0 0 0-16.536-1.84M7.5 14.25 5.106 5.272M6 20.25a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0Zm12.75 0a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0Z"/>
+                        </svg>
+                        Αγοράστηκε για εργασία
+                    </label>
+
+                </div>
+                <span class="woc-hint">Αφήστε χωρίς επιλογή αν δεν υπάρχει ανταλλακτικό.</span>
+            </div>
+
+            {{-- ── Conditional fields ────────────────────────────── --}}
+            <div class="woc-part-fields" id="part-fields">
+
+                {{-- Part dropdown — only for from_stock --}}
+                <div id="field-part-id" style="display:none;">
                     <div class="woc-field">
-                        <label class="woc-label">Προέλευση</label>
-                        <div class="woc-source-wrap">
-
-                            <input type="radio" class="woc-source-pill" value="from_stock"
-                                   :name="'parts['+index+'][source]'" :id="'src-stock-'+row._key"
-                                   x-model="row.source" @change="onSourceChange(row)">
-                            <label :for="'src-stock-'+row._key" class="woc-source-label">
-                                <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                    <path stroke-linecap="round" stroke-linejoin="round"
-                                          d="M20.25 7.5l-.625 10.632a2.25 2.25 0 0 1-2.247 2.118H6.622a2.25 2.25 0 0 1-2.247-2.118L3.75 7.5M10 11.25h4M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125Z"/>
-                                </svg>
-                                <x-workshop.part-source-label source="from_stock" />
-                            </label>
-
-                            <input type="radio" class="woc-source-pill" value="customer_supplied"
-                                   :name="'parts['+index+'][source]'" :id="'src-cust-'+row._key"
-                                   x-model="row.source" @change="onSourceChange(row)">
-                            <label :for="'src-cust-'+row._key" class="woc-source-label">
-                                <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                    <path stroke-linecap="round" stroke-linejoin="round"
-                                          d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z"/>
-                                </svg>
-                                <x-workshop.part-source-label source="customer_supplied" />
-                            </label>
-
-                            <input type="radio" class="woc-source-pill" value="purchased_for_job"
-                                   :name="'parts['+index+'][source]'" :id="'src-job-'+row._key"
-                                   x-model="row.source" @change="onSourceChange(row)">
-                            <label :for="'src-job-'+row._key" class="woc-source-label">
-                                <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                    <path stroke-linecap="round" stroke-linejoin="round"
-                                          d="M2.25 3h1.386c.51 0 .955.343 1.087.835l.383 1.437M7.5 14.25a3 3 0 0 0-3 3h15.75m-12.75-3h11.218c1.121-2.3 2.1-4.684 2.924-7.138a60.114 60.114 0 0 0-16.536-1.84M7.5 14.25 5.106 5.272M6 20.25a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0Zm12.75 0a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0Z"/>
-                                </svg>
-                                <x-workshop.part-source-label source="purchased_for_job" />
-                            </label>
-
-                        </div>
-                        <span class="woc-hint">Αφήστε χωρίς επιλογή αν δεν υπάρχει ανταλλακτικό σε αυτή τη γραμμή.</span>
-                        <template x-if="errorFor(index, 'source')">
-                            <span class="woc-error" x-text="errorFor(index, 'source')"></span>
-                        </template>
-                    </div>
-
-                    {{-- ── Conditional fields ────────────────────────── --}}
-                    <div class="woc-part-fields" :class="{ 'is-visible': row.source }">
-
-                        {{-- Part dropdown — only for from_stock --}}
-                        <div x-show="row.source === 'from_stock'">
-                            <div class="woc-field">
-                                <label :for="'part-id-'+row._key" class="woc-label">
-                                    Ανταλλακτικό <span class="woc-req">*</span>
-                                </label>
-                                <select :id="'part-id-'+row._key" :name="'parts['+index+'][part_id]'"
-                                    class="woc-select" x-model="row.part_id" @change="onPartSelect(row)">
-                                    <option value="">— Επιλογή από απόθεμα —</option>
-                                    @foreach($parts as $p)
-                                        <option value="{{ $p->id }}">
-                                            {{ $p->name }}
-                                            @if($p->quantity !== null)
-                                                (αποθ: {{ rtrim(rtrim(number_format((float) $p->quantity, 1, ',', '.'), '0'), ',') }})
-                                            @endif
-                                            @if($p->sale_price) — {{ number_format($p->sale_price, 2, ',', '.') }} € @endif
-                                        </option>
-                                    @endforeach
-                                </select>
-                                <template x-if="errorFor(index, 'part_id')">
-                                    <span class="woc-error" x-text="errorFor(index, 'part_id')"></span>
-                                </template>
-                            </div>
-                        </div>
-
-                        {{-- Description — for non-stock --}}
-                        <div x-show="row.source && row.source !== 'from_stock'">
-                            <div class="woc-field">
-                                <label :for="'desc-'+row._key" class="woc-label">
-                                    Περιγραφή <span class="woc-req">*</span>
-                                </label>
-                                <input type="text" :id="'desc-'+row._key" :name="'parts['+index+'][description]'"
-                                    class="woc-input" x-model="row.description"
-                                    placeholder="π.χ. Λάδι κινητήρα 5W-40…">
-                                <template x-if="errorFor(index, 'description')">
-                                    <span class="woc-error" x-text="errorFor(index, 'description')"></span>
-                                </template>
-                            </div>
-                        </div>
-
-                        {{-- Qty / unit_cost / unit_price grid --}}
-                        <div class="woc-part-grid">
-
-                            <div class="woc-field">
-                                <label :for="'qty-'+row._key" class="woc-label">Ποσότητα <span class="woc-req">*</span></label>
-                                <input type="number" :id="'qty-'+row._key" :name="'parts['+index+'][quantity]'"
-                                    class="woc-input" x-model="row.quantity"
-                                    min="0.5" step="0.5" placeholder="1" lang="el">
-                                <template x-if="errorFor(index, 'quantity')">
-                                    <span class="woc-error" x-text="errorFor(index, 'quantity')"></span>
-                                </template>
-                            </div>
-
-                            {{-- unit_cost: hidden for customer_supplied --}}
-                            <div class="woc-field" x-show="row.source !== 'customer_supplied'">
-                                <label :for="'cost-'+row._key" class="woc-label">Κόστος / τεμ.</label>
-                                <div class="woc-eur">
-                                    {{-- readonly, όχι κρυφό: το προσωπικό βλέπει το
-                                         κόστος από τον κατάλογο, δεν το ορίζει. Ο server
-                                         το αντικαθιστά ούτως ή άλλως με την τιμή του
-                                         καταλόγου (WorkshopController::costsFromCatalogue),
-                                         οπότε το attribute δεν είναι ο έλεγχος — μόνο η
-                                         ένδειξη ότι δεν είναι επεξεργάσιμο. --}}
-                                    <input type="number" :id="'cost-'+row._key" :name="'parts['+index+'][unit_cost]'"
-                                        class="woc-input" x-model="row.unit_cost"
-                                        @cannot('administer-pricing') readonly @endcannot
-                                        step="0.01" placeholder="0,00" lang="el">
-                                    <span class="woc-eur-sym">€</span>
-                                </div>
-                                <template x-if="errorFor(index, 'unit_cost')">
-                                    <span class="woc-error" x-text="errorFor(index, 'unit_cost')"></span>
-                                </template>
-                            </div>
-
-                            <div class="woc-field">
-                                <label :for="'price-'+row._key" class="woc-label">Τιμή / τεμ.</label>
-                                <div class="woc-eur">
-                                    <input type="number" :id="'price-'+row._key" :name="'parts['+index+'][unit_price]'"
-                                        class="woc-input" x-model="row.unit_price"
-                                        step="0.01" placeholder="0,00" lang="el">
-                                    <span class="woc-eur-sym">€</span>
-                                </div>
-                                <template x-if="errorFor(index, 'unit_price')">
-                                    <span class="woc-error" x-text="errorFor(index, 'unit_price')"></span>
-                                </template>
-                            </div>
-
-                            {{-- Subtotal (read-only display, client-side only — server recomputes) --}}
-                            <div class="woc-field">
-                                <label class="woc-label">Σύνολο γραμμής</label>
-                                <div class="woc-eur">
-                                    <input type="text" class="woc-input woc-line-total-input" readonly tabindex="-1"
-                                        :value="fmt(lineTotal(row))">
-                                    <span class="woc-eur-sym">€</span>
-                                </div>
-                            </div>
-
-                        </div>
-
-                        <div class="woc-field">
-                            <label :for="'note-'+row._key" class="woc-label">Σημείωση</label>
-                            <input type="text" :id="'note-'+row._key" :name="'parts['+index+'][note]'"
-                                class="woc-input" x-model="row.note" placeholder="Προαιρετικό…">
-                            <template x-if="errorFor(index, 'note')">
-                                <span class="woc-error" x-text="errorFor(index, 'note')"></span>
-                            </template>
-                        </div>
-
-                    </div>{{-- /part-fields --}}
-
-                </div>{{-- /woc-part-row --}}
-            </template>
-
-            <button type="button" class="woc-add-btn" @click="addRow()">
-                <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/>
-                </svg>
-                Προσθήκη ανταλλακτικού
-            </button>
-
-        </div>
-        </x-workshop.form.section>
-
-        <x-workshop.form.section title="Στοιχεία service">
-        <div class="woc-card-body woc-card-body--grid">
-
-            <div class="woc-field">
-                <label for="current_mileage" class="woc-label">Τρέχοντα χιλιόμετρα</label>
-                <input type="number" id="current_mileage" name="current_mileage"
-                    class="woc-input {{ $errors->has('current_mileage') ? 'is-invalid' : '' }}"
-                    value="{{ old('current_mileage') }}"
-                    min="0" step="1" placeholder="π.χ. 85000">
-                @error('current_mileage') <span class="woc-error">{{ $message }}</span> @enderror
-            </div>
-
-            <div class="woc-field">
-                <label for="next_service_date" class="woc-label">Ημερομηνία επόμενου service</label>
-                <input type="date" id="next_service_date" name="next_service_date"
-                    class="woc-input {{ $errors->has('next_service_date') ? 'is-invalid' : '' }}"
-                    value="{{ old('next_service_date') }}">
-                @error('next_service_date') <span class="woc-error">{{ $message }}</span> @enderror
-            </div>
-
-            <div class="woc-field">
-                <label for="next_service_mileage" class="woc-label">Χιλιόμετρα επόμενου service</label>
-                <input type="number" id="next_service_mileage" name="next_service_mileage"
-                    class="woc-input {{ $errors->has('next_service_mileage') ? 'is-invalid' : '' }}"
-                    value="{{ old('next_service_mileage') }}"
-                    min="0" step="1" placeholder="π.χ. 95000">
-                @error('next_service_mileage') <span class="woc-error">{{ $message }}</span> @enderror
-            </div>
-
-        </div>
-        </x-workshop.form.section>
-
-        <x-workshop.form.section title="Σύνοψη κόστους">
-            <div class="woc-card-body">
-                <div class="woc-summary">
-                    <div class="woc-sum-row">
-                        <span>Αμοιβή εργασίας</span>
-                        <span class="woc-sum-val" x-text="fmt(laborCost)">0,00 €</span>
-                    </div>
-                    <div class="woc-sum-row">
-                        <span>Ανταλλακτικά</span>
-                        <span class="woc-sum-val" x-text="fmt(partsTotal)">0,00 €</span>
-                    </div>
-                    <div class="woc-sum-row woc-sum-row--grand">
-                        <span>Σύνολο</span>
-                        <span class="woc-sum-val" x-text="fmt(grandTotal)">0,00 €</span>
+                        <label for="part_id_sel" class="woc-label">
+                            Ανταλλακτικό <span class="woc-req">*</span>
+                        </label>
+                        <select id="part_id_sel" name="part[part_id]"
+                            class="woc-select {{ $errors->has('part.part_id') ? 'is-invalid' : '' }}"
+                            onchange="autofillPrice()">
+                            <option value="">— Επιλογή από απόθεμα —</option>
+                            @foreach($parts as $p)
+                                <option value="{{ $p->id }}"
+                                    data-price="{{ $p->sale_price ?? 0 }}"
+                                    {{ old('part.part_id') == $p->id ? 'selected' : '' }}>
+                                    {{ $p->name }}
+                                    @if($p->quantity !== null) (αποθ: {{ $p->quantity }}) @endif
+                                    @if($p->sale_price) — {{ number_format($p->sale_price, 2, ',', '.') }} € @endif
+                                </option>
+                            @endforeach
+                        </select>
+                        @error('part.part_id') <span class="woc-error">{{ $message }}</span> @enderror
                     </div>
                 </div>
+
+                {{-- Description — for non-stock --}}
+                <div id="field-description" style="display:none;">
+                    <div class="woc-field">
+                        <label for="part_desc" class="woc-label">
+                            Περιγραφή <span class="woc-req">*</span>
+                        </label>
+                        <input type="text" id="part_desc" name="part[description]"
+                            class="woc-input {{ $errors->has('part.description') ? 'is-invalid' : '' }}"
+                            value="{{ old('part.description') }}"
+                            placeholder="π.χ. Λάδι κινητήρα 5W-40…"
+                            oninput="recalc()">
+                        @error('part.description') <span class="woc-error">{{ $message }}</span> @enderror
+                    </div>
+                </div>
+
+                {{-- Qty / unit_cost / unit_price grid --}}
+                <div class="woc-part-grid">
+
+                    <div class="woc-field">
+                        <label for="part_qty" class="woc-label">Ποσότητα <span class="woc-req">*</span></label>
+                        <input type="number" id="part_qty" name="part[quantity]"
+                            class="woc-input {{ $errors->has('part.quantity') ? 'is-invalid' : '' }}"
+                            value="{{ old('part.quantity', 1) }}"
+                            min="0.001" step="1" placeholder="1"
+                            oninput="recalc()">
+                        @error('part.quantity') <span class="woc-error">{{ $message }}</span> @enderror
+                    </div>
+
+                    {{-- unit_cost: hidden for customer_supplied --}}
+                    <div class="woc-field" id="field-unit-cost">
+                        <label for="part_cost" class="woc-label">Κόστος / τεμ.</label>
+                        <div class="woc-eur">
+                            <input type="number" id="part_cost" name="part[unit_cost]"
+                                class="woc-input {{ $errors->has('part.unit_cost') ? 'is-invalid' : '' }}"
+                                value="{{ old('part.unit_cost', '') }}"
+                                min="0" step="0.01" placeholder="0.00">
+                            <span class="woc-eur-sym">€</span>
+                        </div>
+                        @error('part.unit_cost') <span class="woc-error">{{ $message }}</span> @enderror
+                    </div>
+
+                    <div class="woc-field">
+                        <label for="part_price" class="woc-label">Τιμή / τεμ.</label>
+                        <div class="woc-eur">
+                            <input type="number" id="part_price" name="part[unit_price]"
+                                class="woc-input {{ $errors->has('part.unit_price') ? 'is-invalid' : '' }}"
+                                value="{{ old('part.unit_price', '') }}"
+                                min="0" step="0.01" placeholder="0.00"
+                                oninput="recalc()">
+                            <span class="woc-eur-sym">€</span>
+                        </div>
+                        @error('part.unit_price') <span class="woc-error">{{ $message }}</span> @enderror
+                    </div>
+
+                    {{-- Subtotal (read-only display) --}}
+                    <div class="woc-field">
+                        <label class="woc-label">Σύνολο γραμμής</label>
+                        <div class="woc-eur">
+                            <input type="text" id="part_line_total" class="woc-input"
+                                value="0,00" readonly tabindex="-1"
+                                style="color:var(--accent);font-weight:700;background:var(--surface-2);cursor:default;">
+                            <span class="woc-eur-sym">€</span>
+                        </div>
+                    </div>
+
+                </div>
+
+            </div>{{-- /part-fields --}}
+
+        </div>
+    </div>
+
+    {{-- ── Σύνοψη ───────────────────────────────────────────────── --}}
+    <div class="woc-card">
+        <div class="woc-card-title">Σύνοψη Κόστους</div>
+        <div class="woc-card-body" style="padding-top:0.625rem;padding-bottom:0.625rem;">
+            <div class="woc-summary">
+                <div class="woc-sum-row">
+                    <span>Αμοιβή εργασίας</span>
+                    <span class="woc-sum-val" id="sum-labor">0,00 €</span>
+                </div>
+                <div class="woc-sum-row">
+                    <span>Ανταλλακτικά</span>
+                    <span class="woc-sum-val" id="sum-parts">0,00 €</span>
+                </div>
+                <div class="woc-sum-row woc-sum-row--grand">
+                    <span>Σύνολο</span>
+                    <span class="woc-sum-val" id="sum-total">0,00 €</span>
+                </div>
             </div>
-        </x-workshop.form.section>
+        </div>
+    </div>
 
-        <x-workshop.form.action-bar>
-            <x-slot:summary>
-                Σύνολο <strong x-text="fmt(grandTotal)">0,00 €</strong>
-            </x-slot:summary>
-
-            <a href="{{ route('workshop.work-orders.index') }}" class="woc-cancel-btn">Ακύρωση</a>
-            <button type="submit" class="woc-submit-btn">
-                Αποθήκευση
-            </button>
-        </x-workshop.form.action-bar>
+    {{-- ── Submit ───────────────────────────────────────────────── --}}
+    <div class="woc-submit-row">
+        <a href="{{ route('workshop.work-orders.index') }}" class="woc-cancel-btn">Άκυρο</a>
+        <button type="submit" class="woc-submit-btn">
+            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/>
+            </svg>
+            Δημιουργία Εντολής
+        </button>
     </div>
 
 </form>
@@ -1013,18 +611,6 @@
    Vehicle dropdown — scoped to the selected customer
 ─────────────────────────────────────────────────────────── */
 const VEHICLES_BY_CUSTOMER = @json($vehiclesByCustomer);
-
-function autoGrowWorkOrderTextarea(textarea) {
-    const styles = window.getComputedStyle(textarea);
-    const lineHeight = parseFloat(styles.lineHeight) || 20;
-    const maxRows = 8;
-    const verticalPadding = parseFloat(styles.paddingTop) + parseFloat(styles.paddingBottom);
-    const maxHeight = (lineHeight * maxRows) + verticalPadding;
-
-    textarea.style.height = 'auto';
-    textarea.style.height = Math.min(textarea.scrollHeight, maxHeight) + 'px';
-    textarea.style.overflowY = textarea.scrollHeight > maxHeight ? 'auto' : 'hidden';
-}
 
 function populateVehicles(customerId, selectedVehicleId) {
     const sel = document.getElementById('vehicle_id');
@@ -1071,116 +657,114 @@ function populateVehicles(customerId, selectedVehicleId) {
     } else {
         sel.value = '';
     }
-
-    fillMileageForSelectedVehicle(customerId, sel.value);
-}
-
-// Auto-fill "current mileage" from the vehicle's last known reading — only
-// when the field is still empty, so it never overwrites a value the staff
-// already typed (or one restored via old() after a validation error).
-function fillMileageForSelectedVehicle(customerId, vehicleId) {
-    const mileageInput = document.getElementById('current_mileage');
-    if (!mileageInput || mileageInput.value !== '') return;
-
-    const vehicles = VEHICLES_BY_CUSTOMER[customerId] || [];
-    const vehicle = vehicles.find(v => String(v.id) === String(vehicleId));
-    if (vehicle && vehicle.mileage !== null && vehicle.mileage !== undefined) {
-        mileageInput.value = vehicle.mileage;
-    }
 }
 
 document.getElementById('customer_id').addEventListener('change', function () {
     populateVehicles(this.value, null);
 });
 
-document.getElementById('vehicle_id').addEventListener('change', function () {
-    fillMileageForSelectedVehicle(document.getElementById('customer_id').value, this.value);
+/* ────────────────────────────────────────────────────────────
+   Source radio → show/hide conditional fields
+─────────────────────────────────────────────────────────── */
+const SOURCES = ['src-stock', 'src-cust', 'src-job'];
+
+function applySource(value) {
+    const pf    = document.getElementById('part-fields');
+    const fdPid = document.getElementById('field-part-id');
+    const fdDsc = document.getElementById('field-description');
+    const fdCst = document.getElementById('field-unit-cost');
+
+    if (!value) {
+        pf.classList.remove('is-visible');
+        return;
+    }
+
+    pf.classList.add('is-visible');
+
+    if (value === 'from_stock') {
+        fdPid.style.display = '';
+        fdDsc.style.display = 'none';
+        fdCst.style.display = '';
+    } else if (value === 'customer_supplied') {
+        fdPid.style.display = 'none';
+        fdDsc.style.display = '';
+        fdCst.style.display = 'none';
+        // unit_cost is implicitly 0 for customer_supplied
+        document.getElementById('part_cost').value = '0';
+    } else { // purchased_for_job
+        fdPid.style.display = 'none';
+        fdDsc.style.display = '';
+        fdCst.style.display = '';
+    }
+
+    recalc();
+}
+
+SOURCES.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.addEventListener('change', () => applySource(el.value));
 });
 
+/* ────────────────────────────────────────────────────────────
+   Auto-fill unit_price from selected Part's sale_price
+─────────────────────────────────────────────────────────── */
+function autofillPrice() {
+    const sel   = document.getElementById('part_id_sel');
+    const opt   = sel?.options[sel.selectedIndex];
+    const price = parseFloat(opt?.dataset?.price || 0);
+    const inp   = document.getElementById('part_price');
+    if (inp && price > 0 && !inp.value) {
+        inp.value = price.toFixed(2);
+    }
+    recalc();
+}
+
+/* ────────────────────────────────────────────────────────────
+   Live recalc — line total + summary
+─────────────────────────────────────────────────────────── */
+function recalc() {
+    const labor = Math.max(0, parseFloat(document.getElementById('labor_cost')?.value || 0) || 0);
+    const qty   = Math.max(0, parseFloat(document.getElementById('part_qty')?.value   || 0) || 0);
+    const price = Math.max(0, parseFloat(document.getElementById('part_price')?.value || 0) || 0);
+
+    // only count parts if the fields are visible
+    const partsVisible = document.getElementById('part-fields')?.classList.contains('is-visible');
+    const lineTotal = partsVisible ? qty * price : 0;
+
+    // update line total display
+    const lt = document.getElementById('part_line_total');
+    if (lt) lt.value = fmt(lineTotal);
+
+    // update summary
+    setText('sum-labor', fmt(labor));
+    setText('sum-parts', fmt(lineTotal));
+    setText('sum-total', fmt(labor + lineTotal));
+}
+
+function setText(id, val) {
+    const el = document.getElementById(id);
+    if (el) el.textContent = val;
+}
+
+function fmt(n) {
+    return n.toLocaleString('el-GR', {minimumFractionDigits: 2, maximumFractionDigits: 2}) + ' €';
+}
+
+/* ── Init ─────────────────────────────────────────────────── */
 document.addEventListener('DOMContentLoaded', function () {
     // Restore vehicle dropdown scoped to the old (or query-string) customer_id, if any
     const customerSel = document.getElementById('customer_id');
     populateVehicles(customerSel.value, @json(old('vehicle_id', request()->query('vehicle_id'))));
 
-    document.querySelectorAll('[data-autogrow]').forEach(textarea => {
-        autoGrowWorkOrderTextarea(textarea);
-        textarea.addEventListener('input', () => autoGrowWorkOrderTextarea(textarea));
+    // Restore state from old() on validation failure
+    const checked = document.querySelector('.woc-source-pill:checked');
+    if (checked) applySource(checked.value);
+    recalc();
+
+    // wire labor_cost and part_price to recalc (already via oninput attr, but defensive)
+    ['labor_cost','part_price','part_qty'].forEach(id => {
+        document.getElementById(id)?.addEventListener('input', recalc);
     });
-});
-
-/* ────────────────────────────────────────────────────────────
-   Ανταλλακτικά repeater — Alpine.js component.
-   Registered via Alpine.data() inside the alpine:init event, which
-   Alpine fires synchronously right before it scans the DOM — this
-   guarantees the component is known before x-data is evaluated,
-   regardless of script load order.
-   Server-side validation/totals remain authoritative; this only
-   drives the add/remove UI and the live on-screen totals.
-─────────────────────────────────────────────────────────── */
-document.addEventListener('alpine:init', () => {
-    Alpine.data('workOrderForm', (initialParts, partsCatalog, initialLaborCost, serverErrors) => ({
-        laborCost: initialLaborCost,
-        catalog: partsCatalog,
-        errors: serverErrors || {},
-        _keyCounter: initialParts.length,
-        parts: initialParts.map((row, i) => ({ _key: 'row-' + i, ...row })),
-
-        blankRow() {
-            const row = {
-                _key: 'row-' + this._keyCounter,
-                source: '', part_id: '', description: '',
-                quantity: '1', unit_cost: '', unit_price: '', note: '',
-            };
-            this._keyCounter++;
-            return row;
-        },
-
-        addRow() {
-            this.parts.push(this.blankRow());
-        },
-
-        removeRow(index) {
-            this.parts.splice(index, 1);
-        },
-
-        onSourceChange(row) {
-            // Switching source invalidates whatever was picked before —
-            // never leave a stale part_id/description hanging around.
-            row.part_id = '';
-            row.description = '';
-            row.unit_cost = row.source === 'customer_supplied' ? '0' : '';
-            row.unit_price = '';
-        },
-
-        onPartSelect(row) {
-            const part = this.catalog[row.part_id];
-            if (!part) return;
-            row.unit_cost = part.purchase_price ?? 0;
-            row.unit_price = part.sale_price ?? 0;
-            if (!row.quantity) row.quantity = '1';
-        },
-
-        lineTotal(row) {
-            return (parseFloat(row.quantity) || 0) * (parseFloat(row.unit_price) || 0);
-        },
-
-        get partsTotal() {
-            return this.parts.reduce((sum, row) => sum + this.lineTotal(row), 0);
-        },
-
-        get grandTotal() {
-            return (parseFloat(this.laborCost) || 0) + this.partsTotal;
-        },
-
-        fmt(n) {
-            return (n || 0).toLocaleString('el-GR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' €';
-        },
-
-        errorFor(index, field) {
-            const key = 'parts.' + index + '.' + field;
-            return this.errors[key] ? this.errors[key][0] : null;
-        },
-    }));
 });
 </script>
 @endpush

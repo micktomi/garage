@@ -1,243 +1,463 @@
 @extends('layouts.workshop')
 
-@section('title', 'Πίνακας Ελέγχου — Συνεργείο')
-@section('header-title', 'Πίνακας Ελέγχου')
-@section('header-subtitle', $todayLabel)
-@section('body-class', 'ws-dashboard-page')
+@section('title', 'Αρχική — Συνεργείο')
+@section('header-title', 'Αρχική')
+
+@push('styles')
+<style>
+    /* ── Greeting ───────────────────────────────────────────────── */
+    .ws-greeting {
+        padding: 0.125rem 0 1rem;
+    }
+    .ws-greeting-date {
+        font-size: 0.75rem;
+        color: var(--text-faint);
+        letter-spacing: 0.02em;
+        margin-bottom: 0.2rem;
+    }
+    .ws-greeting-title {
+        font-size: 1.375rem;
+        font-weight: 700;
+        letter-spacing: 0;
+        color: var(--text);
+        line-height: 1.2;
+    }
+    .ws-greeting-title span {
+        color: var(--accent);
+    }
+
+    /* ── Stat cards row ─────────────────────────────────────────── */
+    .ws-stats {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 0.5rem;
+    }
+
+    .ws-stat {
+        background: var(--surface);
+        border: 1px solid var(--border-soft);
+        border-radius: 12px;
+        padding: 0.75rem 0.7rem;
+        display: flex;
+        flex-direction: column;
+        gap: 0.22rem;
+        position: relative;
+        overflow: hidden;
+        box-shadow: var(--highlight), var(--shadow-sm);
+    }
+    .ws-stat::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 3px;
+        border-radius: 12px 12px 0 0;
+        opacity: 0.9;
+    }
+    .ws-stat.ws-stat--amber::before { background: var(--accent); }
+    .ws-stat.ws-stat--blue::before  { background: var(--info); }
+    .ws-stat.ws-stat--red::before   { background: var(--danger); }
+    .ws-stat.ws-stat--green::before { background: var(--success); }
+
+    .ws-stat-num {
+        font-size: 1.55rem;
+        font-weight: 800;
+        letter-spacing: 0;
+        line-height: 1;
+        font-variant-numeric: tabular-nums;
+    }
+    .ws-stat--amber .ws-stat-num { color: var(--accent); }
+    .ws-stat--blue  .ws-stat-num { color: var(--info); }
+    .ws-stat--red   .ws-stat-num { color: var(--danger); }
+    .ws-stat--green .ws-stat-num { color: var(--success); }
+
+    .ws-stat-label {
+        font-size: 0.7rem;
+        font-weight: 600;
+        color: var(--text-muted);
+        line-height: 1.3;
+    }
+
+    a.ws-stat {
+        text-decoration: none;
+        color: inherit;
+        transition: border-color 0.15s, transform 0.12s, box-shadow 0.15s;
+        -webkit-tap-highlight-color: transparent;
+    }
+    a.ws-stat:hover,
+    a.ws-stat:focus-visible {
+        border-color: rgba(203, 213, 225, 0.28);
+        box-shadow: var(--highlight), var(--shadow-md);
+        transform: translateY(-1px);
+        outline: none;
+    }
+    a.ws-stat:active { transform: scale(0.985); }
+
+    /* ── Search bar ─────────────────────────────────────────────── */
+    .ws-search-wrap {
+        position: relative;
+    }
+    .ws-search-icon {
+        position: absolute;
+        left: 0.875rem;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 18px;
+        height: 18px;
+        color: var(--text-faint);
+        pointer-events: none;
+    }
+    .ws-search-input {
+        width: 100%;
+        height: 48px;
+        background: rgba(255,255,255,0.055);
+        border: 1px solid var(--border-soft);
+        border-radius: 12px;
+        padding: 0 1rem 0 2.75rem;
+        font-size: 0.9375rem;
+        color: var(--text);
+        outline: none;
+        box-shadow: var(--highlight), var(--shadow-sm);
+        transition: border-color 0.15s, box-shadow 0.15s, background 0.15s;
+        -webkit-appearance: none;
+    }
+    .ws-search-input::placeholder { color: var(--text-faint); }
+    .ws-search-input:focus {
+        border-color: var(--accent);
+        box-shadow: 0 0 0 3px var(--accent-dim);
+    }
+
+    /* ── Action grid ────────────────────────────────────────────── */
+    .ws-actions {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.625rem;
+    }
+
+    .ws-card {
+        background: var(--surface);
+        border: 1px solid var(--border-soft);
+        border-radius: 12px;
+        padding: 1rem;
+        display: flex;
+        flex-direction: column;
+        gap: 0.7rem;
+        cursor: pointer;
+        box-shadow: var(--highlight), var(--shadow-sm);
+        transition: background 0.15s, border-color 0.15s, transform 0.12s, box-shadow 0.15s;
+        -webkit-tap-highlight-color: transparent;
+        min-height: 96px;
+        text-decoration: none;
+        color: var(--text);
+    }
+    .ws-card:hover,
+    .ws-card:focus-visible {
+        background: var(--surface-2);
+        border-color: rgba(203, 213, 225, 0.28);
+        box-shadow: var(--highlight), var(--shadow-md);
+        transform: translateY(-1px);
+        outline: none;
+    }
+    .ws-card:active {
+        transform: scale(0.985);
+    }
+
+    .ws-card--primary {
+        background: rgba(245, 158, 11, 0.18);
+        border-color: rgba(245, 158, 11, 0.42);
+        box-shadow: var(--highlight), 0 12px 28px rgba(245, 158, 11, 0.10);
+    }
+    .ws-card--primary:hover {
+        background: rgba(245, 158, 11, 0.24);
+        border-color: rgba(245, 158, 11, 0.58);
+    }
+    .ws-card--primary .ws-card-title {
+        color: #fff7ed;
+    }
+
+    .ws-card--disabled {
+        opacity: 0.58;
+        cursor: not-allowed;
+        pointer-events: none;
+        box-shadow: none;
+    }
+
+    .ws-card-icon {
+        width: 34px;
+        height: 34px;
+        border-radius: 9px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+    }
+    .ws-card-icon svg { width: 19px; height: 19px; stroke-width: 1.8; }
+
+    .ws-card-icon--amber { background: var(--accent-dim);  color: var(--accent); }
+    .ws-card-icon--blue  { background: var(--info-dim);    color: var(--info); }
+    .ws-card-icon--green { background: var(--success-dim); color: var(--success); }
+    .ws-card-icon--red   { background: var(--danger-dim);  color: var(--danger); }
+    .ws-card-icon--gray  { background: rgba(255,255,255,0.055); color: var(--text-muted); }
+
+    .ws-card-body {}
+    .ws-card-title {
+        font-size: 0.9rem;
+        font-weight: 700;
+        line-height: 1.3;
+        color: var(--text);
+    }
+    .ws-card-sub {
+        font-size: 0.75rem;
+        color: var(--text-muted);
+        margin-top: 0.2rem;
+        line-height: 1.3;
+    }
+
+    /* Full-width card variant */
+    .ws-card--wide {
+        grid-column: span 2;
+        flex-direction: row;
+        align-items: center;
+        gap: 0.875rem;
+        min-height: auto;
+        padding: 0.875rem 1rem;
+    }
+    .ws-card--wide .ws-card-body { flex: 1; }
+    .ws-card--wide .ws-card-icon { width: 40px; height: 40px; flex-shrink: 0; }
+    .ws-card--wide .ws-card-icon svg { width: 22px; height: 22px; }
+
+    .ws-card-arrow {
+        color: var(--text-faint);
+        flex-shrink: 0;
+    }
+    .ws-card-arrow svg { width: 16px; height: 16px; stroke-width: 2; }
+
+    .ws-card--kteo {
+        border-color: var(--border-soft);
+        background: rgba(255,255,255,0.045);
+    }
+    .ws-card--kteo-alert {
+        background: rgba(248, 81, 73, 0.10);
+        border-color: rgba(248, 81, 73, 0.30);
+    }
+    .ws-card--kteo-alert .ws-card-title {
+        color: #fee2e2;
+    }
+
+    /* ── Desktop ────────────────────────────────────────────────── */
+    @media (min-width: 768px) {
+        .ws-greeting {
+            padding: 0.35rem 0 1.7rem;
+        }
+        .ws-greeting-title {
+            font-size: 2rem;
+        }
+
+        .ws-stats {
+            gap: 0.875rem;
+        }
+        .ws-stat {
+            padding: 1rem 1.125rem;
+        }
+        .ws-stat-num {
+            font-size: 2.15rem;
+        }
+        .ws-stat-label {
+            font-size: 0.75rem;
+        }
+
+        .ws-search-input {
+            height: 52px;
+            font-size: 1rem;
+        }
+
+        .ws-actions {
+            grid-template-columns: repeat(3, 1fr);
+            gap: 0.875rem;
+        }
+        .ws-card--wide {
+            grid-column: span 3;
+            padding: 1.125rem 1.375rem;
+        }
+        .ws-card {
+            min-height: 132px;
+            padding: 1.25rem;
+            gap: 0.875rem;
+        }
+        .ws-card-icon {
+            width: 44px;
+            height: 44px;
+        }
+        .ws-card-icon svg {
+            width: 24px;
+            height: 24px;
+        }
+        .ws-card-title {
+            font-size: 0.9375rem;
+        }
+        .ws-card-sub {
+            font-size: 0.8125rem;
+        }
+    }
+</style>
+@endpush
+
+@php
+    // The 2026-07-15 dashboard tracked one combined KTEO count; today's
+    // controller reports expired/expiring separately, so this view keeps
+    // its original single figure by summing the two.
+    $kteoExpiring = ($expiredKteo ?? 0) + ($expiringKteo ?? 0);
+@endphp
 
 @section('content')
-    <div class="ws-dashboard">
-        <header class="ws-dashboard-header">
-            <div>
-                <p class="ws-dashboard-kicker">Garage Manager</p>
-                <h1 class="ws-dashboard-title">Ροή συνεργείου</h1>
-                <p class="ws-dashboard-subtitle"><span class="ws-dashboard-subtitle-prefix">Η σημερινή εικόνα του συνεργείου · </span><span class="ws-dashboard-date">{{ $todayLabel }}</span></p>
-            </div>
 
-            <span class="ws-system-status" role="status" aria-label="Το σύστημα λειτουργεί κανονικά">
-                <span class="ws-system-status-dot" aria-hidden="true"></span>
-                Σύστημα ενεργό
-            </span>
-        </header>
+{{-- Greeting --}}
+<div class="ws-greeting">
+    <div class="ws-greeting-date">{{ now()->translatedFormat('l, d F Y') }}</div>
+    <h1 class="ws-greeting-title">
+        Καλημέρα,<br>
+        <span>τι τρέχει σήμερα;</span>
+    </h1>
+</div>
 
-        <div class="ws-dashboard-controls">
-            <form
-                action="{{ route('workshop.search') }}"
-                method="GET"
-                class="ws-search-form"
-                role="search"
-                x-data="{ query: @js((string) request('q')) }"
-            >
-                <label for="workshop-search" class="ws-sr-only">Αναζήτηση συνεργείου</label>
-                <button type="submit" class="ws-search-submit" aria-label="Αναζήτηση">
-                    <svg class="ws-search-icon" aria-hidden="true" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 15.803m10.607 0A7.5 7.5 0 0 1 5.196 15.803Z" />
-                    </svg>
-                </button>
-                <input
-                    id="workshop-search"
-                    x-ref="searchInput"
-                    class="ws-search-input"
-                    type="search"
-                    name="q"
-                    placeholder="Πινακίδα, πελάτης, τηλέφωνο…"
-                    autocomplete="off"
-                    autocorrect="off"
-                    spellcheck="false"
-                    value="{{ request('q') }}"
-                    x-model="query"
-                >
-                <button
-                    type="button"
-                    class="ws-search-clear"
-                    x-cloak
-                    x-show="query.length > 0"
-                    x-on:click="query = ''; $nextTick(() => $refs.searchInput.focus())"
-                    aria-label="Καθαρισμός αναζήτησης"
-                    title="Καθαρισμός αναζήτησης"
-                >
-                    <svg aria-hidden="true" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 6l12 12M18 6 6 18" />
-                    </svg>
-                </button>
-            </form>
-
-            <a href="{{ route('workshop.work-orders.create') }}" class="ws-primary-action">
-                <svg aria-hidden="true" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-                </svg>
-                Νέα εντολή εργασίας
-            </a>
-        </div>
-
-        {{-- Ό,τι βρίσκεται φυσικά στο συνεργείο τώρα. Δεν μοντελοποιούνται
-             θέσεις ή χωρητικότητα, οπότε δεν εμφανίζονται κενές θέσεις — το
-             πλέγμα δείχνει έως 8 οχήματα και τα υπόλοιπα ζουν πίσω από τον
-             σύνδεσμο «Όλες οι εντολές». --}}
-        <section class="ws-bays" aria-label="Οχήματα στο συνεργείο">
-            <div class="ws-bays-head">
-                <div>
-                    <p class="ws-bays-kicker">Ζωντανή ροή</p>
-                    <h2 class="ws-bays-title">Στο συνεργείο <span>· {{ $vehiclesInShop }} {{ $vehiclesInShop === 1 ? 'όχημα' : 'οχήματα' }}</span></h2>
-                </div>
-                <a href="{{ route('workshop.work-orders.index') }}" class="ws-bays-link">
-                    Όλες οι εντολές
-                    <svg aria-hidden="true" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="m9 18 6-6-6-6" />
-                    </svg>
-                </a>
-            </div>
-
-            <div class="ws-bay-grid">
-                @forelse($inShopWorkOrders as $order)
-                    <x-workshop.bay-card :order="$order" />
-                @empty
-                    <x-workshop.empty-state icon="clipboard" title="Κανένα όχημα στο συνεργείο">
-                        <a href="{{ route('workshop.work-orders.create') }}">Άνοιγμα νέας εντολής</a>
-                    </x-workshop.empty-state>
-                @endforelse
-            </div>
-        </section>
-
-        <div class="ws-dashboard-body">
-            <section class="ws-dashboard-primary" aria-label="Πρόσφατες ανοιχτές εντολές">
-                <div class="ws-panel ws-orders-panel">
-                    <x-workshop.section-header
-                        title="Ανοιχτές εντολές"
-                        :href="route('workshop.work-orders.index')"
-                        link="Όλες οι εντολές"
-                        mobile-link="Όλες"
-                    />
-
-                    @forelse($recentWorkOrders as $order)
-                        <x-workshop.work-order-row :order="$order" dashboard />
-                    @empty
-                        <x-workshop.empty-state icon="clipboard" title="Δεν υπάρχουν ανοιχτές εντολές">
-                            <a href="{{ route('workshop.work-orders.create') }}">Άνοιγμα νέας εντολής</a>
-                        </x-workshop.empty-state>
-                    @endforelse
-                </div>
-            </section>
-
-            <aside class="ws-dashboard-aside" aria-label="Εργαλεία ημέρας">
-                <section class="ws-panel ws-day-board" aria-label="Σύνοψη ημέρας και ΚΤΕΟ">
-                    <div class="ws-day-board-head">
-                        <div>
-                            <p class="ws-day-board-kicker">Ημέρα εργασίας</p>
-                            <h2>Σήμερα</h2>
-                        </div>
-                        <time datetime="{{ now()->toDateString() }}">{{ $todayLabel }}</time>
-                    </div>
-
-                    <div class="ws-ops-list" aria-label="Σύνοψη ημέρας">
-                        <div class="ws-ops-item ws-ops-item--appointments">
-                            <span class="ws-ops-icon" aria-hidden="true">
-                                <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3.75 8.25h16.5m-15 12h13.5a1.5 1.5 0 0 0 1.5-1.5v-13.5a1.5 1.5 0 0 0-1.5-1.5H5.25a1.5 1.5 0 0 0-1.5 1.5v13.5a1.5 1.5 0 0 0 1.5 1.5Zm6.75-8.625v3.75h3" />
-                                </svg>
-                            </span>
-                            <span class="ws-ops-label">Ραντεβού σήμερα</span>
-                            <strong>{{ $todayAppointments }}</strong>
-                        </div>
-
-                        <div class="ws-ops-item ws-ops-item--danger">
-                            <span class="ws-ops-icon" aria-hidden="true">
-                                <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9.303 3.376c.866 1.5-.217 3.374-1.948 3.374H4.645c-1.73 0-2.813-1.874-1.948-3.374L10.053 3.38c.866-1.5 3.032-1.5 3.898 0l7.352 12.747ZM12 16.5h.008v.008H12V16.5Z" />
-                                </svg>
-                            </span>
-                            <span class="ws-ops-label">ΚΤΕΟ έληξαν</span>
-                            <strong>{{ $expiredKteo }}</strong>
-                        </div>
-
-                        <div class="ws-ops-item ws-ops-item--parts">
-                            <span class="ws-ops-icon" aria-hidden="true">
-                                <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="m21 7.5-9-5.25L3 7.5m18 0-9 5.25M21 7.5v9l-9 5.25m0-9L3 7.5m9 5.25v9M3 7.5v9l9 5.25" />
-                                </svg>
-                            </span>
-                            <span class="ws-ops-label">Αναμονή ανταλλακτικών</span>
-                            <strong>{{ $awaitingParts }}</strong>
-                        </div>
-                    </div>
-
-                    <div class="ws-day-board-section">
-                        <div class="ws-day-board-section-head">
-                            <h3>Έλεγχοι ΚΤΕΟ</h3>
-                            <a href="{{ route('workshop.kteo') }}">Προβολή όλων</a>
-                        </div>
-
-                        @if($expiredKteoVehicles->isEmpty() && $expiringKteoVehicles->isEmpty())
-                            <div class="ws-list">
-                                <x-workshop.empty-state icon="calendar" title="Δεν υπάρχουν λήξεις ΚΤΕΟ εντός 30 ημερών">
-                                    <a href="{{ route('workshop.vehicles.create') }}">Καταχώρηση οχήματος</a>
-                                </x-workshop.empty-state>
-                            </div>
-                        @endif
-
-                        @if($expiredKteoVehicles->isNotEmpty())
-                            <h4 class="ws-kteo-subhead ws-kteo-subhead--expired">Έληξαν <span>· {{ $expiredKteo }}</span></h4>
-
-                            <div class="ws-list">
-                                @foreach($expiredKteoVehicles as $vehicle)
-                                    <x-workshop.kteo-row :vehicle="$vehicle" />
-                                @endforeach
-                            </div>
-                        @endif
-
-                        @if($expiringKteoVehicles->isNotEmpty())
-                            <h4 class="ws-kteo-subhead">Λήγουν σύντομα <span>· {{ $expiringKteo }}</span></h4>
-
-                            <div class="ws-list">
-                                @foreach($expiringKteoVehicles as $vehicle)
-                                    <x-workshop.kteo-row :vehicle="$vehicle" />
-                                @endforeach
-                            </div>
-                        @endif
-                    </div>
-
-                    <div class="ws-day-tools" aria-labelledby="quick-actions-title">
-                        <h3 id="quick-actions-title">Γρήγορη καταχώρηση</h3>
-                        <div class="ws-quick-actions">
-                            <a href="{{ route('workshop.customers.create') }}" class="ws-quick-action">
-                                <span class="ws-quick-action-icon" aria-hidden="true">
-                                    <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6.75a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.5 20.118a7.5 7.5 0 0 1 15 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.5-1.632Z"/>
-                                    </svg>
-                                </span>
-                                <span>Πελάτης</span>
-                                <svg class="ws-quick-action-plus" aria-hidden="true" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/>
-                                </svg>
-                            </a>
-
-                            <a href="{{ route('workshop.vehicles.create') }}" class="ws-quick-action">
-                                <span class="ws-quick-action-icon" aria-hidden="true">
-                                    <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" d="m5.25 17.25.75-6 1.5-3h9l1.5 3 .75 6M3.75 14.25h16.5M6.75 17.25v1.5m10.5-1.5v1.5"/>
-                                    </svg>
-                                </span>
-                                <span>Όχημα</span>
-                                <svg class="ws-quick-action-plus" aria-hidden="true" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/>
-                                </svg>
-                            </a>
-
-                            <a href="{{ route('workshop.work-orders.create') }}" class="ws-quick-action">
-                                <span class="ws-quick-action-icon" aria-hidden="true">
-                                    <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 5.25h6m-6 4.5h6m-6 4.5h3m-6.75 6h13.5A1.5 1.5 0 0 0 20.25 18.75v-15a1.5 1.5 0 0 0-1.5-1.5H5.25a1.5 1.5 0 0 0-1.5 1.5v15a1.5 1.5 0 0 0 1.5 1.5Z"/>
-                                    </svg>
-                                </span>
-                                <span>Εντολή</span>
-                                <svg class="ws-quick-action-plus" aria-hidden="true" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/>
-                                </svg>
-                            </a>
-                        </div>
-                    </div>
-                </section>
-            </aside>
-        </div>
+{{-- Stats --}}
+<div class="ws-label">Επισκόπηση</div>
+<div class="ws-stats">
+    <div class="ws-stat ws-stat--amber">
+        <div class="ws-stat-num">{{ $openWorkOrders }}</div>
+        <div class="ws-stat-label">Ανοιχτές εντολές</div>
     </div>
+    <a href="{{ route('workshop.appointments.index') }}" class="ws-stat ws-stat--blue">
+        <div class="ws-stat-num">{{ $todayAppointments }}</div>
+        <div class="ws-stat-label">Ραντεβού σήμερα</div>
+    </a>
+    <div class="ws-stat {{ $kteoExpiring > 0 ? 'ws-stat--red' : 'ws-stat--green' }}">
+        <div class="ws-stat-num">{{ $kteoExpiring }}</div>
+        <div class="ws-stat-label">ΚΤΕΟ 30 ημερών</div>
+    </div>
+</div>
+
+<div class="ws-gap"></div>
+
+{{-- Quick search --}}
+<div class="ws-label">Γρήγορη αναζήτηση</div>
+<div class="ws-search-wrap">
+    <svg class="ws-search-icon" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 15.803m10.607 0A7.5 7.5 0 0 1 5.196 15.803"/>
+    </svg>
+    <input
+        type="search"
+        class="ws-search-input"
+        placeholder="Πινακίδα, πελάτης, τηλέφωνο…"
+        autocomplete="off"
+        autocorrect="off"
+        spellcheck="false"
+        disabled
+    >
+</div>
+
+<div class="ws-gap"></div>
+
+{{-- Action cards --}}
+<div class="ws-label">Ενέργειες</div>
+<div class="ws-actions">
+
+    {{-- Αναζήτηση πινακίδας --}}
+    <a href="{{ route('workshop.search') }}" class="ws-card">
+        <div class="ws-card-icon ws-card-icon--gray">
+            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round"
+                      d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 15.803m10.607 0A7.5 7.5 0 0 1 5.196 15.803"/>
+            </svg>
+        </div>
+        <div class="ws-card-body">
+            <div class="ws-card-title">Αναζήτηση πινακίδας</div>
+            <div class="ws-card-sub">Πινακίδα, πελάτης, τηλέφωνο</div>
+        </div>
+    </a>
+
+    {{-- Νέα εντολή εργασίας --}}
+    <a href="{{ route('workshop.work-orders.create') }}" class="ws-card ws-card--primary">
+        <div class="ws-card-icon ws-card-icon--amber">
+            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round"
+                      d="M12 4.5v15m7.5-7.5h-15"/>
+            </svg>
+        </div>
+        <div class="ws-card-body">
+            <div class="ws-card-title">Νέα εντολή εργασίας</div>
+            <div class="ws-card-sub">Άνοιγμα εντολής</div>
+        </div>
+    </a>
+
+    {{-- Ανοιχτές εργασίες --}}
+    <a href="{{ route('workshop.work-orders.index') }}" class="ws-card">
+        <div class="ws-card-icon ws-card-icon--blue">
+            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round"
+                      d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 0 0 2.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 0 0-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 0 0 .75-.75 2.25 2.25 0 0 0-.1-.664m-5.8 0A2.251 2.251 0 0 1 13.5 2.25H15c1.012 0 1.867.668 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m0 0H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V9.375c0-.621-.504-1.125-1.125-1.125H8.25Z"/>
+            </svg>
+        </div>
+        <div class="ws-card-body">
+            <div class="ws-card-title">Ανοιχτές εργασίες</div>
+            <div class="ws-card-sub">{{ $openWorkOrders }} σε εξέλιξη</div>
+        </div>
+    </a>
+
+    {{-- Πελάτες --}}
+    <a href="{{ route('workshop.customers.index') }}" class="ws-card">
+        <div class="ws-card-icon ws-card-icon--green">
+            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round"
+                      d="M18 7.5v3m0 0v3m0-3h3m-3 0h-3m-2.25-4.125a3.375 3.375 0 1 1-6.75 0 3.375 3.375 0 0 1 6.75 0ZM3 19.235v-.11a6.375 6.375 0 0 1 12.75 0v.109A12.318 12.318 0 0 1 9.374 21c-2.331 0-4.512-.645-6.374-1.766Z"/>
+            </svg>
+        </div>
+        <div class="ws-card-body">
+            <div class="ws-card-title">Πελάτες</div>
+            <div class="ws-card-sub">Αναζήτηση και καταχώρηση</div>
+        </div>
+    </a>
+
+    {{-- Νέο όχημα --}}
+    <a href="{{ route('workshop.vehicles.create') }}" class="ws-card">
+        <div class="ws-card-icon ws-card-icon--gray">
+            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round"
+                      d="M8.25 18.75a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m3 0h6m-9 0H3.375a1.125 1.125 0 0 1-1.125-1.125V14.25m17.25 4.5a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m3 0h1.125c.621 0 1.129-.504 1.09-1.124a17.902 17.902 0 0 0-3.213-9.193 2.056 2.056 0 0 0-1.58-.86H14.25M16.5 18.75h-2.25m0-11.177v-.958c0-.568-.422-1.048-.987-1.106a48.554 48.554 0 0 0-10.026 0 1.106 1.106 0 0 0-.987 1.106v7.635m12-6.677v6.677m0 4.5v-4.5m0 0h-12"/>
+            </svg>
+        </div>
+        <div class="ws-card-body">
+            <div class="ws-card-title">Νέο όχημα</div>
+            <div class="ws-card-sub">Καταχώρηση</div>
+        </div>
+    </a>
+
+    {{-- Υπενθυμίσεις ΚΤΕΟ — full width --}}
+    <a href="{{ route('workshop.kteo') }}" class="ws-card ws-card--wide ws-card--kteo {{ $kteoExpiring > 0 ? 'ws-card--kteo-alert' : '' }}">
+        <div class="ws-card-icon ws-card-icon--{{ $kteoExpiring > 0 ? 'red' : 'gray' }}">
+            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round"
+                      d="M14.857 17.082a23.848 23.848 0 0 0 5.454-1.31A8.967 8.967 0 0 1 18 9.75V9A6 6 0 0 0 6 9v.75a8.967 8.967 0 0 1-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 0 1-5.714 0m5.714 0a3 3 0 1 1-5.714 0"/>
+            </svg>
+        </div>
+        <div class="ws-card-body">
+            <div class="ws-card-title">Υπενθυμίσεις ΚΤΕΟ</div>
+            <div class="ws-card-sub">
+                @if($kteoExpiring > 0)
+                    {{ $kteoExpiring }} οχήματα λήγουν εντός 30 ημερών
+                @else
+                    Δεν υπάρχουν επείγοντες λήξεις
+                @endif
+            </div>
+        </div>
+        <span class="ws-card-arrow">
+            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5"/>
+            </svg>
+        </span>
+    </a>
+
+</div>
+
 @endsection

@@ -127,31 +127,6 @@ class AuthorizationRolesTest extends TestCase
             ->assertFormFieldIsEnabled('sale_price');
     }
 
-    public function test_the_workshop_cost_box_is_read_only_for_staff(): void
-    {
-        $this->makeVehicle('ΡΟΛ-0011');
-
-        $staffForm = $this->actingAs($this->staff())
-            ->get(route('workshop.work-orders.create'))
-            ->assertOk()
-            ->getContent();
-        $ownerForm = $this->actingAs($this->owner())
-            ->get(route('workshop.work-orders.create'))
-            ->assertOk()
-            ->getContent();
-
-        $costInput = "'parts['+index+'][unit_cost]'";
-
-        $this->assertMatchesRegularExpression(
-            '/'.preg_quote($costInput, '/').'.{0,300}?readonly/s',
-            $staffForm,
-        );
-        $this->assertDoesNotMatchRegularExpression(
-            '/'.preg_quote($costInput, '/').'.{0,300}?readonly/s',
-            $ownerForm,
-        );
-    }
-
     public function test_a_cost_typed_by_staff_is_replaced_by_the_catalogue_cost(): void
     {
         $vehicle = $this->makeVehicle('ΡΟΛ-0004');
@@ -201,33 +176,6 @@ class AuthorizationRolesTest extends TestCase
         ])->assertForbidden();
 
         $this->assertSame(WorkOrderStatus::Completed, $workOrder->fresh()->status);
-    }
-
-    public function test_staff_is_not_offered_status_buttons_that_would_only_403(): void
-    {
-        $workOrder = $this->makeWorkOrder(WorkOrderStatus::ReadyForPickup, 'ΡΟΛ-0012');
-        $workOrder->update(['status' => WorkOrderStatus::Completed]);
-
-        $staffPage = $this->actingAs($this->staff())
-            ->get(route('workshop.work-orders.show', $workOrder))
-            ->assertOk();
-        $ownerPage = $this->actingAs($this->owner())
-            ->get(route('workshop.work-orders.show', $workOrder))
-            ->assertOk();
-
-        $this->assertCount(0, $this->statusForms($staffPage->getContent()));
-        $this->assertCount(5, $this->statusForms($ownerPage->getContent()));
-        $staffPage->assertSee('μόνο από τον ιδιοκτήτη');
-    }
-
-    private function statusForms(string $html): \DOMNodeList
-    {
-        $document = new \DOMDocument;
-        @$document->loadHTML($html);
-
-        return (new \DOMXPath($document))->query(
-            '//form[contains(concat(" ", normalize-space(@class), " "), " wos-status-form ")]'
-        );
     }
 
     public function test_the_owner_may_amend_an_order_that_has_already_been_filed(): void

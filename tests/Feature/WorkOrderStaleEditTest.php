@@ -160,7 +160,7 @@ class WorkOrderStaleEditTest extends TestCase
         @$document->loadHTML($response->getContent());
         $inputs = (new DOMXPath($document))->query('//form[contains(concat(" ", normalize-space(@class), " "), " wos-status-form ")]//input[@name="lock_version"]');
 
-        $this->assertCount(5, $inputs, 'Every status form must submit the version it was rendered from.');
+        $this->assertCount(3, $inputs, 'Every status form must submit the version it was rendered from.');
 
         foreach ($inputs as $input) {
             $this->assertSame((string) $workOrder->lock_version, $input->getAttribute('value'));

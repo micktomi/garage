@@ -11,15 +11,54 @@ use App\Models\Part;
 use App\Models\Vehicle;
 use App\Models\VehicleModel;
 use App\Models\WorkOrder;
+use App\Models\WorkOrderPart;
 use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
+use Inertia\Inertia;
 
 class WorkshopController extends Controller
 {
+    private function validateRequest(Request $request, array $rules, array $messages = []): array
+    {
+        return $request->validate($rules, $messages + [
+            'required' => 'Το πεδίο :attribute είναι υποχρεωτικό.',
+            'required_without' => 'Συμπληρώστε το πεδίο :attribute.',
+            'string' => 'Το πεδίο :attribute πρέπει να είναι κείμενο.',
+            'integer' => 'Το πεδίο :attribute πρέπει να είναι ακέραιος αριθμός.',
+            'numeric' => 'Το πεδίο :attribute πρέπει να είναι αριθμός.',
+            'email' => 'Συμπληρώστε έγκυρο email.',
+            'exists' => 'Η επιλογή στο πεδίο :attribute δεν είναι διαθέσιμη.',
+            'in' => 'Η επιλογή στο πεδίο :attribute δεν είναι έγκυρη.',
+            'min.numeric' => 'Το πεδίο :attribute πρέπει να είναι τουλάχιστον :min.',
+            'max.string' => 'Το πεδίο :attribute επιτρέπεται έως :max χαρακτήρες.',
+            'date' => 'Συμπληρώστε έγκυρη ημερομηνία στο πεδίο :attribute.',
+            'date_format' => 'Ελέγξτε τη μορφή στο πεδίο :attribute.',
+            'after_or_equal' => 'Το πεδίο :attribute πρέπει να είναι από :date και μετά.',
+        ], [
+            'full_name' => 'ονοματεπώνυμο', 'customer_id' => 'πελάτης', 'vehicle_id' => 'όχημα',
+            'problem_description' => 'πρόβλημα / αίτημα', 'phone' => 'τηλέφωνο', 'address' => 'διεύθυνση',
+            'make' => 'μάρκα', 'model' => 'μοντέλο', 'plate_number' => 'πινακίδα',
+            'appointment_date' => 'ημερομηνία ραντεβού', 'appointment_time' => 'ώρα ραντεβού',
+            'parts.*.source' => 'προέλευση υλικού', 'parts.*.quantity' => 'ποσότητα υλικού',
+            'parts.*.description' => 'περιγραφή υλικού', 'parts.*.part_id' => 'ανταλλακτικό',
+        ]);
+    }
+
+    private function page(string $component, array $props = [])
+    {
+        if (isset($props['workOrder'])) {
+            $props['canEdit'] = Gate::allows('amendCompleted', $props['workOrder']);
+        }
+        $props['defaults'] = request()->only('customer_id', 'vehicle_id') + ['idempotency_key' => (string) Str::uuid()];
+
+        return Inertia::render($component, $props);
+    }
+
     public function dashboard()
     {
         $today = Carbon::today();
@@ -32,7 +71,7 @@ class WorkshopController extends Controller
 
         // The strip answers "what is on the floor now", the list below answers
         // "what is still owed to a customer" — deliberately different sets.
-        $vehiclesInShop = WorkOrder::inShop()->count();
+        $vehiclesInShop = WorkOrder::inShop()->distinct()->count('vehicle_id');
         $inShopWorkOrders = WorkOrder::with(['customer', 'vehicle'])
             ->inShop()
             ->latest()
@@ -66,9 +105,11 @@ class WorkshopController extends Controller
             ->take(5)
             ->get();
 
+        $todayAppointmentRows = Appointment::with(['customer', 'vehicle'])->whereDate('appointment_date', $today)->orderBy('appointment_date')->take(8)->get();
+
         $todayLabel = Str::ucfirst($today->locale('el')->translatedFormat('l, j F Y'));
 
-        return view('workshop.index', compact(
+        return $this->page('Dashboard', compact(
             'openWorkOrders',
             'todayAppointments',
             'expiredKteo',
@@ -80,17 +121,25 @@ class WorkshopController extends Controller
             'expiringKteo',
             'expiringKteoVehicles',
             'todayLabel',
+            'todayAppointmentRows',
         ));
     }
 
-    public function workOrdersIndex()
+    public function workOrdersIndex(Request $request)
     {
+        $q = trim((string) $request->query('q', ''));
+        $status = (string) $request->query('status', 'open');
         $workOrders = WorkOrder::with(['customer', 'vehicle'])
-            ->whereIn('status', WorkOrderStatus::openValues())
-            ->latest()
-            ->get();
+            ->when($status === 'open', fn ($query) => $query->whereIn('status', WorkOrderStatus::openValues()))
+            ->when($status === 'archive', fn ($query) => $query->whereNotIn('status', WorkOrderStatus::openValues()))
+            ->when(in_array($status, array_column(WorkOrderStatus::cases(), 'value')), fn ($query) => $query->where('status', $status))
+            ->when($q !== '', fn ($query) => $query->where(fn ($sub) => $sub
+                ->where('problem_description', 'like', "%{$q}%")
+                ->orWhereHas('customer', fn ($c) => $c->where('full_name', 'like', "%{$q}%")->orWhere('phone', 'like', "%{$q}%"))
+                ->orWhereHas('vehicle', fn ($v) => $v->where('plate_number', 'like', "%{$q}%"))))
+            ->latest()->paginate(20)->withQueryString();
 
-        return view('workshop.work-orders.index', compact('workOrders'));
+        return $this->page('WorkOrders/Index', compact('workOrders', 'q', 'status'));
     }
 
     public function workOrdersCreate()
@@ -101,7 +150,7 @@ class WorkshopController extends Controller
 
         $parts = Part::orderBy('name')->get(['id', 'name', 'quantity', 'purchase_price', 'sale_price']);
 
-        return view('workshop.work-orders.create', compact('customers', 'vehiclesByCustomer', 'parts'));
+        return $this->page('WorkOrders/Form', compact('customers', 'vehiclesByCustomer', 'parts'));
     }
 
     /**
@@ -133,7 +182,7 @@ class WorkshopController extends Controller
      *
      * @return array<string, array<int, string>>
      */
-    private function vehicleModelsByMake(): array
+    public static function vehicleModelsByMake(): array
     {
         return VehicleModel::query()
             ->select(['make', 'model'])
@@ -161,9 +210,9 @@ class WorkshopController extends Controller
             ->all();
     }
 
-    public function workOrdersStore(Request $request, CreateWorkOrderAction $createWorkOrder)
+    private function validateWorkOrder(Request $request, ?WorkOrder $workOrder = null): array
     {
-        $validated = $request->validate([
+        return $this->validateRequest($request, [
             'idempotency_key' => ['nullable', 'string', 'max:64'],
             'customer_id' => ['required', 'integer', 'exists:customers,id'],
             'vehicle_id' => [
@@ -185,6 +234,7 @@ class WorkshopController extends Controller
             // its own `source`. Rows with no source are treated as blank
             // placeholder rows and only get light type-checking.
             'parts' => ['nullable', 'array'],
+            'parts.*.id' => ['nullable', 'integer', Rule::exists('work_order_parts', 'id')->where('work_order_id', $workOrder?->id ?? 0)],
             'parts.*' => Rule::forEach(function ($value) {
                 $source = is_array($value) ? ($value['source'] ?? null) : null;
 
@@ -217,6 +267,11 @@ class WorkshopController extends Controller
         ], [
             'vehicle_id.exists' => 'Το επιλεγμένο όχημα δεν ανήκει στον επιλεγμένο πελάτη.',
         ]);
+    }
+
+    public function workOrdersStore(Request $request, CreateWorkOrderAction $createWorkOrder)
+    {
+        $validated = $this->validateWorkOrder($request);
 
         // Purchase cost is margin data, not counter data. Rather than
         // rejecting the submission, fall back to the value the catalogue
@@ -264,14 +319,20 @@ class WorkshopController extends Controller
      * @param  array<int, array<string, mixed>>  $parts
      * @return array<int, array<string, mixed>>
      */
-    private function costsFromCatalogue(array $parts): array
+    private function costsFromCatalogue(array $parts, ?WorkOrder $workOrder = null): array
     {
         $catalogue = Part::query()
             ->whereIn('id', collect($parts)->pluck('part_id')->filter()->all())
             ->pluck('purchase_price', 'id');
 
         return collect($parts)
-            ->map(function (array $row) use ($catalogue): array {
+            ->map(function (array $row) use ($catalogue, $workOrder): array {
+                $existing = isset($row['id']) ? $workOrder?->workOrderParts()->find($row['id']) : null;
+                if ($existing && $existing->source === $row['source'] && ($row['source'] !== 'from_stock' || $existing->part_id == ($row['part_id'] ?? null))) {
+                    $row['unit_cost'] = (float) $existing->unit_cost;
+
+                    return $row;
+                }
                 $row['unit_cost'] = ($row['source'] ?? null) === 'from_stock'
                     ? (float) ($catalogue[$row['part_id'] ?? null] ?? 0)
                     : 0;
@@ -284,14 +345,13 @@ class WorkshopController extends Controller
     public function workOrdersShow(WorkOrder $workOrder)
     {
         $workOrder->load(['customer', 'vehicle', 'workOrderParts.part']);
-        $statusOptions = WorkOrderStatus::cases();
 
-        return view('workshop.work-orders.show', compact('workOrder', 'statusOptions'));
+        return $this->page('WorkOrders/Show', compact('workOrder'));
     }
 
     public function workOrdersUpdateStatus(Request $request, WorkOrder $workOrder)
     {
-        $validated = $request->validate([
+        $validated = $this->validateRequest($request, [
             // Required, not optional: an omitted token is a page rendered
             // before this guard existed, which is the same stale
             // representation the guard is here to refuse.
@@ -337,28 +397,26 @@ class WorkshopController extends Controller
                 });
             })
             ->orderBy('full_name')
-            ->get();
+            ->paginate(20)->withQueryString();
 
-        return view('workshop.customers.index', compact('customers', 'q'));
+        return $this->page('Customers/Index', compact('customers', 'q'));
     }
 
     public function customersCreate()
     {
-        return view('workshop.customers.create');
+        return $this->page('Customers/Form');
     }
 
     public function customersStore(Request $request)
     {
-        $partInput = $request->input('part', []);
-        $partSource = $partInput['source'] ?? null;
-        $hasSelectedPart = $partSource && (($partSource === 'from_stock' && ! empty($partInput['part_id']))
-            || ($partSource !== 'from_stock' && ! empty(trim($partInput['description'] ?? ''))));
-
-        $validated = $request->validate([
-            'first_name' => ['required', 'string', 'max:255'],
-            'last_name' => ['required', 'string', 'max:255'],
+        $validated = $this->validateRequest($request, [
+            'full_name' => ['required_without:first_name', 'nullable', 'string', 'max:255'],
+            'first_name' => ['required_without:full_name', 'nullable', 'string', 'max:255'],
+            'last_name' => ['required_without:full_name', 'nullable', 'string', 'max:255'],
             'phone' => ['required', 'string', 'max:50'],
             'email' => ['nullable', 'email', 'max:255'],
+            'address' => ['nullable', 'string', 'max:2000'],
+            'notes' => ['nullable', 'string', 'max:5000'],
         ], [
             'first_name.required' => 'Το όνομα είναι υποχρεωτικό.',
             'first_name.max' => 'Το όνομα είναι πολύ μεγάλο.',
@@ -370,14 +428,16 @@ class WorkshopController extends Controller
             'email.max' => 'Το email είναι πολύ μεγάλο.',
         ]);
 
-        Customer::create([
-            'full_name' => trim($validated['first_name'].' '.$validated['last_name']),
+        $customer = Customer::create([
+            'full_name' => $validated['full_name'] ?? trim($validated['first_name'].' '.$validated['last_name']),
+            'address' => $validated['address'] ?? null,
+            'notes' => $validated['notes'] ?? null,
             'phone' => $validated['phone'],
             'email' => $validated['email'] ?? null,
         ]);
 
         return redirect()
-            ->route('workshop.customers.create')
+            ->route('workshop.customers.show', $customer)
             ->with('success', 'Ο πελάτης δημιουργήθηκε.');
     }
 
@@ -387,7 +447,7 @@ class WorkshopController extends Controller
         $modelsByMake = $this->vehicleModelsByMake();
         $makes = array_keys($modelsByMake);
 
-        return view('workshop.vehicles.create', compact('customers', 'makes', 'modelsByMake'));
+        return $this->page('Vehicles/Form', compact('customers', 'makes', 'modelsByMake'));
     }
 
     private function vehicleValidationRules(?Vehicle $vehicle = null): array
@@ -404,6 +464,7 @@ class WorkshopController extends Controller
             'vin' => ['nullable', 'string', 'max:50'],
             'mileage' => ['nullable', 'integer', 'min:0'],
             'kteo_expires_at' => ['nullable', 'date'],
+            'notes' => ['nullable', 'string', 'max:5000'],
         ];
     }
 
@@ -429,12 +490,12 @@ class WorkshopController extends Controller
 
     public function vehiclesStore(Request $request)
     {
-        $validated = $request->validate(
+        $validated = $this->validateRequest($request,
             $this->vehicleValidationRules(),
             $this->vehicleValidationMessages()
         );
 
-        Vehicle::create([
+        $vehicle = Vehicle::create([
             'customer_id' => $validated['customer_id'],
             'plate_number' => $validated['license_plate'],
             'make' => $validated['make'] ?? null,
@@ -443,10 +504,11 @@ class WorkshopController extends Controller
             'vin' => $validated['vin'] ?? null,
             'mileage' => $validated['mileage'] ?? null,
             'kteo_expires_at' => $validated['kteo_expires_at'] ?? null,
+            'notes' => $validated['notes'] ?? null,
         ]);
 
         return redirect()
-            ->route('workshop.vehicles.create')
+            ->route('workshop.vehicles.edit', $vehicle)
             ->with('success', 'Το όχημα προστέθηκε.');
     }
 
@@ -456,12 +518,24 @@ class WorkshopController extends Controller
         $modelsByMake = $this->vehicleModelsByMake();
         $makes = array_keys($modelsByMake);
 
-        return view('workshop.vehicles.edit', compact('vehicle', 'customers', 'makes', 'modelsByMake'));
+        // Read-only history for this vehicle — presentation data only,
+        // no new business logic.
+        $vehicleWorkOrders = WorkOrder::where('vehicle_id', $vehicle->id)->latest()->paginate(20, ['*'], 'work_orders_page')->withQueryString();
+        $vehicleAppointments = Appointment::where('vehicle_id', $vehicle->id)->orderByDesc('appointment_date')->paginate(20, ['*'], 'appointments_page')->withQueryString();
+
+        return $this->page('Vehicles/Form', compact(
+            'vehicle',
+            'customers',
+            'makes',
+            'modelsByMake',
+            'vehicleWorkOrders',
+            'vehicleAppointments',
+        ));
     }
 
     public function vehiclesUpdate(Request $request, Vehicle $vehicle)
     {
-        $validated = $request->validate(
+        $validated = $this->validateRequest($request,
             $this->vehicleValidationRules($vehicle),
             $this->vehicleValidationMessages()
         );
@@ -477,6 +551,7 @@ class WorkshopController extends Controller
             'vin' => $validated['vin'] ?? null,
             'mileage' => $validated['mileage'] ?? null,
             'kteo_expires_at' => $validated['kteo_expires_at'] ?? null,
+            'notes' => $validated['notes'] ?? null,
         ]);
 
         return redirect()
@@ -491,17 +566,19 @@ class WorkshopController extends Controller
 
         $vehicles = Vehicle::with('customer')
             ->whereNotNull('kteo_expires_at')
-            ->where('kteo_expires_at', '<=', $horizon)
+            ->whereDate('kteo_expires_at', '<=', $horizon)
             ->orderByRaw('CASE WHEN kteo_expires_at < ? THEN 0 ELSE 1 END', [$today])
             ->orderBy('kteo_expires_at')
-            ->get();
+            ->paginate(20)->withQueryString();
 
-        return view('workshop.kteo.index', compact('vehicles', 'today'));
+        return $this->page('Kteo/Index', compact('vehicles', 'today'));
     }
 
     public function search(Request $request)
     {
         $q = trim((string) $request->query('q', ''));
+
+        $customers = Customer::where(fn ($c) => $c->where('full_name', 'like', "%{$q}%")->orWhere('phone', 'like', "%{$q}%"))->orderBy('full_name')->paginate(20, ['*'], 'customers_page')->withQueryString();
 
         if ($q === '') {
             $vehicles = Vehicle::with(['customer', 'workOrders' => function ($query) {
@@ -511,7 +588,7 @@ class WorkshopController extends Controller
                 ->paginate(12)
                 ->withQueryString();
 
-            return view('workshop.search', compact('vehicles', 'q'));
+            return $this->page('Search', compact('vehicles', 'q', 'customers'));
         }
 
         // Normalize the plate query: uppercase, no spaces/dashes — so
@@ -529,21 +606,22 @@ class WorkshopController extends Controller
                     });
             })
             ->orderBy('plate_number')
-            ->get();
+            ->paginate(20)->withQueryString();
 
-        return view('workshop.search', compact('vehicles', 'q'));
+        return $this->page('Search', compact('vehicles', 'q', 'customers'));
     }
 
-    public function appointmentsIndex()
+    public function appointmentsIndex(Request $request)
     {
         $today = Carbon::today();
 
         $appointments = Appointment::with(['customer', 'vehicle'])
-            ->where('appointment_date', '>=', $today)
+            ->when(! $request->boolean('history'), fn ($query) => $query->whereDate('appointment_date', '>=', $today))
+            ->when($request->filled('status'), fn ($query) => $query->where('status', $request->query('status')))
             ->orderBy('appointment_date')
-            ->get();
+            ->paginate(20)->withQueryString();
 
-        return view('workshop.appointments.index', compact('appointments', 'today'));
+        return $this->page('Appointments/Index', ['appointments' => $appointments, 'today' => $today, 'filters' => $request->only('history', 'status')]);
     }
 
     public function appointmentsCreate()
@@ -552,17 +630,12 @@ class WorkshopController extends Controller
 
         $vehiclesByCustomer = $this->vehiclesGroupedByCustomer();
 
-        return view('workshop.appointments.create', compact('customers', 'vehiclesByCustomer'));
+        return $this->page('Appointments/Form', compact('customers', 'vehiclesByCustomer'));
     }
 
     public function appointmentsStore(Request $request, CreateAppointmentAction $createAppointment)
     {
-        $partInput = $request->input('part', []);
-        $partSource = $partInput['source'] ?? null;
-        $hasSelectedPart = $partSource && (($partSource === 'from_stock' && ! empty($partInput['part_id']))
-            || ($partSource !== 'from_stock' && ! empty(trim($partInput['description'] ?? ''))));
-
-        $validated = $request->validate([
+        $validated = $this->validateRequest($request, [
             'customer_id' => ['required', 'integer', 'exists:customers,id'],
             'vehicle_id' => [
                 'required',
@@ -597,5 +670,137 @@ class WorkshopController extends Controller
         return redirect()
             ->route('workshop.appointments.index')
             ->with('success', 'Το ραντεβού καταχωρήθηκε.');
+    }
+
+    public function workOrdersEdit(WorkOrder $workOrder)
+    {
+        Gate::authorize('amendCompleted', $workOrder);
+        $workOrder->load('workOrderParts.part');
+
+        return Inertia::render('WorkOrders/Form', [
+            'workOrder' => $workOrder,
+            'customers' => Customer::orderBy('full_name')->get(['id', 'full_name']),
+            'vehiclesByCustomer' => $this->vehiclesGroupedByCustomer(),
+            'parts' => Part::orderBy('name')->get(),
+        ]);
+    }
+
+    public function workOrdersUpdate(Request $request, WorkOrder $workOrder)
+    {
+        Gate::authorize('amendCompleted', $workOrder);
+        $version = $this->validateRequest($request, ['lock_version' => ['required', 'integer']])['lock_version'];
+        $validated = $this->validateWorkOrder($request, $workOrder);
+        if (Gate::denies('administer-pricing')) {
+            $validated['parts'] = $this->costsFromCatalogue($validated['parts'] ?? [], $workOrder);
+        }
+        DB::transaction(function () use ($workOrder, $version, $validated) {
+            $lines = $validated['parts'] ?? [];
+            $attributes = collect($validated)->except(['parts', 'idempotency_key'])->all();
+            $workOrder->updateWithExpectedVersion($version, $attributes);
+            // Replace lines through existing model hooks: no controller stock arithmetic.
+            foreach ($workOrder->workOrderParts()->get() as $line) {
+                $line->delete();
+            }
+            foreach ($lines as $line) {
+                if (blank($line['source'] ?? null)) {
+                    continue;
+                }
+                WorkOrderPart::create([
+                    ...$line,
+                    'work_order_id' => $workOrder->id,
+                    'part_id' => $line['source'] === 'from_stock' ? $line['part_id'] : null,
+                    'unit_cost' => $line['source'] === 'customer_supplied' ? 0 : ($line['unit_cost'] ?? 0),
+                    'line_total' => $line['quantity'] * $line['unit_price'],
+                ]);
+            }
+            $workOrder->calculatePartsCost();
+            if (isset($validated['current_mileage'])) {
+                Vehicle::whereKey($validated['vehicle_id'])
+                    ->where(fn ($q) => $q->whereNull('mileage')->orWhere('mileage', '<', $validated['current_mileage']))
+                    ->update(['mileage' => $validated['current_mileage']]);
+            }
+        });
+
+        return to_route('workshop.work-orders.show', $workOrder)->with('success', 'Η εντολή ενημερώθηκε.');
+    }
+
+    public function customersShow(Customer $customer)
+    {
+        Gate::authorize('view', $customer);
+
+        return Inertia::render('Customers/Show', [
+            'customer' => $customer->load('vehicles'),
+            'workOrders' => $customer->workOrders()->with('vehicle')->latest()->paginate(20)->withQueryString(),
+        ]);
+    }
+
+    public function customersEdit(Customer $customer)
+    {
+        Gate::authorize('update', $customer);
+
+        return Inertia::render('Customers/Form', compact('customer'));
+    }
+
+    public function customersUpdate(Request $request, Customer $customer)
+    {
+        Gate::authorize('update', $customer);
+        $customer->update($this->validateRequest($request, [
+            'full_name' => ['required', 'string', 'max:255'],
+            'phone' => ['required', 'string', 'max:50'],
+            'email' => ['nullable', 'email', 'max:255'],
+            'address' => ['nullable', 'string', 'max:2000'],
+            'notes' => ['nullable', 'string', 'max:5000'],
+        ]));
+
+        return to_route('workshop.customers.show', $customer)->with('success', 'Ο πελάτης ενημερώθηκε.');
+    }
+
+    public function vehiclesIndex(Request $request)
+    {
+        $q = trim((string) $request->query('q', ''));
+        $vehicles = Vehicle::with('customer')->when($q !== '', fn ($query) => $query->where(fn ($sub) => $sub
+            ->where('plate_number', 'like', "%{$q}%")->orWhere('make', 'like', "%{$q}%")->orWhere('model', 'like', "%{$q}%")
+            ->orWhereHas('customer', fn ($c) => $c->where('full_name', 'like', "%{$q}%")->orWhere('phone', 'like', "%{$q}%"))))
+            ->orderBy('plate_number')->paginate(20)->withQueryString();
+
+        return Inertia::render('Vehicles/Index', compact('vehicles', 'q'));
+    }
+
+    public function appointmentsEdit(Appointment $appointment)
+    {
+        Gate::authorize('update', $appointment);
+
+        return Inertia::render('Appointments/Form', [
+            'appointment' => $appointment,
+            'customers' => Customer::orderBy('full_name')->get(['id', 'full_name']),
+            'vehiclesByCustomer' => $this->vehiclesGroupedByCustomer(),
+        ]);
+    }
+
+    public function appointmentsUpdate(Request $request, Appointment $appointment)
+    {
+        Gate::authorize('update', $appointment);
+        $validated = $this->validateRequest($request, [
+            'customer_id' => ['required', 'integer', 'exists:customers,id'],
+            'vehicle_id' => ['required', Rule::exists('vehicles', 'id')->where('customer_id', $request->input('customer_id'))],
+            'appointment_date' => ['required', 'date', 'after_or_equal:today'],
+            'appointment_time' => ['required', 'date_format:H:i'],
+            'description' => ['nullable', 'string', 'max:2000'],
+            'status' => ['required', Rule::in(['scheduled', 'in_progress', 'completed', 'cancelled'])],
+        ]);
+        $validated['appointment_date'] = Carbon::parse($validated['appointment_date'].' '.$validated['appointment_time']);
+        unset($validated['appointment_time']);
+        $appointment->update($validated);
+
+        return to_route('workshop.appointments.index')->with('success', 'Το ραντεβού ενημερώθηκε.');
+    }
+
+    public function partsIndex(Request $request)
+    {
+        $q = trim((string) $request->query('q', ''));
+        $parts = Part::select(['id', 'code', 'name', 'quantity', 'sale_price'])->when($q !== '', fn ($query) => $query->where(fn ($sub) => $sub->where('code', 'like', "%{$q}%")->orWhere('name', 'like', "%{$q}%")))
+            ->orderBy('name')->paginate(20)->withQueryString();
+
+        return Inertia::render('Parts/Index', compact('parts', 'q'));
     }
 }

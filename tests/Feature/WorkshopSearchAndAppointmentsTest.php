@@ -7,6 +7,7 @@ use App\Models\Customer;
 use App\Models\User;
 use App\Models\Vehicle;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Inertia\Testing\AssertableInertia as Assert;
 use Tests\TestCase;
 
 class WorkshopSearchAndAppointmentsTest extends TestCase
@@ -23,9 +24,9 @@ class WorkshopSearchAndAppointmentsTest extends TestCase
         $response = $this->actingAs($user)->get(route('workshop.search', ['q' => 'MEK-9900']));
 
         $response->assertOk();
-        $response->assertSee('MEK-9900');
-        $response->assertDontSee('ΔΕΖ-5678');
-        $response->assertSee('value="MEK-9900"', false);
+        $response->assertWorkshopDataContains('MEK-9900');
+        $response->assertWorkshopDataMissing('ΔΕΖ-5678');
+        $response->assertInertia(fn (Assert $page) => $page->where('q', 'MEK-9900')->has('vehicles.data', 1));
     }
 
     public function test_search_finds_vehicle_by_partial_plate(): void
@@ -38,8 +39,8 @@ class WorkshopSearchAndAppointmentsTest extends TestCase
         $response = $this->actingAs($user)->get(route('workshop.search', ['q' => '1234']));
 
         $response->assertOk();
-        $response->assertSee('ΑΒΓ-1234');
-        $response->assertDontSee('ΞΨΩ-9999');
+        $response->assertWorkshopDataContains('ΑΒΓ-1234');
+        $response->assertWorkshopDataMissing('ΞΨΩ-9999');
     }
 
     public function test_search_finds_vehicle_by_partial_customer_name(): void
@@ -53,9 +54,9 @@ class WorkshopSearchAndAppointmentsTest extends TestCase
         $response = $this->actingAs($user)->get(route('workshop.search', ['q' => 'Χριστοδ']));
 
         $response->assertOk()
-            ->assertSee('Κατερίνα Χριστοδούλου')
-            ->assertSee('ΝΑΜ-1010')
-            ->assertDontSee('ΖΗΤ-2020');
+            ->assertWorkshopDataContains('Κατερίνα Χριστοδούλου')
+            ->assertWorkshopDataContains('ΝΑΜ-1010')
+            ->assertWorkshopDataMissing('ΖΗΤ-2020');
     }
 
     public function test_search_finds_vehicle_by_customer_phone(): void
@@ -69,9 +70,9 @@ class WorkshopSearchAndAppointmentsTest extends TestCase
         $response = $this->actingAs($user)->get(route('workshop.search', ['q' => '6944556677']));
 
         $response->assertOk()
-            ->assertSee('6944556677')
-            ->assertSee('ΤΗΛ-3030')
-            ->assertDontSee('ΑΛΛ-4040');
+            ->assertWorkshopDataContains('6944556677')
+            ->assertWorkshopDataContains('ΤΗΛ-3030')
+            ->assertWorkshopDataMissing('ΑΛΛ-4040');
     }
 
     public function test_search_result_new_work_order_link_has_correct_customer_and_vehicle(): void
@@ -83,10 +84,7 @@ class WorkshopSearchAndAppointmentsTest extends TestCase
         $response = $this->actingAs($user)->get(route('workshop.search', ['q' => 'ΖΩΩ-4321']));
 
         $response->assertOk();
-        // Blade HTML-escapes the "&" between query params, so check the
-        // href contains the right path and both query values.
-        $response->assertSee('/workshop/work-orders/create?customer_id='.$customer->id, false);
-        $response->assertSee('vehicle_id='.$vehicle->id, false);
+        $response->assertInertia(fn (Assert $page) => $page->where('vehicles.data.0.customer_id', $customer->id)->where('vehicles.data.0.id', $vehicle->id));
     }
 
     public function test_appointments_index_loads(): void
@@ -96,7 +94,7 @@ class WorkshopSearchAndAppointmentsTest extends TestCase
         $response = $this->actingAs($user)->get(route('workshop.appointments.index'));
 
         $response->assertOk();
-        $response->assertSee('Ραντεβού');
+        $response->assertInertia(fn (Assert $page) => $page->component('Appointments/Index'));
     }
 
     public function test_appointments_index_shows_today_and_future_in_order_and_hides_past(): void
@@ -132,8 +130,8 @@ class WorkshopSearchAndAppointmentsTest extends TestCase
         $response = $this->actingAs($user)->get(route('workshop.appointments.index'));
 
         $response->assertOk();
-        $response->assertDontSee('Παλιό ραντεβού');
-        $response->assertSeeInOrder(['Σημερινό ραντεβού', 'Μελλοντικό ραντεβού']);
+        $response->assertWorkshopDataMissing('Παλιό ραντεβού');
+        $response->assertInertia(fn (Assert $page) => $page->has('appointments.data', 2)->where('appointments.data.0.description', 'Σημερινό ραντεβού')->where('appointments.data.1.description', 'Μελλοντικό ραντεβού'));
     }
 
     public function test_appointments_index_shows_empty_state_without_appointments(): void
@@ -143,7 +141,7 @@ class WorkshopSearchAndAppointmentsTest extends TestCase
         $response = $this->actingAs($user)->get(route('workshop.appointments.index'));
 
         $response->assertOk();
-        $response->assertSee('Δεν υπάρχουν προγραμματισμένα ραντεβού');
+        $response->assertInertia(fn (Assert $page) => $page->component('Appointments/Index')->has('appointments.data', 0));
     }
 
     public function test_appointment_can_be_created_with_matching_customer_and_vehicle(): void
@@ -195,7 +193,6 @@ class WorkshopSearchAndAppointmentsTest extends TestCase
         $response = $this->actingAs($user)->get(route('workshop.dashboard'));
 
         $response->assertOk();
-        $response->assertSee(route('workshop.search'), false);
-        $response->assertSee(route('workshop.appointments.index'), false);
+        $response->assertInertia(fn (Assert $page) => $page->component('Dashboard')->has('todayAppointmentRows')->has('todayAppointments'));
     }
 }

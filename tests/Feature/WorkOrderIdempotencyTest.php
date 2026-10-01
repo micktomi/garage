@@ -10,6 +10,8 @@ use App\Models\WorkOrder;
 use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Str;
+use Inertia\Testing\AssertableInertia;
 use Tests\TestCase;
 
 /**
@@ -77,7 +79,7 @@ class WorkOrderIdempotencyTest extends TestCase
         $this->actingAs($user)
             ->get(route('workshop.work-orders.create'))
             ->assertOk()
-            ->assertSee('name="idempotency_key"', false);
+            ->assertInertia(fn (AssertableInertia $page) => $page->component('WorkOrders/Form')->where('defaults.idempotency_key', fn ($key) => Str::isUuid($key)));
     }
 
     public function test_the_database_itself_refuses_a_duplicate_idempotency_key(): void

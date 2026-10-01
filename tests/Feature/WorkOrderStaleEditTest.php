@@ -10,11 +10,10 @@ use App\Models\User;
 use App\Models\Vehicle;
 use App\Models\WorkOrder;
 use App\Models\WorkOrderPart;
-use DOMDocument;
-use DOMXPath;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
+use Inertia\Testing\AssertableInertia;
 use Livewire\Livewire;
 use Tests\TestCase;
 
@@ -156,15 +155,9 @@ class WorkOrderStaleEditTest extends TestCase
             ->get(route('workshop.work-orders.show', $workOrder))
             ->assertOk();
 
-        $document = new DOMDocument;
-        @$document->loadHTML($response->getContent());
-        $inputs = (new DOMXPath($document))->query('//form[contains(concat(" ", normalize-space(@class), " "), " wos-status-form ")]//input[@name="lock_version"]');
-
-        $this->assertCount(3, $inputs, 'Every status form must submit the version it was rendered from.');
-
-        foreach ($inputs as $input) {
-            $this->assertSame((string) $workOrder->lock_version, $input->getAttribute('value'));
-        }
+        $response->assertInertia(fn (AssertableInertia $page) => $page
+            ->component('WorkOrders/Show')->where('workOrder.lock_version', $workOrder->lock_version)
+            ->has('workOrderStatuses', 6));
     }
 
     /**

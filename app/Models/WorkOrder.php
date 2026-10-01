@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Enums\WorkOrderStatus;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
 class WorkOrder extends Model
@@ -113,11 +114,13 @@ class WorkOrder extends Model
      * @param  array<string, mixed>  $attributes
      *
      * @throws ValidationException when $expectedVersion no longer matches
-     *                              the row's current lock_version
+     *                             the row's current lock_version
      */
     public function updateWithExpectedVersion(int $expectedVersion, array $attributes): void
     {
         $this->fill($attributes);
+        // Even an unchanged edit must verify its rendered version atomically.
+        $this->setAttribute('lock_version', (int) $this->getRawOriginal('lock_version') + 1);
         $this->expectedLockVersion = $expectedVersion;
 
         try {
@@ -167,6 +170,39 @@ class WorkOrder extends Model
         return true;
     }
 
+    /** Reconcile allocation once per persisted cancellation boundary, atomically. */
+    public function save(array $options = [])
+    {
+        if (! $this->exists || ! $this->isDirty('status')) {
+            return parent::save($options);
+        }
+
+        return DB::transaction(function () use ($options) {
+            $previous = static::query()->whereKey($this->getKey())->lockForUpdate()->firstOrFail()->getRawOriginal('status');
+            $saved = parent::save($options);
+            if (! $saved || $previous === $this->status->value) {
+                return $saved;
+            }
+
+            $wasCancelled = $previous === WorkOrderStatus::Cancelled->value;
+            $isCancelled = $this->status === WorkOrderStatus::Cancelled;
+            if ($wasCancelled !== $isCancelled) {
+                foreach ($this->workOrderParts()->with('part')->get() as $line) {
+                    if ($line->source !== 'from_stock' || ! $line->part) {
+                        continue;
+                    }
+                    if ($isCancelled) {
+                        $line->part->increment('quantity', $line->quantity);
+                    } else {
+                        WorkOrderPart::consumeStock($line->part, (float) $line->quantity);
+                    }
+                }
+            }
+
+            return $saved;
+        });
+    }
+
     protected static function booted(): void
     {
         // Registered before every other updating hook so the version advances
@@ -202,18 +238,5 @@ class WorkOrder extends Model
             }
         });
 
-        static::updated(function (WorkOrder $workOrder) {
-            if (
-                $workOrder->wasChanged('status') &&
-                $workOrder->status === WorkOrderStatus::Cancelled &&
-                $workOrder->getRawOriginal('status') !== WorkOrderStatus::Cancelled->value
-            ) {
-                foreach ($workOrder->workOrderParts as $workOrderPart) {
-                    if ($workOrderPart->source === 'from_stock' && $workOrderPart->part) {
-                        $workOrderPart->part->increment('quantity', $workOrderPart->quantity);
-                    }
-                }
-            }
-        });
     }
 }

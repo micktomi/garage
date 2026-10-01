@@ -2,11 +2,14 @@
 
 namespace Tests\Feature;
 
+use App\Models\Appointment;
 use App\Models\Customer;
 use App\Models\User;
 use App\Models\Vehicle;
 use App\Models\VehicleModel;
+use App\Models\WorkOrder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Inertia\Testing\AssertableInertia as Assert;
 use Tests\TestCase;
 
 class VehicleCreateTest extends TestCase
@@ -30,7 +33,7 @@ class VehicleCreateTest extends TestCase
         $vehicle = Vehicle::first();
 
         $this->assertNotNull($vehicle);
-        $response->assertRedirect(route('workshop.vehicles.create'));
+        $response->assertRedirect(route('workshop.vehicles.edit', Vehicle::latest('id')->first()));
         $this->assertEquals('WVWZZZ1JZXW000001', $vehicle->vin);
         $this->assertEquals(85000, $vehicle->mileage);
         $this->assertTrue($vehicle->customer->is($customer));
@@ -47,7 +50,7 @@ class VehicleCreateTest extends TestCase
             'license_plate' => 'ΕΛΕ-1234',
             'make' => 'Toyota',
             'model' => 'Custom Conversion',
-        ])->assertRedirect(route('workshop.vehicles.create'));
+        ])->assertRedirect(route('workshop.vehicles.edit', Vehicle::latest('id')->first()));
 
         $vehicle = Vehicle::where('plate_number', 'ΕΛΕ-1234')->firstOrFail();
         $this->assertSame('Custom Conversion', $vehicle->model);
@@ -78,8 +81,79 @@ class VehicleCreateTest extends TestCase
         $response = $this->actingAs($user)->get(route('workshop.vehicles.edit', $vehicle));
 
         $response->assertOk();
-        $response->assertSee('JHMFA16588S000001');
-        $response->assertSee('42000');
+        $response->assertWorkshopDataContains('JHMFA16588S000001');
+        $response->assertWorkshopDataContains('42000');
+    }
+
+    public function test_vehicle_edit_shows_its_own_work_orders_and_appointments_only(): void
+    {
+        $user = User::factory()->create();
+        $customer = Customer::create(['full_name' => 'Ελένη Σταύρου']);
+        $vehicle = Vehicle::create([
+            'customer_id' => $customer->id,
+            'plate_number' => 'ΙΣΤ-1111',
+            'make' => 'Toyota',
+            'model' => 'Yaris',
+        ]);
+        $otherVehicle = Vehicle::create([
+            'customer_id' => $customer->id,
+            'plate_number' => 'ΑΛΛ-2222',
+            'make' => 'Honda',
+            'model' => 'Civic',
+        ]);
+
+        WorkOrder::create([
+            'customer_id' => $customer->id,
+            'vehicle_id' => $vehicle->id,
+            'problem_description' => 'Αλλαγή λαδιών κινητήρα',
+            'status' => 'completed',
+        ]);
+        WorkOrder::create([
+            'customer_id' => $customer->id,
+            'vehicle_id' => $otherVehicle->id,
+            'problem_description' => 'Δεν πρέπει να εμφανιστεί εδώ',
+            'status' => 'new',
+        ]);
+
+        Appointment::create([
+            'customer_id' => $customer->id,
+            'vehicle_id' => $vehicle->id,
+            'appointment_date' => now()->addDays(2),
+            'description' => 'Έλεγχος φρένων',
+            'status' => 'scheduled',
+        ]);
+        Appointment::create([
+            'customer_id' => $customer->id,
+            'vehicle_id' => $otherVehicle->id,
+            'appointment_date' => now()->addDays(3),
+            'description' => 'Ραντεβού άλλου οχήματος',
+            'status' => 'scheduled',
+        ]);
+
+        $response = $this->actingAs($user)->get(route('workshop.vehicles.edit', $vehicle));
+
+        $response->assertOk()
+            ->assertWorkshopDataContains('Αλλαγή λαδιών κινητήρα')
+            ->assertWorkshopDataContains('Έλεγχος φρένων')
+            ->assertWorkshopDataMissing('Δεν πρέπει να εμφανιστεί εδώ')
+            ->assertWorkshopDataMissing('Ραντεβού άλλου οχήματος');
+    }
+
+    public function test_vehicle_edit_history_shows_empty_states_without_records(): void
+    {
+        $user = User::factory()->create();
+        $customer = Customer::create(['full_name' => 'Νίκος Δήμου']);
+        $vehicle = Vehicle::create([
+            'customer_id' => $customer->id,
+            'plate_number' => 'ΚΕΝ-3333',
+            'make' => 'Toyota',
+            'model' => 'Corolla',
+        ]);
+
+        $response = $this->actingAs($user)->get(route('workshop.vehicles.edit', $vehicle));
+
+        $response->assertOk()
+            ->assertInertia(fn (Assert $page) => $page->component('Vehicles/Form')->has('vehicleWorkOrders.data', 0)->has('vehicleAppointments.data', 0));
     }
 
     public function test_vehicle_update_allows_correcting_mileage_downward(): void
@@ -123,8 +197,7 @@ class VehicleCreateTest extends TestCase
         // /workshop/vehicles/create is only for entering a brand-new plate
         // manually. Selecting an existing vehicle (and redirecting to its
         // edit page) belongs to the work-order creation flow only.
-        $response->assertDontSee('existing_vehicle_id', false);
-        $response->assertDontSee('VEHICLES_BY_CUSTOMER', false);
+        $response->assertInertia(fn (Assert $page) => $page->component('Vehicles/Form')->missing('existing_vehicle_id')->missing('vehiclesByCustomer'));
     }
 
     public function test_vehicle_store_rejects_duplicate_plate_for_same_customer(): void

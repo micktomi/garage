@@ -55,3 +55,9 @@ Homestead.json
 Homestead.yaml
 
 /storage/backups/
+
+# Local agent tooling and generated UI verification artifacts
+/.agents/
+/docs/workshop/screenshots/
+/docs/workshop/design-lint.json
+/docs/workshop/static-audit.json

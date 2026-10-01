@@ -7,11 +7,10 @@ use App\Models\Customer;
 use App\Models\User;
 use App\Models\Vehicle;
 use App\Models\WorkOrder;
-use DOMDocument;
-use DOMXPath;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Schema;
+use Inertia\Testing\AssertableInertia;
 use Tests\TestCase;
 
 class WorkOrderStatusTest extends TestCase
@@ -101,32 +100,11 @@ class WorkOrderStatusTest extends TestCase
         $response = $this->actingAs($user)
             ->get(route('workshop.work-orders.index'))
             ->assertOk();
-        $xpath = $this->xpath($response->getContent());
-
-        $this->assertCount(count($openOrders), $xpath->query('//a[contains(concat(" ", normalize-space(@class), " "), " wo-btn-open ")]'));
-
-        // The 2026-07-15 status map only ever knew new/in_progress/completed/
-        // cancelled; awaiting_parts and ready fall back to a plain label
-        // rather than the enum's own Greek one, so only assert the exact
-        // label for the statuses the old map actually covers.
-        $knownLabels = [
-            WorkOrderStatus::New->value => WorkOrderStatus::New->label(),
-            WorkOrderStatus::InProgress->value => WorkOrderStatus::InProgress->label(),
-        ];
-
-        foreach ($openOrders as $workOrder) {
-            $response->assertSee($workOrder->vehicle->plate_number);
-
-            if (isset($knownLabels[$workOrder->status->value])) {
-                $response->assertSee($knownLabels[$workOrder->status->value]);
-            }
-        }
-
-        foreach ($closedOrders as $workOrder) {
-            $response
-                ->assertDontSee($workOrder->vehicle->plate_number)
-                ->assertDontSee(route('workshop.work-orders.show', $workOrder), false);
-        }
+        $response->assertInertia(fn (AssertableInertia $page) => $page
+            ->component('WorkOrders/Index')->has('workOrders.data', count($openOrders))
+            ->where('workOrders.data', fn ($items) => collect($items)->pluck('id')->sort()->values()->all() === collect($openOrders)->pluck('id')->sort()->values()->all())
+            ->where('workOrderStatuses', fn ($items) => collect($items)->pluck('value')->all() === array_column(WorkOrderStatus::cases(), 'value'))
+        );
     }
 
     public function test_blocking_reason_flag_and_route_are_removed(): void
@@ -154,13 +132,5 @@ class WorkOrderStatusTest extends TestCase
             'total_cost' => 0,
             'status' => $status,
         ]);
-    }
-
-    private function xpath(string $html): DOMXPath
-    {
-        $document = new DOMDocument;
-        @$document->loadHTML($html);
-
-        return new DOMXPath($document);
     }
 }

@@ -9,6 +9,7 @@ use App\Models\Vehicle;
 use App\Models\WorkOrder;
 use App\Models\WorkOrderPart;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Inertia\Testing\AssertableInertia as Assert;
 use Tests\TestCase;
 
 class WorkOrderCreateTest extends TestCase
@@ -35,7 +36,7 @@ class WorkOrderCreateTest extends TestCase
         $response = $this->actingAs($user)->get(route('workshop.work-orders.create'));
 
         $response->assertOk();
-        $response->assertSee('Νέα Εντολή Εργασίας');
+        $response->assertInertia(fn (Assert $page) => $page->component('WorkOrders/Form'));
     }
 
     public function test_work_order_can_be_created_with_vehicle_belonging_to_customer(): void
@@ -335,7 +336,7 @@ class WorkOrderCreateTest extends TestCase
         $response->assertOk();
         // The vehicle-select JS blob must carry each vehicle's mileage so
         // it can auto-fill the "current mileage" field on selection.
-        $response->assertSee('"mileage":73500', false);
+        $response->assertInertia(fn (Assert $page) => $page->where('vehiclesByCustomer.'.$customer->id.'.0.mileage', 73500));
     }
 
     public function test_work_order_raises_vehicle_mileage_when_higher(): void

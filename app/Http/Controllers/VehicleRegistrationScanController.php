@@ -8,22 +8,28 @@ use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\RequestException;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
-use Illuminate\View\View;
+use Inertia\Inertia;
 use Throwable;
 
 final class VehicleRegistrationScanController extends Controller
 {
-    public function show(): View
+    public function show(Request $request)
     {
-        return view('workshop.registration-scan', ['extracted' => null]);
+        if ($request->boolean('new')) {
+            $request->session()->forget('workshop_registration_review');
+        }
+        $old = $request->session()->getOldInput();
+
+        return Inertia::render('RegistrationScan/Index', [
+            'extracted' => ($old['review_ready'] ?? false) ? $old : $request->session()->get('workshop_registration_review'),
+            'modelsByMake' => WorkshopController::vehicleModelsByMake(),
+        ]);
     }
 
-    public function extract(Request $request, VehicleRegistrationExtractor $extractor): Response|RedirectResponse
+    public function extract(Request $request, VehicleRegistrationExtractor $extractor)
     {
-        $serverStartedAt = hrtime(true);
         $validated = $request->validate([
             'registration_image' => ['required', 'file', 'image', 'mimes:jpg,jpeg,png,webp', 'max:10240'],
             'browser_preprocess_ms' => ['nullable', 'numeric', 'min:0', 'max:120000'],
@@ -56,21 +62,9 @@ final class VehicleRegistrationScanController extends Controller
                 ->withErrors(['registration_image' => 'Η αναγνώριση απέτυχε. Δεν αποθηκεύτηκε τίποτα.']);
         }
 
-        $timings = [
-            'browser_preprocess_ms' => round((float) ($validated['browser_preprocess_ms'] ?? 0), 1),
-            ...$extractor->timings(),
-            'server_total_ms' => round((hrtime(true) - $serverStartedAt) / 1_000_000, 1),
-        ];
+        $request->session()->put('workshop_registration_review', $extracted);
 
-        $response = response()->view('workshop.registration-scan', compact('extracted', 'timings'));
-        $response->headers->set('Server-Timing', sprintf(
-            'gemini;dur=%.1f, decode;dur=%.1f, server;dur=%.1f',
-            $timings['gemini_ms'],
-            $timings['decode_validation_ms'],
-            $timings['server_total_ms'],
-        ));
-
-        return $response;
+        return to_route('workshop.registration-scan.show');
     }
 
     public function store(Request $request, CreateCustomerVehicleFromRegistrationAction $action): RedirectResponse
@@ -83,6 +77,8 @@ final class VehicleRegistrationScanController extends Controller
                 ->withErrors($exception->errors())
                 ->withInput();
         }
+
+        $request->session()->forget('workshop_registration_review');
 
         $message = $result['customer_reused']
             ? 'Το όχημα δημιουργήθηκε και συνδέθηκε με τον υπάρχοντα πελάτη του ίδιου ΑΦΜ.'

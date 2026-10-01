@@ -9,6 +9,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
+use Inertia\Testing\AssertableInertia as Assert;
 use Tests\TestCase;
 
 class VehicleRegistrationScanTest extends TestCase
@@ -27,17 +28,7 @@ class VehicleRegistrationScanTest extends TestCase
         $response = $this->actingAs(User::factory()->create())
             ->get(route('workshop.registration-scan.show'));
 
-        $response->assertOk()
-            ->assertSee('name="registration_image"', false)
-            ->assertSee('accept="image/jpeg,image/png,image/webp"', false)
-            ->assertSee('capture="environment"', false)
-            ->assertSee('enctype="multipart/form-data"', false)
-            ->assertSee('const maxDimension = 3072', false)
-            ->assertSee("canvas.toBlob(resolve, 'image/jpeg', 0.9)", false)
-            ->assertSee('όλα τα τμήματα στο κάδρο')
-            ->assertSee("imageOrientation: 'from-image'", false)
-            ->assertSee('new DataTransfer()', false)
-            ->assertSee('name="browser_preprocess_ms"', false);
+        $response->assertOk()->assertInertia(fn (Assert $page) => $page->component('RegistrationScan/Index')->where('extracted', null)->has('modelsByMake'));
     }
 
     public function test_extract_rejects_non_image_uploads_without_storing_them(): void
@@ -86,13 +77,11 @@ class VehicleRegistrationScanTest extends TestCase
                 'registration_image' => UploadedFile::fake()->image('adeia.jpg', 1200, 800),
             ]);
 
-        $response->assertOk()
-            ->assertSee('Απαραίτητος ανθρώπινος έλεγχος')
-            ->assertSee('value="Μαρία Ιωάννου"', false)
-            ->assertSee('value="ΙΥΖ-5020"', false)
-            ->assertSee('value="VF3LRYHZPJS396912"', false)
-            ->assertSee('action="'.route('workshop.registration-scan.store').'"', false);
-        $response->assertHeader('Server-Timing');
+        $response->assertRedirect(route('workshop.registration-scan.show'));
+        $this->get(route('workshop.registration-scan.show'))->assertInertia(fn (Assert $page) => $page
+            ->component('RegistrationScan/Index')->where('extracted.owner_full_name', 'Μαρία Ιωάννου')
+            ->where('extracted.plate_number', 'ΙΥΖ-5020')->where('extracted.vin', 'VF3LRYHZPJS396912')
+            ->where('extracted.make', 'Volkswagen')->where('extracted.model', 'Golf'));
         $this->assertSame([], Storage::disk('local')->allFiles());
         $this->assertDatabaseCount('customers', 0);
         $this->assertDatabaseCount('vehicles', 0);
@@ -130,11 +119,9 @@ class VehicleRegistrationScanTest extends TestCase
                 'registration_image' => UploadedFile::fake()->image('adeia.jpg', 1200, 800),
             ]);
 
-        $response->assertOk()
-            ->assertSee('value="Μαρία Ιωάννου"', false)
-            ->assertSee('value="ΙΥΖ-5020"', false)
-            ->assertSee('name="vin" maxlength="50" value=""', false)
-            ->assertDontSee('VF3LRYHZPIS396912');
+        $response->assertRedirect(route('workshop.registration-scan.show'));
+        $this->get(route('workshop.registration-scan.show'))->assertInertia(fn (Assert $page) => $page
+            ->where('extracted.owner_full_name', 'Μαρία Ιωάννου')->where('extracted.plate_number', 'ΙΥΖ-5020')->where('extracted.vin', null));
         $this->assertSame([], Storage::disk('local')->allFiles());
     }
 
@@ -283,8 +270,8 @@ class VehicleRegistrationScanTest extends TestCase
             ->post(route('workshop.registration-scan.extract'), [
                 'registration_image' => UploadedFile::fake()->image('adeia.jpg'),
             ])
-            ->assertOk()
-            ->assertSee('value="VF3LRYHZPJS396912"', false);
+            ->assertRedirect(route('workshop.registration-scan.show'));
+        $this->get(route('workshop.registration-scan.show'))->assertInertia(fn (Assert $page) => $page->where('extracted.vin', 'VF3LRYHZPJS396912'));
 
         $this->actingAs($user)
             ->post(route('workshop.registration-scan.store'), [
@@ -343,8 +330,7 @@ class VehicleRegistrationScanTest extends TestCase
 
         $this->get(route('workshop.registration-scan.show'))
             ->assertOk()
-            ->assertSee('name="confirm_near_vin"', false)
-            ->assertSee('Έλεγξα ξανά το πεδίο (E)');
+            ->assertInertia(fn (Assert $page) => $page->component('RegistrationScan/Index')->has('errors.near_vin')->where('extracted.vin', $payload['vin']));
 
         $this->actingAs($user)
             ->post(route('workshop.registration-scan.store'), [

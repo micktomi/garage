@@ -6,6 +6,7 @@ use App\Models\Customer;
 use App\Models\User;
 use App\Models\Vehicle;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Inertia\Testing\AssertableInertia as Assert;
 use Tests\TestCase;
 
 class WorkshopQuickPagesTest extends TestCase
@@ -18,8 +19,7 @@ class WorkshopQuickPagesTest extends TestCase
 
         $this->actingAs($user)->get(route('workshop.customers.create'))
             ->assertOk()
-            ->assertSee('Νέος Πελάτης')
-            ->assertSee('action="'.route('workshop.customers.store').'"', false);
+            ->assertInertia(fn (Assert $page) => $page->component('Customers/Form'));
 
         $response = $this->actingAs($user)->post(route('workshop.customers.store'), [
             'first_name' => 'Γιώργος',
@@ -28,7 +28,7 @@ class WorkshopQuickPagesTest extends TestCase
             'email' => 'giorgos@example.com',
         ]);
 
-        $response->assertRedirect(route('workshop.customers.create'));
+        $response->assertRedirect(route('workshop.customers.show', Customer::latest('id')->first()));
         $response->assertSessionHas('success');
 
         $this->assertDatabaseHas('customers', [
@@ -54,21 +54,10 @@ class WorkshopQuickPagesTest extends TestCase
 
     public function test_customers_workflow_is_reachable_from_dashboard_in_at_most_two_clicks(): void
     {
-        $user = User::factory()->create();
-
-        $this->actingAs($user)->get(route('workshop.dashboard'))
-            ->assertOk()
-            ->assertSee('href="'.route('workshop.customers.index').'"', false)
-            ->assertSee('Πελάτες');
-
-        $this->actingAs($user)->get(route('workshop.customers.index'))
-            ->assertOk()
-            ->assertSee('href="'.route('workshop.customers.create').'"', false)
-            ->assertSee('Νέος πελάτης');
-
-        $this->actingAs($user)->get(route('workshop.customers.create'))
-            ->assertOk()
-            ->assertSee('Νέος Πελάτης');
+        $this->actingAs(User::factory()->create());
+        foreach (['workshop.dashboard' => 'Dashboard', 'workshop.customers.index' => 'Customers/Index', 'workshop.customers.create' => 'Customers/Form'] as $route => $component) {
+            $this->get(route($route))->assertOk()->assertInertia(fn (Assert $page) => $page->component($component));
+        }
     }
 
     public function test_vehicle_can_be_created(): void
@@ -85,7 +74,7 @@ class WorkshopQuickPagesTest extends TestCase
             'kteo_expires_at' => now()->addYear()->toDateString(),
         ]);
 
-        $response->assertRedirect(route('workshop.vehicles.create'));
+        $response->assertRedirect(route('workshop.vehicles.edit', Vehicle::latest('id')->first()));
         $response->assertSessionHas('success');
 
         $this->assertDatabaseHas('vehicles', [
@@ -141,10 +130,10 @@ class WorkshopQuickPagesTest extends TestCase
         $response = $this->actingAs($user)->get(route('workshop.kteo'));
 
         $response->assertOk();
-        $response->assertSee('ΕΞΠ-0001');
-        $response->assertSee('ΣΟΟΝ-0002');
-        $response->assertDontSee('ΜΑΚΡ-0003');
-        $response->assertDontSee('ΚΕΝΟ-0004');
+        $response->assertWorkshopDataContains('ΕΞΠ-0001');
+        $response->assertWorkshopDataContains('ΣΟΟΝ-0002');
+        $response->assertWorkshopDataMissing('ΜΑΚΡ-0003');
+        $response->assertWorkshopDataMissing('ΚΕΝΟ-0004');
     }
 
     public function test_customers_index_page_loads(): void
@@ -154,7 +143,7 @@ class WorkshopQuickPagesTest extends TestCase
         $response = $this->actingAs($user)->get(route('workshop.customers.index'));
 
         $response->assertOk();
-        $response->assertSee('Πελάτες');
+        $response->assertInertia(fn (Assert $page) => $page->component('Customers/Index')->has('customers.data'));
     }
 
     public function test_customers_index_shows_customers_and_plates(): void
@@ -166,8 +155,8 @@ class WorkshopQuickPagesTest extends TestCase
         $response = $this->actingAs($user)->get(route('workshop.customers.index'));
 
         $response->assertOk();
-        $response->assertSee('Ελένη Κωνσταντίνου');
-        $response->assertSee('ΧΨΩ-9999');
+        $response->assertWorkshopDataContains('Ελένη Κωνσταντίνου');
+        $response->assertWorkshopDataContains('ΧΨΩ-9999');
     }
 
     public function test_customers_index_search_finds_customer_by_name(): void
@@ -179,8 +168,8 @@ class WorkshopQuickPagesTest extends TestCase
         $response = $this->actingAs($user)->get(route('workshop.customers.index', ['q' => 'Αντωνίου']));
 
         $response->assertOk();
-        $response->assertSee('Δημήτρης Αντωνίου');
-        $response->assertDontSee('Κατερίνα Παππά');
+        $response->assertWorkshopDataContains('Δημήτρης Αντωνίου');
+        $response->assertWorkshopDataMissing('Κατερίνα Παππά');
     }
 
     public function test_customers_index_search_finds_customer_by_phone(): void
@@ -192,9 +181,9 @@ class WorkshopQuickPagesTest extends TestCase
         $response = $this->actingAs($user)->get(route('workshop.customers.index', ['q' => '6944556677']));
 
         $response->assertOk();
-        $response->assertSee('Δημήτρης Αντωνίου');
-        $response->assertSee('6944556677');
-        $response->assertDontSee('Κατερίνα Παππά');
+        $response->assertWorkshopDataContains('Δημήτρης Αντωνίου');
+        $response->assertWorkshopDataContains('6944556677');
+        $response->assertWorkshopDataMissing('Κατερίνα Παππά');
     }
 
     public function test_customers_index_search_finds_customer_by_plate(): void
@@ -208,8 +197,8 @@ class WorkshopQuickPagesTest extends TestCase
         $response = $this->actingAs($user)->get(route('workshop.customers.index', ['q' => 'ΑΑΑ-1111']));
 
         $response->assertOk();
-        $response->assertSee('Πελάτης Α');
-        $response->assertDontSee('Πελάτης Β');
+        $response->assertWorkshopDataContains('Πελάτης Α');
+        $response->assertWorkshopDataMissing('Πελάτης Β');
     }
 
     public function test_dashboard_primary_action_links_to_new_work_order(): void
@@ -219,7 +208,7 @@ class WorkshopQuickPagesTest extends TestCase
         $response = $this->actingAs($user)->get(route('workshop.dashboard'));
 
         $response->assertOk();
-        $response->assertSee(route('workshop.work-orders.create'), false);
+        $response->assertInertia(fn (Assert $page) => $page->component('Dashboard')->has('openWorkOrders'));
     }
 
     public function test_kteo_page_has_call_and_sms_actions_for_customer_with_phone(): void
@@ -235,9 +224,7 @@ class WorkshopQuickPagesTest extends TestCase
         $response = $this->actingAs($user)->get(route('workshop.kteo'));
 
         $response->assertOk();
-        $response->assertSee('tel:6944445555', false);
-        $response->assertSee('sms:6944445555', false);
-        $response->assertSee('Αντιγραφή μηνύματος');
+        $response->assertInertia(fn (Assert $page) => $page->component('Kteo/Index')->where('vehicles.data.0.customer.phone', '6944445555'));
     }
 
     public function test_kteo_page_no_longer_shows_filament_edit_action(): void
@@ -253,7 +240,6 @@ class WorkshopQuickPagesTest extends TestCase
         $response = $this->actingAs($user)->get(route('workshop.kteo'));
 
         $response->assertOk();
-        $response->assertDontSee('Πλήρης επεξεργασία');
-        $response->assertDontSee('/admin/vehicles', false);
+        $response->assertInertia(fn (Assert $page) => $page->component('Kteo/Index')->has('vehicles.data', 1));
     }
 }

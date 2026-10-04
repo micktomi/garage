@@ -4,7 +4,7 @@
     "scripts": {
         "build": "vite build",
         "dev": "vite",
-        "test": "node tests/Frontend/workshop.test.js"
+        "test": "node --test tests/Frontend/*.test.js"
     },
     "devDependencies": {
         "@vitejs/plugin-react": "^4.7.0",

@@ -72,12 +72,15 @@ class VehicleRegistrationScanTest extends TestCase
             ]],
         ])]);
 
+        $image = UploadedFile::fake()->image('adeia.jpg', 1200, 800);
+        $imageBytes = $image->get();
         $response = $this->actingAs(User::factory()->create())
             ->post(route('workshop.registration-scan.extract'), [
-                'registration_image' => UploadedFile::fake()->image('adeia.jpg', 1200, 800),
+                'registration_image' => $image,
             ]);
 
         $response->assertRedirect(route('workshop.registration-scan.show'));
+        Http::assertSent(fn ($request) => data_get($request->data(), 'contents.0.parts.1.inlineData.data') === base64_encode($imageBytes));
         $this->get(route('workshop.registration-scan.show'))->assertInertia(fn (Assert $page) => $page
             ->component('RegistrationScan/Index')->where('extracted.owner_full_name', 'Μαρία Ιωάννου')
             ->where('extracted.plate_number', 'ΙΥΖ-5020')->where('extracted.vin', 'VF3LRYHZPJS396912')

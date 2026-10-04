@@ -4,11 +4,12 @@ name: Garage Manager Workshop
 description: Greek desktop workspace for the service counter and workshop queue.
 colors:
   primary: '#3659d9'
-  background: '#f4f6f9'
+  background: '#edf1f6'
+  surface-muted: '#f3f6fa'
   surface: '#ffffff'
   text: '#182230'
   muted: '#596779'
-  border: '#dce2ea'
+  border: '#ccd5e1'
   danger: '#a32d3b'
   success: '#246848'
   warning: '#885513'
@@ -46,7 +47,8 @@ Runtime token owner: `resources/css/workshop.css`, scoped under `.workshop-app`.
 This document mirrors those canonical tokens; neither generates Filament tokens.
 
 ## Colors
-Light workspace, white panels, dark text, one blue primary accent. Status colors
+Cool grey workspace, white panels, lightly shaded panel/table headers and form
+actions, dark text, one blue primary accent. Status colors
 have textual labels from the server. Neutral metrics; danger only for actionable
 risk, not decoration. No dark theme in this migration.
 
@@ -64,7 +66,14 @@ labelled collapsible region in document flow; every destination remains reachabl
 
 ## Elevation & Depth
 Borders and spacing carry hierarchy. Subtle shadow only on panels/dialogs;
-no gradients, decorative glow, or full-card status backgrounds.
+no gradients, decorative glow, or full-card status backgrounds. Panel borders
+and a faint shadow separate the white cards from the workspace.
+
+Token path: `workshop.css` owns `--page`, `--surface`, `--surface-muted`,
+`--border` and the semantic tone foreground/background/border variables; shared
+Panel, DataTable, Form and Feedback components consume them through their CSS
+classes. `colors.background`, `colors.surface`, `colors.surface-muted` and
+`colors.border` above mirror those runtime values. Filament has no adapter.
 
 ## Shapes
 8px controls/panels; restrained pill status badges. Thin plate border indicates

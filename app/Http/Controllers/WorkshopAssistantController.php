@@ -30,7 +30,9 @@ class WorkshopAssistantController extends Controller
     {
         return Inertia::render('Assistant/Index', [
             ...$this->state($request),
-            'enabled' => (bool) config('garage-assistant.enabled') && filled(config('garage-assistant.gemini.api_key')),
+            'enabled' => (bool) config('garage-assistant.enabled')
+                && filled(config('garage-assistant.gemini.api_key'))
+                && filled(config('garage-assistant.gemini.model')),
         ]);
     }
 

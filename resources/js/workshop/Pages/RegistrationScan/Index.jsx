@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useRef, useState } from "react";
 import { useForm, usePage } from "@inertiajs/react";
 import {
     Button,
@@ -51,8 +51,11 @@ function Upload() {
         browser_preprocess_ms: null,
     });
     const [preparing, setPreparing] = useState(false);
+    const camera = useRef(null);
+    const gallery = useRef(null);
     const select = async (e) => {
         const file = e.target.files?.[0];
+        e.target.value = "";
         if (!file) return;
         form.clearErrors();
         form.setData({ registration_image: null, browser_preprocess_ms: null });
@@ -91,23 +94,63 @@ function Upload() {
                 <section className="ws-form-section">
                     <h2>Φωτογραφία εγγράφου</h2>
                     <div className="ws-upload">
-                        <label htmlFor="registration_image">
-                            <strong>Επιλέξτε ή φωτογραφίστε την άδεια</strong>
-                        </label>
-                        <p>
+                        <strong id="registration-upload-label">
+                            Επιλέξτε ή φωτογραφίστε την άδεια
+                        </strong>
+                        <p id="registration-upload-hint">
                             Καθαρή εικόνα, χωρίς αντανακλάσεις, με όλα τα
                             τμήματα στο κάδρο. JPEG, PNG ή WebP έως 10 MB.
                         </p>
+                        <div
+                            className="ws-actions"
+                            role="group"
+                            aria-labelledby="registration-upload-label"
+                        >
+                            <Button
+                                onClick={() => camera.current?.click()}
+                                disabled={preparing || form.processing}
+                                aria-describedby="registration-upload-hint registration-upload-error"
+                            >
+                                Λήψη φωτογραφίας
+                            </Button>
+                            <Button
+                                onClick={() => gallery.current?.click()}
+                                disabled={preparing || form.processing}
+                                aria-describedby="registration-upload-hint registration-upload-error"
+                            >
+                                Επιλογή αρχείου
+                            </Button>
+                        </div>
                         <input
+                            ref={camera}
+                            id="registration_camera"
+                            name="registration_image"
+                            type="file"
+                            accept="image/*"
+                            capture="environment"
+                            hidden
+                            onChange={select}
+                            disabled={preparing || form.processing}
+                            aria-label="Λήψη φωτογραφίας άδειας"
+                        />
+                        <input
+                            ref={gallery}
                             id="registration_image"
                             name="registration_image"
                             type="file"
                             accept="image/jpeg,image/png,image/webp"
-                            capture="environment"
+                            hidden
                             onChange={select}
                             disabled={preparing || form.processing}
-                            aria-invalid={!!form.errors.registration_image}
+                            aria-label="Επιλογή εικόνας άδειας από αρχεία"
                         />
+                        <p
+                            id="registration-upload-error"
+                            className="ws-field-error"
+                            role="alert"
+                        >
+                            {form.errors.registration_image}
+                        </p>
                         {form.data.registration_image && (
                             <p>{form.data.registration_image.name}</p>
                         )}

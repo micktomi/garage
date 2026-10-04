@@ -9,6 +9,8 @@ import {
     PageHeading,
     Panel,
 } from "../../Components/ui";
+import { speechErrorMessage, createSpeechDiagnostics } from "./speech";
+
 export default function Index({ messages, proposal, ambiguity, enabled }) {
     const form = useForm({ message: "", action: "send" });
     const [confirm, setConfirm] = useState(false);
@@ -31,8 +33,14 @@ export default function Index({ messages, proposal, ambiguity, enabled }) {
         });
     };
     const dictate = () => {
+        const diagnostics = createSpeechDiagnostics(import.meta.env.DEV, window);
+        diagnostics.inspect();
         const Recognition =
             window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (!window.isSecureContext) {
+            setSpeechError(speechErrorMessage("insecure-context"));
+            return;
+        }
         if (!Recognition) {
             setSpeechError(
                 "Η υπαγόρευση δεν υποστηρίζεται από αυτόν τον browser. Γράψτε το αίτημά σας.",
@@ -52,16 +60,27 @@ export default function Index({ messages, proposal, ambiguity, enabled }) {
                 "message",
                 `${form.data.message} ${e.results[0][0].transcript}`.trim(),
             );
-        recognition.onend = () => setListening(false);
-        recognition.onerror = () => {
-            setSpeechError(
-                "Η υπαγόρευση δεν ολοκληρώθηκε. Ελέγξτε το μικρόφωνο ή γράψτε το αίτημά σας.",
-            );
+        recognition.onstart = () => diagnostics.report("recognition-start");
+        recognition.onaudiostart = () => diagnostics.report("microphone-audio-start");
+        recognition.onend = () => {
+            diagnostics.report("recognition-end");
+            setListening(false);
+        };
+        recognition.onerror = (event) => {
+            diagnostics.report("recognition-error", { error: event.error });
+            diagnostics.permission();
+            setSpeechError(speechErrorMessage(event.error));
             setListening(false);
         };
         setSpeechError("");
         setListening(true);
-        recognition.start();
+        try {
+            recognition.start();
+        } catch (error) {
+            diagnostics.report("recognition-start-error", { error: error.name });
+            setListening(false);
+            setSpeechError(speechErrorMessage(error.name));
+        }
     };
     return (
         <>
@@ -101,7 +120,7 @@ export default function Index({ messages, proposal, ambiguity, enabled }) {
                 )}
                 {messages.map((m, i) => (
                     <article
-                        className={`ws-message ${m.role === "user" ? "ws-message-user" : ""}`}
+                        className={`ws-message ${m.role === "user" ? "ws-message-user" : m.type === "error" ? "ws-message-error" : ""}`}
                         key={i}
                     >
                         <small>

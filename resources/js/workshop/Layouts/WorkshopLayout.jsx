@@ -174,7 +174,7 @@ export default function WorkshopLayout({ children }) {
                     </span>
                     <Button href="/workshop/work-orders/create" primary>
                         <Icon name="plus" />
-                        Νέα εντολή
+                        <span className="ws-btn-label">Νέα εντολή</span>
                     </Button>
                 </header>
                 <main id="workspace" className="ws-content" aria-busy={busy}>

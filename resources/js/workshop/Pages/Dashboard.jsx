@@ -1,6 +1,7 @@
 import React from "react";
 import { Link } from "@inertiajs/react";
 import {
+    Icon,
     PageHeading,
     Panel,
     DataTable,
@@ -20,24 +21,32 @@ export default function Dashboard(props) {
             props.vehiclesInShop,
             "Οχήματα με ενεργή παραμονή",
             "/workshop/work-orders",
+            "info",
+            "car",
         ],
         [
             "Ανοικτές εντολές",
             props.openWorkOrders,
             `${props.awaitingParts} σε αναμονή ανταλλακτικού`,
             "/workshop/work-orders",
+            "warning",
+            "work",
         ],
         [
             "Ραντεβού σήμερα",
             props.todayAppointments,
             "Η σημερινή ουρά υποδοχής",
             "/workshop/appointments",
+            "success",
+            "calendar",
         ],
         [
             "ΚΤΕΟ που έληξαν",
             props.expiredKteo,
             `${props.expiringKteo} λήγουν σε 30 ημέρες`,
             "/workshop/kteo",
+            props.expiredKteo ? "danger" : "neutral",
+            "check",
         ],
     ];
     return (
@@ -47,17 +56,23 @@ export default function Dashboard(props) {
                 description={props.todayLabel}
             >
                 <Button href="/workshop/registration-scan">
-                    Σάρωση άδειας
+                    <Icon name="scan" />
+                    <span className="ws-btn-label">Σάρωση άδειας</span>
                 </Button>
             </PageHeading>
             <div className="ws-metrics">
-                {metrics.map(([label, count, note, href], i) => (
+                {metrics.map(([label, count, note, href, tone, icon], i) => (
                     <Link
-                        className="ws-panel ws-metric"
+                        className={`ws-panel ws-metric ws-metric-${tone}`}
                         href={href}
                         key={label}
                     >
-                        <span className="ws-metric-label">{label}</span>
+                        <span className="ws-metric-top">
+                            <span className="ws-metric-label">{label}</span>
+                            <span className="ws-metric-icon">
+                                <Icon name={icon} />
+                            </span>
+                        </span>
                         <strong className={i === 3 && count ? "ws-danger" : ""}>
                             {count}
                         </strong>

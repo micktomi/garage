@@ -226,7 +226,9 @@ export function StatusBadge({ status, appointment = false }) {
 }
 export function Plate({ vehicle, link = true }) {
     if (!vehicle) return "—";
-    const badge = <span className="ws-plate">{vehicle.plate_number}</span>;
+    const badge = (
+        <span className="ws-plate ws-plate-gr">{vehicle.plate_number}</span>
+    );
     return link ? (
         <Link
             href={`/workshop/vehicles/${vehicle.id}/edit`}
@@ -267,6 +269,7 @@ export function DataTable({ columns, data, empty, caption }) {
                                     {columns.map((col) => (
                                         <td
                                             key={col.label}
+                                            data-label={col.label}
                                             className={
                                                 col.numeric ? "numeric" : ""
                                             }

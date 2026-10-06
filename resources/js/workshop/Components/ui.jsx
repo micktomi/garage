@@ -560,3 +560,42 @@ export const workOrderColumns = [
     { label: "Κατάσταση", render: (o) => <StatusBadge status={o.status} /> },
     { label: "Σύνολο", numeric: true, render: (o) => money(o.total_cost) },
 ];
+export function WorkOrderTable(props) {
+    return (
+        <div className="ws-wo">
+            <ul className="ws-wo-list">
+                {rows(props.data).map((o) => (
+                    <li key={o.id}>
+                        <Link
+                            className="ws-wo-row"
+                            href={`/workshop/work-orders/${o.id}`}
+                        >
+                            <span className="ws-wo-line">
+                                <Plate vehicle={o.vehicle} link={false} />
+                                <span className="ws-wo-text ws-muted">
+                                    {[o.vehicle?.make, o.vehicle?.model]
+                                        .filter(Boolean)
+                                        .join(" ")}
+                                </span>
+                                <StatusBadge status={o.status} />
+                            </span>
+                            <span className="ws-wo-line">
+                                <span className="ws-wo-text">
+                                    <strong>
+                                        {o.customer?.full_name || "—"}
+                                    </strong>
+                                    {o.problem_description &&
+                                        ` · ${o.problem_description}`}
+                                </span>
+                                <span className="ws-wo-total">
+                                    {money(o.total_cost)}
+                                </span>
+                            </span>
+                        </Link>
+                    </li>
+                ))}
+            </ul>
+            <DataTable columns={workOrderColumns} {...props} />
+        </div>
+    );
+}

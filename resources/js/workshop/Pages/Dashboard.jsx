@@ -5,7 +5,7 @@ import {
     PageHeading,
     Panel,
     DataTable,
-    workOrderColumns,
+    WorkOrderTable,
     Plate,
     Button,
     date,
@@ -89,9 +89,8 @@ export default function Dashboard(props) {
                         </Link>
                     }
                 >
-                    <DataTable
+                    <WorkOrderTable
                         data={props.inShopWorkOrders}
-                        columns={workOrderColumns}
                         empty={{
                             title: "Το συνεργείο είναι ελεύθερο",
                             description:
@@ -184,10 +183,7 @@ export default function Dashboard(props) {
                     </Panel>
                 </div>
                 <Panel title="Πρόσφατες ανοικτές εντολές">
-                    <DataTable
-                        data={props.recentWorkOrders}
-                        columns={workOrderColumns}
-                    />
+                    <WorkOrderTable data={props.recentWorkOrders} />
                 </Panel>
             </div>
         </>

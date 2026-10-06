@@ -1,11 +1,10 @@
 import React from "react";
 import { router, usePage } from "@inertiajs/react";
 import {
-    DataTable,
     PageHeading,
     Panel,
     SearchFilter,
-    workOrderColumns,
+    WorkOrderTable,
 } from "../../Components/ui";
 export default function Index({ workOrders, q, status }) {
     const { workOrderStatuses } = usePage().props;
@@ -39,11 +38,7 @@ export default function Index({ workOrders, q, status }) {
                 </select>
             </SearchFilter>
             <Panel>
-                <DataTable
-                    data={workOrders}
-                    columns={workOrderColumns}
-                    caption="Εντολές εργασίας"
-                />
+                <WorkOrderTable data={workOrders} caption="Εντολές εργασίας" />
             </Panel>
         </>
     );

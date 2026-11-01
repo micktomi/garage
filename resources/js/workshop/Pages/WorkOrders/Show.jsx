@@ -2,18 +2,23 @@ import React, { useState, useEffect } from "react";
 import { Link, useForm, usePage } from "@inertiajs/react";
 import {
     Button,
+    CardPerson,
     ConfirmDialog,
     DataTable,
-    Field,
-    Form,
+    DetailList,
     Feedback,
+    Field,
+    Icon,
     PageHeading,
     Panel,
     Plate,
+    RecordCard,
     StatusBadge,
-    customerLink,
+    PhoneLink,
     date,
     money,
+    padId,
+    vehicleName,
 } from "../../Components/ui";
 export default function Show({ workOrder: order, canEdit }) {
     const { workOrderStatuses } = usePage().props;
@@ -43,7 +48,7 @@ export default function Show({ workOrder: order, canEdit }) {
     return (
         <>
             <PageHeading
-                title={`Εντολή #${String(order.id).padStart(4, "0")}`}
+                title={`Εντολή ${padId(order.id)}`}
                 description={`Δημιουργήθηκε ${date(order.created_at)} · ${order.in_shop ? "Το όχημα βρίσκεται στο συνεργείο" : "Το όχημα έχει αποχωρήσει"}`}
             >
                 <a
@@ -71,14 +76,7 @@ export default function Show({ workOrder: order, canEdit }) {
                         action={<StatusBadge status={order.status} />}
                         body
                     >
-                        <dl className="ws-detail-list">
-                            {details.map(([label, value]) => (
-                                <div key={label}>
-                                    <dt>{label}</dt>
-                                    <dd>{value ?? "—"}</dd>
-                                </div>
-                            ))}
-                        </dl>
+                        <DetailList items={details} />
                     </Panel>
                     <Panel title="Ανταλλακτικά και υλικά">
                         <DataTable
@@ -142,41 +140,49 @@ export default function Show({ workOrder: order, canEdit }) {
                     </Panel>
                 </div>
                 <div className="ws-stack">
-                    <Panel title="Πελάτης και όχημα" body>
-                        <h2>{customerLink(order.customer)}</h2>
-                        <p className="ws-muted">
-                            {order.customer?.phone || "Χωρίς τηλέφωνο"}
-                        </p>
-                        <hr className="ws-divider" />
-                        <Plate vehicle={order.vehicle} />
-                        <p>
-                            {order.vehicle?.make} {order.vehicle?.model}
-                        </p>
-                        <div className="ws-actions" style={{ marginTop: 18 }}>
-                            {order.customer?.phone && (
-                                <>
-                                    <a
-                                        className="ws-btn"
-                                        href={`tel:${order.customer.phone}`}
-                                    >
-                                        Κλήση
-                                    </a>
-                                    <a
-                                        className="ws-btn"
-                                        href={`sms:${order.customer.phone}?body=${encodeURIComponent(`Το όχημά σας ${order.vehicle?.plate_number} είναι έτοιμο προς παραλαβή.`)}`}
-                                    >
-                                        Άνοιγμα SMS
-                                    </a>
-                                </>
-                            )}
+                    <section>
+                        <div className="ws-section-head">
+                            <h2>Πελάτης και όχημα</h2>
                         </div>
-                        <hr className="ws-divider" />
-                        <Link
+                        <RecordCard
                             href={`/workshop/vehicles/${order.vehicle_id}/edit`}
+                            label={`Ιστορικό οχήματος ${order.vehicle?.plate_number || ""}`}
+                            plate={
+                                order.vehicle && (
+                                    <Plate vehicle={order.vehicle} link={false} />
+                                )
+                            }
+                            title={vehicleName(order.vehicle) || "Όχημα"}
+                            subtitle={order.vehicle?.year}
+                            meta={
+                                !order.customer?.phone && (
+                                    <span>Χωρίς τηλέφωνο</span>
+                                )
+                            }
+                            actions={
+                                <>
+                                    <PhoneLink customer={order.customer} />
+                                    {order.customer?.phone && (
+                                        <a
+                                            className="ws-icon-btn"
+                                            href={`sms:${order.customer.phone}?body=${encodeURIComponent(`Το όχημά σας ${order.vehicle?.plate_number} είναι έτοιμο προς παραλαβή.`)}`}
+                                            aria-label="Άνοιγμα SMS"
+                                        >
+                                            <Icon name="sms" size={16} />
+                                        </a>
+                                    )}
+                                    <Button
+                                        href={`/workshop/vehicles/${order.vehicle_id}/edit`}
+                                        className="ws-btn-sm"
+                                    >
+                                        Ιστορικό οχήματος
+                                    </Button>
+                                </>
+                            }
                         >
-                            Ιστορικό οχήματος →
-                        </Link>
-                    </Panel>
+                            <CardPerson customer={order.customer} />
+                        </RecordCard>
+                    </section>
                     <Panel title="Κατάσταση εντολής" body>
                         {canEdit ? (
                             <>
@@ -200,7 +206,7 @@ export default function Show({ workOrder: order, canEdit }) {
                                             ? setConfirm(true)
                                             : changeStatus()
                                     }
-                                    style={{ marginTop: 16 }}
+                                    className="ws-mt-4"
                                 >
                                     Ενημέρωση κατάστασης
                                 </Button>
@@ -216,7 +222,7 @@ export default function Show({ workOrder: order, canEdit }) {
             </div>
             <ConfirmDialog
                 open={confirm}
-                title={`Ακύρωση εντολής #${order.id}`}
+                title={`Ακύρωση εντολής ${padId(order.id)}`}
                 danger
                 confirmLabel="Ακύρωση εντολής"
                 busy={form.processing}

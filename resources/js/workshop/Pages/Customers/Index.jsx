@@ -1,13 +1,6 @@
 import React from "react";
-import { Link } from "@inertiajs/react";
-import {
-    DataTable,
-    PageHeading,
-    Panel,
-    SearchFilter,
-    Button,
-    customerLink,
-} from "../../Components/ui";
+import { Button, CardGrid, FilterBar, PageHeading } from "../../Components/ui";
+import { CustomerCard } from "../../Components/cards";
 export default function Index({ customers, q }) {
     return (
         <>
@@ -19,34 +12,18 @@ export default function Index({ customers, q }) {
                     Νέος πελάτης
                 </Button>
             </PageHeading>
-            <SearchFilter url="/workshop/customers" q={q} />
-            <Panel>
-                <DataTable
-                    data={customers}
-                    columns={[
-                        { label: "Πελάτης", render: (c) => customerLink(c) },
-                        {
-                            label: "Τηλέφωνο",
-                            render: (c) =>
-                                c.phone ? (
-                                    <a href={`tel:${c.phone}`}>{c.phone}</a>
-                                ) : (
-                                    "—"
-                                ),
-                        },
-                        { label: "Email", render: (c) => c.email || "—" },
-                        { label: "Οχήματα", render: (c) => c.vehicles_count },
-                        {
-                            label: "Ενέργεια",
-                            render: (c) => (
-                                <Link href={`/workshop/customers/${c.id}`}>
-                                    Καρτέλα πελάτη →
-                                </Link>
-                            ),
-                        },
-                    ]}
-                />
-            </Panel>
+            <FilterBar url="/workshop/customers" q={q} />
+            <CardGrid
+                data={customers}
+                caption="Πελάτες"
+                unit={["πελάτης", "πελάτες"]}
+                render={(customer) => <CustomerCard customer={customer} />}
+                empty={{
+                    title: "Δεν βρέθηκαν πελάτες",
+                    description:
+                        "Αλλάξτε την αναζήτηση ή καταχωρίστε νέο πελάτη.",
+                }}
+            />
         </>
     );
 }

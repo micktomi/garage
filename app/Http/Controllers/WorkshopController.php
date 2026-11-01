@@ -69,20 +69,19 @@ class WorkshopController extends Controller
         $todayAppointments = Appointment::whereDate('appointment_date', $today)->count();
         $awaitingParts = WorkOrder::where('status', WorkOrderStatus::AwaitingParts->value)->count();
 
-        // The strip answers "what is on the floor now", the list below answers
-        // "what is still owed to a customer" — deliberately different sets.
         $vehiclesInShop = WorkOrder::inShop()->distinct()->count('vehicle_id');
-        $inShopWorkOrders = WorkOrder::with(['customer', 'vehicle'])
-            ->inShop()
-            ->latest()
-            ->take(8)
-            ->get();
 
-        $recentWorkOrders = WorkOrder::with(['customer', 'vehicle'])
+        // The board lays every open order out by status. Oldest first, because the
+        // order that has waited longest is the one the counter should see first.
+        $boardWorkOrders = WorkOrder::with(['customer', 'vehicle'])
             ->whereIn('status', $openStatuses)
-            ->latest()
-            ->take(8)
+            ->orderBy('created_at')
+            ->take(120)
             ->get();
+        $boardCounts = WorkOrder::whereIn('status', $openStatuses)
+            ->selectRaw('status, count(*) as total')
+            ->groupBy('status')
+            ->pluck('total', 'status');
 
         $kteoBase = fn () => Vehicle::with('customer')->whereNotNull('kteo_expires_at');
 
@@ -115,8 +114,8 @@ class WorkshopController extends Controller
             'expiredKteo',
             'awaitingParts',
             'vehiclesInShop',
-            'inShopWorkOrders',
-            'recentWorkOrders',
+            'boardWorkOrders',
+            'boardCounts',
             'expiredKteoVehicles',
             'expiringKteo',
             'expiringKteoVehicles',

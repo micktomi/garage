@@ -1,15 +1,12 @@
 import React from "react";
 import {
+    Button,
+    CardGrid,
+    DetailList,
     PageHeading,
     Panel,
-    Button,
-    DataTable,
-    Plate,
-    date,
-    StatusBadge,
-    money,
 } from "../../Components/ui";
-import { Link } from "@inertiajs/react";
+import { VehicleCard, WorkOrderCard } from "../../Components/cards";
 export default function Show({ customer, workOrders }) {
     return (
         <>
@@ -29,127 +26,79 @@ export default function Show({ customer, workOrders }) {
                     Επεξεργασία πελάτη
                 </Button>
             </PageHeading>
-            <div className="ws-stack">
-                <Panel title="Στοιχεία επικοινωνίας" body>
-                    <dl className="ws-detail-list">
-                        <div>
-                            <dt>Τηλέφωνο</dt>
-                            <dd>
-                                {customer.phone ? (
-                                    <a href={`tel:${customer.phone}`}>
-                                        {customer.phone}
-                                    </a>
-                                ) : (
-                                    "—"
-                                )}
-                            </dd>
+            <div className="ws-columns ws-columns-lead">
+                <div className="ws-aside">
+                    <Panel title="Στοιχεία επικοινωνίας" body>
+                        <DetailList
+                            items={[
+                                [
+                                    "Τηλέφωνο",
+                                    customer.phone ? (
+                                        <a href={`tel:${customer.phone}`}>
+                                            {customer.phone}
+                                        </a>
+                                    ) : null,
+                                ],
+                                [
+                                    "Email",
+                                    customer.email ? (
+                                        <a href={`mailto:${customer.email}`}>
+                                            {customer.email}
+                                        </a>
+                                    ) : null,
+                                ],
+                                ["Διεύθυνση", customer.address],
+                                ["Σημειώσεις", customer.notes],
+                                ...(customer.afm ? [["ΑΦΜ", customer.afm]] : []),
+                            ]}
+                        />
+                    </Panel>
+                </div>
+                <div className="ws-stack ws-main-col">
+                    <section>
+                        <div className="ws-section-head">
+                            <h2>Οχήματα</h2>
                         </div>
-                        <div>
-                            <dt>Email</dt>
-                            <dd>
-                                {customer.email ? (
-                                    <a href={`mailto:${customer.email}`}>
-                                        {customer.email}
-                                    </a>
-                                ) : (
-                                    "—"
-                                )}
-                            </dd>
-                        </div>
-                        <div>
-                            <dt>Διεύθυνση</dt>
-                            <dd>{customer.address || "—"}</dd>
-                        </div>
-                        <div>
-                            <dt>Σημειώσεις</dt>
-                            <dd>{customer.notes || "—"}</dd>
-                        </div>
-                        {customer.afm && (
-                            <div>
-                                <dt>ΑΦΜ</dt>
-                                <dd>{customer.afm}</dd>
-                            </div>
-                        )}
-                    </dl>
-                </Panel>
-                <Panel title="Οχήματα">
-                    <DataTable
-                        data={customer.vehicles}
-                        columns={[
-                            {
-                                label: "Πινακίδα",
-                                render: (v) => <Plate vehicle={v} />,
-                            },
-                            {
-                                label: "Μάρκα / μοντέλο",
-                                render: (v) =>
-                                    `${v.make || ""} ${v.model || ""}`,
-                            },
-                            {
-                                label: "ΚΤΕΟ",
-                                render: (v) => date(v.kteo_expires_at),
-                            },
-                            {
-                                label: "Ενέργεια",
-                                render: (v) => (
-                                    <Link
-                                        href={`/workshop/work-orders/create?customer_id=${customer.id}&vehicle_id=${v.id}`}
+                        <CardGrid
+                            data={customer.vehicles}
+                            caption="Οχήματα του πελάτη"
+                            render={(vehicle) => (
+                                <VehicleCard
+                                    vehicle={vehicle}
+                                    intent="order"
+                                    showCustomer={false}
+                                />
+                            )}
+                            empty={{
+                                title: "Δεν υπάρχει όχημα για τον πελάτη",
+                                description:
+                                    "Προσθέστε το πρώτο όχημα για να καταχωρίσετε εργασία.",
+                                action: (
+                                    <Button
+                                        href={`/workshop/vehicles/create?customer_id=${customer.id}`}
                                     >
-                                        Νέα εντολή →
-                                    </Link>
+                                        Προσθήκη οχήματος
+                                    </Button>
                                 ),
-                            },
-                        ]}
-                        empty={{
-                            title: "Δεν υπάρχει όχημα για τον πελάτη",
-                            description:
-                                "Προσθέστε το πρώτο όχημα για να καταχωρίσετε εργασία.",
-                            action: (
-                                <Button
-                                    href={`/workshop/vehicles/create?customer_id=${customer.id}`}
-                                >
-                                    Προσθήκη οχήματος
-                                </Button>
-                            ),
-                        }}
-                    />
-                </Panel>
-                <Panel title="Ιστορικό εργασιών">
-                    <DataTable
-                        data={workOrders}
-                        columns={[
-                            {
-                                label: "Εντολή",
-                                render: (o) => (
-                                    <Link
-                                        href={`/workshop/work-orders/${o.id}`}
-                                    >
-                                        #{o.id}
-                                    </Link>
-                                ),
-                            },
-                            {
-                                label: "Όχημα",
-                                render: (o) => <Plate vehicle={o.vehicle} />,
-                            },
-                            {
-                                label: "Εργασία",
-                                render: (o) => o.problem_description,
-                            },
-                            {
-                                label: "Κατάσταση",
-                                render: (o) => (
-                                    <StatusBadge status={o.status} />
-                                ),
-                            },
-                            {
-                                label: "Σύνολο",
-                                numeric: true,
-                                render: (o) => money(o.total_cost),
-                            },
-                        ]}
-                    />
-                </Panel>
+                            }}
+                        />
+                    </section>
+                    <section>
+                        <div className="ws-section-head">
+                            <h2>Ιστορικό εργασιών</h2>
+                        </div>
+                        <CardGrid
+                            data={workOrders}
+                            caption="Ιστορικό εργασιών"
+                            render={(order) => <WorkOrderCard order={order} />}
+                            empty={{
+                                title: "Καμία εντολή ακόμη",
+                                description:
+                                    "Οι εντολές του πελάτη εμφανίζονται εδώ.",
+                            }}
+                        />
+                    </section>
+                </div>
             </div>
         </>
     );

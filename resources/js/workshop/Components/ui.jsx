@@ -1,5 +1,7 @@
 import React, { useEffect, useId, useRef, useState } from "react";
 import { Head, Link, router, usePage } from "@inertiajs/react";
+import { daysBetween, kteoStatus } from "./dates";
+export { kteoStatus };
 
 export const money = (value) =>
     new Intl.NumberFormat("el-GR", {
@@ -15,31 +17,31 @@ export const date = (value) =>
               year: "numeric",
           }).format(new Date(value))
         : "—";
-export const time = (value) =>
-    value
-        ? new Intl.DateTimeFormat("el-GR", {
-              timeZone: "Europe/Athens",
-              hour: "2-digit",
-              minute: "2-digit",
-          }).format(new Date(value))
-        : "—";
 export const rows = (collection) =>
     Array.isArray(collection) ? collection : collection?.data || [];
 export function Icon({ name = "grid", size = 18 }) {
     const paths = {
+        home: "M3 11l9-8 9 8 M5 10v10h14V10 M10 20v-6h4v6",
         grid: "M3 3h7v7H3z M14 3h7v7h-7z M3 14h7v7H3z M14 14h7v7h-7z",
-        work: "M4 6h16v15H4z M8 3h8v6H8z M8 13h8 M8 17h5",
-        calendar: "M3 5h18v16H3z M7 3v4 M17 3v4 M3 10h18",
-        people: "M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2 M13 7a4 4 0 1 1-8 0a4 4 0 0 1 8 0 M17 3a4 4 0 0 1 0 8 M22 21v-2a4 4 0 0 0-3-4",
-        car: "M3 13l2-7h14l2 7 M3 13h18v6H3z M6 19v2 M18 19v2 M6 16h2 M16 16h2",
-        check: "M4 12l5 5L20 6",
-        parts: "M3 7l9-4 9 4-9 4z M3 7v10l9 4 9-4V7 M12 11v10",
+        work: "M9 4h6v3H9z M7 5H5v16h14V5h-2 M9 12h6 M9 16h4",
+        calendar: "M4 6h16v14H4z M4 10h16 M8 3v5 M16 3v5",
+        people: "M9 11a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7z M2.5 20c0-3.3 2.9-6 6.5-6s6.5 2.7 6.5 6 M16 4.5a3.2 3.2 0 0 1 0 6 M18 14.3c2 .7 3.5 2.6 3.5 5.7",
+        car: "M4 17v-5l2-5h12l2 5v5z M4 17v2 M20 17v2 M7 14h2 M15 14h2 M4 12h16",
+        check: "M12 3l8 3v6c0 4.5-3.4 8-8 9-4.6-1-8-4.5-8-9V6z M8.5 12l2.5 2.5 4.5-5",
+        parts: "M3 7.5l9-4.5 9 4.5v9l-9 4.5-9-4.5z M3 7.5l9 4.5 9-4.5 M12 12v9",
         assistant:
-            "M12 3v3 M12 18v3 M3 12h3 M18 12h3 M8 8l4-2 4 2 2 4-2 4-4 2-4-2-2-4z",
-        scan: "M3 8V3h5 M16 3h5v5 M21 16v5h-5 M8 21H3v-5 M7 8h10v8H7z",
+            "M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z M18 16l.8 2.2L21 19l-2.2.8L18 22l-.8-2.2L15 19l2.2-.8z",
+        scan: "M4 8V5a1 1 0 0 1 1-1h3 M16 4h3a1 1 0 0 1 1 1v3 M20 16v3a1 1 0 0 1-1 1h-3 M8 20H5a1 1 0 0 1-1-1v-3 M8 9h8v6H8z",
         arrow: "M5 12h14 M13 6l6 6-6 6",
-        admin: "M12 3l9 5v6c0 4-9 7-9 7s-9-3-9-7V8z",
+        admin: "M4 7h10 M18 7h2 M4 17h2 M10 17h10 M16 5v4 M8 15v4",
         plus: "M12 5v14 M5 12h14",
+        search: "M11 18a7 7 0 1 0 0-14 7 7 0 0 0 0 14z M20 20l-4-4",
+        phone: "M6 3h3l2 5-2 1.5a11 11 0 0 0 5.5 5.5L16 13l5 2v3a2 2 0 0 1-2 2A16 16 0 0 1 4 5a2 2 0 0 1 2-2z",
+        more: "M5 12h.01 M12 12h.01 M19 12h.01",
+        open: "M7 17L17 7 M8 7h9v9",
+        close: "M6 6l12 12 M18 6L6 18",
+        sms: "M4 5h16v11H9l-5 4z M8 9h8 M8 12h5",
+        copy: "M9 9h11v11H9z M5 15H4V4h11v1",
     };
     return (
         <svg
@@ -48,7 +50,7 @@ export function Icon({ name = "grid", size = 18 }) {
             viewBox="0 0 24 24"
             fill="none"
             stroke="currentColor"
-            strokeWidth="1.6"
+            strokeWidth="1.7"
             strokeLinecap="round"
             strokeLinejoin="round"
             aria-hidden="true"
@@ -213,21 +215,54 @@ export function EmptyState({
         </div>
     );
 }
+// Work-order status values carry finer colour than the server's three tones:
+// waiting for parts is its own signal and a completed order goes quiet.
+export function statusTone(status, tone, appointment = false) {
+    if (appointment) return tone || "neutral";
+    if (status === "awaiting_parts") return "parts";
+    if (status === "completed") return "calm";
+    return tone || "neutral";
+}
+/* The one badge: a status, a deadline or a stock warning all use it. */
+export function Badge({ tone = "neutral", mono = false, children }) {
+    return (
+        <span className={`ws-badge ws-badge-${tone} ${mono ? "ws-badge-mono" : ""}`}>
+            {children}
+        </span>
+    );
+}
 export function StatusBadge({ status, appointment = false }) {
     const props = usePage().props;
     const choice = (
         appointment ? props.appointmentStatuses : props.workOrderStatuses
     )?.find((item) => item.value === status);
     return (
-        <span className={`ws-badge ws-badge-${choice?.tone || "neutral"}`}>
+        <Badge tone={statusTone(status, choice?.tone, appointment)}>
             {choice?.label || status || "—"}
-        </span>
+        </Badge>
+    );
+}
+export const padId = (id) => `#${String(id).padStart(4, "0")}`;
+/* Label/value facts for detail pages and asides. */
+export function DetailList({ items }) {
+    return (
+        <dl className="ws-detail-list">
+            {items.map(([label, value]) => (
+                <div key={label}>
+                    <dt>{label}</dt>
+                    <dd>{value ?? "—"}</dd>
+                </div>
+            ))}
+        </dl>
     );
 }
 export function Plate({ vehicle, link = true }) {
     if (!vehicle) return "—";
     const badge = (
-        <span className="ws-plate ws-plate-gr">{vehicle.plate_number}</span>
+        <span className="ws-plate ws-plate-gr">
+            <i aria-hidden="true">GR</i>
+            <b>{vehicle.plate_number}</b>
+        </span>
     );
     return link ? (
         <Link
@@ -238,6 +273,18 @@ export function Plate({ vehicle, link = true }) {
         </Link>
     ) : (
         badge
+    );
+}
+/* "8 εντολές": the count that replaces the pager when everything fits on one page. */
+export function ListCount({ data, unit }) {
+    if (!unit) return null;
+    const total = Array.isArray(data) ? data.length : (data?.total ?? 0);
+    if (!total) return null;
+    const noun = Array.isArray(unit) ? unit[total === 1 ? 0 : 1] : unit;
+    return (
+        <p className="ws-list-count">
+            {total} {noun}
+        </p>
     );
 }
 export function DataTable({ columns, data, empty, caption }) {
@@ -290,7 +337,7 @@ export function DataTable({ columns, data, empty, caption }) {
     );
 }
 export function Pagination({ data }) {
-    if (!data || Array.isArray(data)) return null;
+    if (!data || Array.isArray(data) || !(data.last_page > 1)) return null;
     return (
         <div className="ws-pager">
             <span>
@@ -320,11 +367,12 @@ export function Pagination({ data }) {
         </div>
     );
 }
-export function SearchFilter({ url, q = "", children, params = {} }) {
+/* The one filter row: optional search, then page-specific controls as children. */
+export function FilterBar({ url, q = "", children, params = {}, search = true }) {
     const [query, setQuery] = useState(q);
     const ref = useRef();
     useEffect(() => setQuery(q), [q]);
-    const search = (value) =>
+    const run = (value) =>
         router.get(
             url,
             { ...params, q: value },
@@ -336,34 +384,36 @@ export function SearchFilter({ url, q = "", children, params = {} }) {
             noValidate
             onSubmit={(e) => {
                 e.preventDefault();
-                search(query);
+                if (search) run(query);
             }}
         >
-            <div className="ws-search">
-                <input
-                    ref={ref}
-                    className="ws-input"
-                    aria-label="Αναζήτηση"
-                    placeholder="Αναζήτηση…"
-                    value={query}
-                    onChange={(e) => setQuery(e.target.value)}
-                />
-                {query && (
-                    <button
-                        type="button"
-                        aria-label="Καθαρισμός αναζήτησης"
-                        onClick={() => {
-                            setQuery("");
-                            search("");
-                            ref.current.focus();
-                        }}
-                    >
-                        ×
-                    </button>
-                )}
-            </div>
+            {search && (
+                <div className="ws-search">
+                    <input
+                        ref={ref}
+                        className="ws-input"
+                        aria-label="Αναζήτηση"
+                        placeholder="Αναζήτηση…"
+                        value={query}
+                        onChange={(e) => setQuery(e.target.value)}
+                    />
+                    {query && (
+                        <button
+                            type="button"
+                            aria-label="Καθαρισμός αναζήτησης"
+                            onClick={() => {
+                                setQuery("");
+                                run("");
+                                ref.current.focus();
+                            }}
+                        >
+                            ×
+                        </button>
+                    )}
+                </div>
+            )}
             {children}
-            <Button type="submit">Αναζήτηση</Button>
+            {search && <Button type="submit">Αναζήτηση</Button>}
         </form>
     );
 }
@@ -514,88 +564,116 @@ export const customerLink = (customer) =>
     ) : (
         "—"
     );
-export const workOrderColumns = [
-    {
-        label: "Εντολή",
-        render: (o) => (
-            <Link
-                className="ws-record-link"
-                href={`/workshop/work-orders/${o.id}`}
-            >
-                #{String(o.id).padStart(4, "0")}
-                <small>{date(o.created_at)}</small>
-            </Link>
-        ),
-    },
-    {
-        label: "Όχημα",
-        render: (o) => (
-            <>
-                <Plate vehicle={o.vehicle} />
-                <small>
-                    {[o.vehicle?.make, o.vehicle?.model]
-                        .filter(Boolean)
-                        .join(" ")}
-                </small>
-            </>
-        ),
-    },
-    {
-        label: "Πελάτης",
-        render: (o) => (
-            <>
-                {customerLink(o.customer)}
-                <small>{o.customer?.phone}</small>
-            </>
-        ),
-    },
-    {
-        label: "Εργασία",
-        render: (o) => (
-            <Link href={`/workshop/work-orders/${o.id}`}>
-                {o.problem_description}
-            </Link>
-        ),
-    },
-    { label: "Κατάσταση", render: (o) => <StatusBadge status={o.status} /> },
-    { label: "Σύνολο", numeric: true, render: (o) => money(o.total_cost) },
-];
-export function WorkOrderTable(props) {
+export const vehicleName = (vehicle) =>
+    [vehicle?.make, vehicle?.model].filter(Boolean).join(" ");
+// Days an order has been with the garage; five or more is flagged as late.
+export const orderAge = (order) =>
+    daysBetween(order.checked_in_at || order.created_at);
+export const LATE_AFTER_DAYS = 5;
+export function Age({ days }) {
+    if (days === null || days === undefined) return null;
     return (
-        <div className="ws-wo">
-            <ul className="ws-wo-list">
-                {rows(props.data).map((o) => (
-                    <li key={o.id}>
+        <span
+            className={`ws-age ${days >= LATE_AFTER_DAYS ? "ws-age-late" : ""}`}
+        >
+            {days <= 0 ? "σήμερα" : `${days} ημ.`}
+        </span>
+    );
+}
+export function PhoneLink({ customer }) {
+    if (!customer?.phone) return null;
+    return (
+        <a
+            className="ws-icon-btn"
+            href={`tel:${customer.phone}`}
+            aria-label={`Κλήση ${customer.full_name}`}
+        >
+            <Icon name="phone" size={16} />
+        </a>
+    );
+}
+
+/* Shared card shell for list pages. Header: plate, title, status badge.
+   Body: the facts that matter. Footer: metadata and the primary action.
+   The title link covers the whole card; inner links and buttons sit above it. */
+export function RecordCard({
+    href,
+    label,
+    plate,
+    title,
+    subtitle,
+    badge,
+    children,
+    meta,
+    actions,
+}) {
+    return (
+        <article className="ws-card">
+            <header className={`ws-card-head ${plate ? "" : "ws-card-head-plain"}`}>
+                {plate && <div className="ws-card-plate">{plate}</div>}
+                <div className="ws-card-title">
+                    <h3>
                         <Link
-                            className="ws-wo-row"
-                            href={`/workshop/work-orders/${o.id}`}
+                            className="ws-card-link"
+                            href={href}
+                            aria-label={label}
                         >
-                            <span className="ws-wo-line">
-                                <Plate vehicle={o.vehicle} link={false} />
-                                <span className="ws-wo-text ws-muted">
-                                    {[o.vehicle?.make, o.vehicle?.model]
-                                        .filter(Boolean)
-                                        .join(" ")}
-                                </span>
-                                <StatusBadge status={o.status} />
-                            </span>
-                            <span className="ws-wo-line">
-                                <span className="ws-wo-text">
-                                    <strong>
-                                        {o.customer?.full_name || "—"}
-                                    </strong>
-                                    {o.problem_description &&
-                                        ` · ${o.problem_description}`}
-                                </span>
-                                <span className="ws-wo-total">
-                                    {money(o.total_cost)}
-                                </span>
-                            </span>
+                            {title}
                         </Link>
-                    </li>
-                ))}
-            </ul>
-            <DataTable columns={workOrderColumns} {...props} />
+                    </h3>
+                    {subtitle && <p>{subtitle}</p>}
+                </div>
+                {badge && <div className="ws-card-badge">{badge}</div>}
+            </header>
+            <div className="ws-card-body">{children}</div>
+            <footer className="ws-card-foot">
+                <div className="ws-card-meta">{meta}</div>
+                <div className="ws-card-actions">{actions}</div>
+            </footer>
+        </article>
+    );
+}
+export function CardPerson({ customer }) {
+    return (
+        <div className="ws-card-person">
+            <Icon name="people" size={15} />
+            {customerLink(customer)}
+            {customer?.phone && <span>{customer.phone}</span>}
+        </div>
+    );
+}
+export function CardFacts({ items }) {
+    const shown = items.filter(([, value]) => value);
+    if (!shown.length) return null;
+    return (
+        <dl className="ws-card-facts">
+            {shown.map(([label, value]) => (
+                <div key={label}>
+                    <dt>{label}</dt>
+                    <dd>{value}</dd>
+                </div>
+            ))}
+        </dl>
+    );
+}
+/* A responsive grid of cards with the same empty state and pagination as DataTable. */
+export function CardGrid({ data, render, empty, caption, unit }) {
+    const items = rows(data);
+    return (
+        <div className="ws-card-wrap">
+            <ListCount data={data} unit={unit} />
+            {items.length ? (
+                <ul className="ws-card-grid" aria-label={caption}>
+                    {items.map((item) => (
+                        <li key={item.id}>{render(item)}</li>
+                    ))}
+                </ul>
+            ) : (
+                <Panel>
+                    <EmptyState {...empty} />
+                </Panel>
+            )}
+            <Pagination data={data} />
         </div>
     );
 }

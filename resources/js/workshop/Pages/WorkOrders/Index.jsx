@@ -1,11 +1,11 @@
 import React from "react";
 import { router, usePage } from "@inertiajs/react";
 import {
+    CardGrid,
     PageHeading,
-    Panel,
-    SearchFilter,
-    WorkOrderTable,
+    FilterBar,
 } from "../../Components/ui";
+import { WorkOrderCard } from "../../Components/cards";
 export default function Index({ workOrders, q, status }) {
     const { workOrderStatuses } = usePage().props;
     return (
@@ -14,11 +14,10 @@ export default function Index({ workOrders, q, status }) {
                 title="Εντολές εργασίας"
                 description="Η ουρά εργασιών και το ιστορικό του συνεργείου."
             />
-            <SearchFilter url="/workshop/work-orders" q={q} params={{ status }}>
+            <FilterBar url="/workshop/work-orders" q={q} params={{ status }}>
                 <select
                     aria-label="Κατάσταση εντολών"
-                    className="ws-input"
-                    style={{ width: "auto" }}
+                    className="ws-input ws-field-auto"
                     value={status}
                     onChange={(e) =>
                         router.get("/workshop/work-orders", {
@@ -36,10 +35,18 @@ export default function Index({ workOrders, q, status }) {
                         </option>
                     ))}
                 </select>
-            </SearchFilter>
-            <Panel>
-                <WorkOrderTable data={workOrders} caption="Εντολές εργασίας" />
-            </Panel>
+            </FilterBar>
+            <CardGrid
+                data={workOrders}
+                caption="Εντολές εργασίας"
+                unit={["εντολή", "εντολές"]}
+                render={(order) => <WorkOrderCard order={order} />}
+                empty={{
+                    title: "Δεν βρέθηκαν εντολές",
+                    description:
+                        "Αλλάξτε την αναζήτηση ή το φίλτρο κατάστασης.",
+                }}
+            />
         </>
     );
 }

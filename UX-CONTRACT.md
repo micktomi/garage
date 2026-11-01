@@ -20,8 +20,12 @@ are introduced. Filament keeps administration and the existing authentication.
 ## Dataset navigation
 20 rows/server page; q/status/history/page persisted in query string. Explicit
 Enter/search applies filters; clear applies immediately. No automatic remote
-search means no debounce race. Native table with horizontal overflow on narrow
-screens. No bulk selection. Empty/no-results have text and an actionable next step.
+search means no debounce race. Lists are card grids (`CardGrid`/`RecordCard`): two
+columns when the list is at least 640px wide, one column below. The pager is shown
+only when there is more than one page; a count line replaces it otherwise. Tables
+are reserved for numeric comparison (work-order material lines, parts catalogue)
+and scroll horizontally on narrow screens. No bulk selection. Empty/no-results use
+the shared `EmptyState`: what is missing and what to do next.
 
 ## Flow ledger
 Create customer -> customer detail -> add vehicle. Create vehicle -> vehicle edit
@@ -31,8 +35,11 @@ AI -> proposal -> explicit confirmation -> shared executor; cancellation discard
 the shared token. Mutations wait for server confirmation; busy disables duplicates.
 
 ## Navigation and responsive behavior
-Page Head uses Greek title + Garage Manager. Fixed sidebar desktop, labelled
-collapsible narrow navigation. Tables scroll horizontally, long forms vertically.
+Page Head uses Greek title + Garage Manager. Fixed sidebar desktop; below 900px a
+bottom tab bar (Home, Orders, New, Appointments, Menu) and the full navigation as a
+modal sheet (Escape closes, focus returns to the Menu tab). Detail and form pages
+share a 2fr/1fr frame; the aside moves below the main column on narrow screens.
+Long forms scroll vertically.
 Print remains existing Blade in a separate browser tab. Error pages show a Greek explanation and a safe return to the workshop.
 
 ## Validation and resilience

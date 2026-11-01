@@ -176,7 +176,7 @@ export default function Index({ messages, proposal, ambiguity, enabled }) {
                                 ),
                             )}
                         </dl>
-                        <div className="ws-actions" style={{ marginTop: 20 }}>
+                        <div className="ws-actions ws-mt-6">
                             <Button
                                 primary
                                 onClick={() => setConfirm(true)}
@@ -204,7 +204,7 @@ export default function Index({ messages, proposal, ambiguity, enabled }) {
                                 as="textarea"
                                 placeholder="Γράψτε τι θέλετε να βρείτε ή να προετοιμάσετε…"
                             />
-                            <p className="ws-muted" style={{ marginTop: 10 }}>
+                            <p className="ws-muted ws-mt-3">
                                 Η υπαγόρευση συμπληρώνει το κείμενο για έλεγχο
                                 πριν την αποστολή.
                             </p>

@@ -1,189 +1,163 @@
 import React from "react";
-import { Link } from "@inertiajs/react";
+import { Head, Link } from "@inertiajs/react";
 import {
-    Icon,
-    PageHeading,
-    Panel,
-    DataTable,
-    WorkOrderTable,
-    Plate,
-    Button,
-    date,
-    time,
-    customerLink,
-    StatusBadge,
     EmptyState,
+    Icon,
+    Panel,
+    Plate,
+    StatusBadge,
+    date,
+    kteoStatus,
 } from "../Components/ui";
+import { StatusBoard } from "../Components/cards";
+import { timeOfDay } from "../Components/dates";
+
+const vehicleName = (vehicle) =>
+    [vehicle?.make, vehicle?.model].filter(Boolean).join(" ");
+
 export default function Dashboard(props) {
-    const metrics = [
-        [
-            "Στο συνεργείο",
-            props.vehiclesInShop,
-            "Οχήματα με ενεργή παραμονή",
-            "/workshop/work-orders",
-            "info",
-            "car",
-        ],
-        [
-            "Ανοικτές εντολές",
-            props.openWorkOrders,
-            `${props.awaitingParts} σε αναμονή ανταλλακτικού`,
-            "/workshop/work-orders",
-            "warning",
-            "work",
-        ],
-        [
-            "Ραντεβού σήμερα",
-            props.todayAppointments,
-            "Η σημερινή ουρά υποδοχής",
-            "/workshop/appointments",
-            "success",
-            "calendar",
-        ],
-        [
-            "ΚΤΕΟ που έληξαν",
-            props.expiredKteo,
-            `${props.expiringKteo} λήγουν σε 30 ημέρες`,
-            "/workshop/kteo",
-            props.expiredKteo ? "danger" : "neutral",
-            "check",
-        ],
+    const kteoVehicles = [
+        ...(props.expiredKteoVehicles || []),
+        ...(props.expiringKteoVehicles || []),
+    ].slice(0, 5);
+    const glance = [
+        [props.vehiclesInShop, "οχήματα στο συνεργείο", "/workshop/work-orders"],
+        [props.todayAppointments, "ραντεβού σήμερα", "/workshop/appointments"],
+        [props.expiredKteo, "ΚΤΕΟ που έληξαν", "/workshop/kteo", props.expiredKteo > 0],
     ];
     return (
         <>
-            <PageHeading
-                title="Επισκόπηση συνεργείου"
-                description={props.todayLabel}
-            >
-                <Button href="/workshop/registration-scan">
-                    <Icon name="scan" />
-                    <span className="ws-btn-label">Σάρωση άδειας</span>
-                </Button>
-            </PageHeading>
-            <div className="ws-metrics">
-                {metrics.map(([label, count, note, href, tone, icon], i) => (
-                    <Link
-                        className={`ws-panel ws-metric ws-metric-${tone}`}
-                        href={href}
-                        key={label}
-                    >
-                        <span className="ws-metric-top">
-                            <span className="ws-metric-label">{label}</span>
-                            <span className="ws-metric-icon">
-                                <Icon name={icon} />
-                            </span>
-                        </span>
-                        <strong className={i === 3 && count ? "ws-danger" : ""}>
-                            {count}
-                        </strong>
-                        <small>{note}</small>
-                    </Link>
-                ))}
+            <Head title="Συνεργείο σήμερα" />
+            <div className="ws-dash-head">
+                <div>
+                    <div className="ws-dash-date">{props.todayLabel}</div>
+                    <h1>Συνεργείο σήμερα</h1>
+                </div>
+                <nav className="ws-glance" aria-label="Συνοπτικά στοιχεία">
+                    {glance.map(([count, label, href, late]) => (
+                        <Link
+                            key={label}
+                            href={href}
+                            className={late ? "is-late" : ""}
+                        >
+                            <b>{count}</b>
+                            <span>{label}</span>
+                        </Link>
+                    ))}
+                </nav>
             </div>
-            <div className="ws-stack">
+            <section className="ws-dash-section" aria-label="Πίνακας εργασιών">
+                <div className="ws-section-title">
+                    <h2>Πίνακας εργασιών</h2>
+                    <Link href="/workshop/work-orders">
+                        Όλες οι εντολές →
+                    </Link>
+                </div>
+                <StatusBoard
+                    orders={props.boardWorkOrders}
+                    counts={props.boardCounts}
+                    empty={{
+                        title: "Το συνεργείο είναι ελεύθερο",
+                        description:
+                            "Τα οχήματα εμφανίζονται εδώ με την καταχώριση νέας εντολής.",
+                    }}
+                />
+            </section>
+            <div className="ws-duo">
                 <Panel
-                    title="Οχήματα στο συνεργείο"
+                    title="Ραντεβού σήμερα"
                     action={
-                        <Link href="/workshop/work-orders">
-                            Όλες οι εντολές →
+                        <Link href="/workshop/appointments/create">
+                            Προσθήκη +
                         </Link>
                     }
                 >
-                    <WorkOrderTable
-                        data={props.inShopWorkOrders}
-                        empty={{
-                            title: "Το συνεργείο είναι ελεύθερο",
-                            description:
-                                "Τα οχήματα εμφανίζονται εδώ με την καταχώριση νέας εντολής.",
-                        }}
-                    />
-                </Panel>
-                <div className="ws-columns">
-                    <Panel
-                        title="Σημερινά ραντεβού"
-                        action={
-                            <Link href="/workshop/appointments/create">
-                                Προσθήκη →
-                            </Link>
-                        }
-                    >
-                        <DataTable
-                            data={props.todayAppointmentRows}
-                            columns={[
-                                {
-                                    label: "Ώρα",
-                                    render: (a) => time(a.appointment_date),
-                                },
-                                {
-                                    label: "Πελάτης",
-                                    render: (a) => customerLink(a.customer),
-                                },
-                                {
-                                    label: "Όχημα",
-                                    render: (a) => (
-                                        <Plate vehicle={a.vehicle} />
-                                    ),
-                                },
-                                {
-                                    label: "Κατάσταση",
-                                    render: (a) => (
-                                        <StatusBadge
-                                            status={a.status}
-                                            appointment
-                                        />
-                                    ),
-                                },
-                                {
-                                    label: "Ενέργεια",
-                                    render: (a) => (
+                    {props.todayAppointmentRows?.length ? (
+                        <ul className="ws-agenda">
+                            {props.todayAppointmentRows.map((a) => (
+                                <li
+                                    key={a.id}
+                                    className="ws-agenda-row ws-agenda-appt"
+                                >
+                                    <span className="ws-agenda-time">
+                                        {timeOfDay(a.appointment_date)}
+                                    </span>
+                                    <div className="ws-agenda-who">
                                         <Link
                                             href={`/workshop/appointments/${a.id}/edit`}
                                         >
-                                            Άνοιγμα
+                                            {a.customer?.full_name || "—"}
                                         </Link>
-                                    ),
-                                },
-                            ]}
-                            empty={{
-                                title: "Δεν υπάρχουν ραντεβού σήμερα",
-                                description:
-                                    "Προσθέστε το επόμενο προγραμματισμένο ραντεβού.",
-                            }}
+                                        <small>
+                                            <Plate
+                                                vehicle={a.vehicle}
+                                                link={false}
+                                            />
+                                            {vehicleName(a.vehicle)}
+                                        </small>
+                                    </div>
+                                    <StatusBadge
+                                        status={a.status}
+                                        appointment
+                                    />
+                                </li>
+                            ))}
+                        </ul>
+                    ) : (
+                        <EmptyState
+                            title="Δεν υπάρχουν ραντεβού σήμερα"
+                            description="Προσθέστε το επόμενο προγραμματισμένο ραντεβού."
                         />
-                    </Panel>
-                    <Panel
-                        title="Προτεραιότητα ΚΤΕΟ"
-                        action={<Link href="/workshop/kteo">Όλα →</Link>}
-                    >
-                        <DataTable
-                            data={[
-                                ...(props.expiredKteoVehicles || []),
-                                ...(props.expiringKteoVehicles || []),
-                            ].slice(0, 5)}
-                            columns={[
-                                {
-                                    label: "Όχημα",
-                                    render: (v) => <Plate vehicle={v} />,
-                                },
-                                {
-                                    label: "Λήξη",
-                                    render: (v) => date(v.kteo_expires_at),
-                                },
-                                {
-                                    label: "Πελάτης",
-                                    render: (v) => customerLink(v.customer),
-                                },
-                            ]}
-                            empty={{
-                                title: "Δεν υπάρχουν επείγουσες λήξεις",
-                                description:
-                                    "Ο έλεγχος καλύπτει τις επόμενες 30 ημέρες.",
-                            }}
+                    )}
+                </Panel>
+                <Panel
+                    title="ΚΤΕΟ προς υπενθύμιση"
+                    action={<Link href="/workshop/kteo">Όλα →</Link>}
+                >
+                    {kteoVehicles.length ? (
+                        <ul className="ws-agenda">
+                            {kteoVehicles.map((v) => {
+                                const status = kteoStatus(v) || { tone: "calm", label: "—" };
+                                return (
+                                    <li
+                                        key={v.id}
+                                        className="ws-agenda-row ws-agenda-kteo"
+                                    >
+                                        <div className="ws-agenda-who">
+                                            <strong>
+                                                {v.customer?.full_name || "—"}
+                                            </strong>
+                                            <small>
+                                                <Plate vehicle={v} />
+                                                {date(v.kteo_expires_at)}
+                                            </small>
+                                        </div>
+                                        <span
+                                            className={`ws-badge ws-badge-${status.tone}`}
+                                        >
+                                            {status.label}
+                                        </span>
+                                        {v.customer?.phone ? (
+                                            <a
+                                                className="ws-icon-btn"
+                                                href={`tel:${v.customer.phone}`}
+                                                aria-label={`Κλήση ${v.customer.full_name}`}
+                                            >
+                                                <Icon name="phone" size={16} />
+                                            </a>
+                                        ) : (
+                                            <span />
+                                        )}
+                                    </li>
+                                );
+                            })}
+                        </ul>
+                    ) : (
+                        <EmptyState
+                            title="Δεν υπάρχουν επείγουσες λήξεις"
+                            description="Ο έλεγχος καλύπτει τις επόμενες 30 ημέρες."
                         />
-                    </Panel>
-                </div>
-                <Panel title="Πρόσφατες ανοικτές εντολές">
-                    <WorkOrderTable data={props.recentWorkOrders} />
+                    )}
                 </Panel>
             </div>
         </>

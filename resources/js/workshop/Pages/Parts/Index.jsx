@@ -1,11 +1,14 @@
 import React from "react";
 import {
-    PageHeading,
+    Badge,
     DataTable,
+    FilterBar,
+    ListCount,
+    PageHeading,
     Panel,
-    SearchFilter,
     money,
 } from "../../Components/ui";
+const LOW_STOCK = 5;
 export default function Index({ parts, q }) {
     return (
         <>
@@ -13,16 +16,16 @@ export default function Index({ parts, q }) {
                 title="Ανταλλακτικά"
                 description="Διαθεσιμότητα και τιμές πώλησης. Η διαχείριση καταλόγου γίνεται στο Filament."
             />
-            <SearchFilter url="/workshop/parts" q={q} />
+            <FilterBar url="/workshop/parts" q={q} />
+            <ListCount data={parts} unit={["ανταλλακτικό", "ανταλλακτικά"]} />
             <Panel>
                 <DataTable
                     data={parts}
+                    caption="Ανταλλακτικά"
                     columns={[
                         {
                             label: "Κωδικός",
-                            render: (p) => (
-                                <span className="ws-plate">{p.code}</span>
-                            ),
+                            render: (p) => <Badge mono>{p.code}</Badge>,
                         },
                         {
                             label: "Ανταλλακτικό",
@@ -36,14 +39,14 @@ export default function Index({ parts, q }) {
                         {
                             label: "Απόθεμα",
                             numeric: true,
-                            render: (p) => (
-                                <span
-                                    className={`ws-badge ${p.quantity <= 5 ? "ws-badge-warning" : ""}`}
-                                >
-                                    {p.quantity}
-                                    {p.quantity <= 5 ? " · Χαμηλό" : ""}
-                                </span>
-                            ),
+                            render: (p) =>
+                                p.quantity <= LOW_STOCK ? (
+                                    <Badge tone="warning">
+                                        {p.quantity} · Χαμηλό απόθεμα
+                                    </Badge>
+                                ) : (
+                                    p.quantity
+                                ),
                         },
                         {
                             label: "Τιμή πώλησης",

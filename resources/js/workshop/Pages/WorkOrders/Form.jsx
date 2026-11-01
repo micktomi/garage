@@ -7,6 +7,7 @@ import {
     Field,
     Form,
     FormFooter,
+    padId,
     PageHeading,
     money,
 } from "../../Components/ui";
@@ -78,7 +79,7 @@ export default function WorkOrderForm({
             <PageHeading
                 title={
                     workOrder
-                        ? `Επεξεργασία εντολής #${workOrder.id}`
+                        ? `Επεξεργασία εντολής ${padId(workOrder.id)}`
                         : "Νέα εντολή εργασίας"
                 }
                 description="Καταγράψτε το όχημα, την εργασία και τα υλικά."
@@ -160,7 +161,7 @@ export default function WorkOrderForm({
                     </div>
                 </section>
                 <section className="ws-form-section">
-                    <div className="ws-page-heading">
+                    <div className="ws-section-head">
                         <h2>Ανταλλακτικά και υλικά</h2>
                         <Button
                             onClick={() =>
@@ -195,7 +196,7 @@ export default function WorkOrderForm({
                         };
                         return (
                             <div className="ws-line-form" key={index}>
-                                <div className="ws-page-heading">
+                                <div className="ws-section-head">
                                     <h3>Γραμμή {index + 1}</h3>
                                     <Button
                                         danger

@@ -84,6 +84,7 @@ function Upload() {
         <>
             <Feedback errors={form.errors} />
             <Form
+                className="ws-tool"
                 form={form}
                 onSubmit={() =>
                     form.post("/workshop/registration-scan/extract", {
@@ -165,7 +166,7 @@ function Upload() {
                             </p>
                         )}
                     </div>
-                    <p className="ws-muted" style={{ marginTop: 16 }}>
+                    <p className="ws-muted ws-mt-4">
                         Η φωτογραφία δεν αποθηκεύεται. Ελέγχετε κάθε
                         αναγνωρισμένο στοιχείο πριν την καταχώριση.
                     </p>
@@ -198,12 +199,13 @@ function Review({ extracted, modelsByMake }) {
         <>
             <Feedback errors={form.errors} />
             <Form
+                className="ws-tool"
                 form={form}
                 onSubmit={() => form.post("/workshop/registration-scan")}
             >
                 <section className="ws-form-section">
                     <h2>Απαραίτητος ανθρώπινος έλεγχος</h2>
-                    <p className="ws-muted" style={{ marginBottom: 20 }}>
+                    <p className="ws-muted ws-mb-6">
                         Διορθώστε ό,τι δεν διαβάστηκε σωστά. Αν το VIN δεν είναι
                         βέβαιο, ελέγξτε το πεδίο (E) της άδειας.
                     </p>
@@ -263,7 +265,7 @@ function Review({ extracted, modelsByMake }) {
                     {(errors.near_vin ||
                         form.errors.near_vin ||
                         form.data.confirm_near_vin) && (
-                        <label className="ws-actions" style={{ marginTop: 20 }}>
+                        <label className="ws-actions ws-mt-6">
                             <input
                                 name="confirm_near_vin"
                                 type="checkbox"

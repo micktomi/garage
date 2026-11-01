@@ -8,6 +8,7 @@ use App\Models\User;
 use App\Models\Vehicle;
 use App\Models\WorkOrder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Inertia\Testing\AssertableInertia as Assert;
 use Tests\TestCase;
 
 class WorkshopDashboardTest extends TestCase
@@ -62,6 +63,42 @@ class WorkshopDashboardTest extends TestCase
                 ->get(route('workshop.dashboard'))
                 ->assertOk();
         }
+    }
+
+    public function test_board_lists_only_open_orders_oldest_first_with_status_counts(): void
+    {
+        $this->actingAs(User::factory()->create());
+        [$customer, $vehicle] = $this->makeCustomerAndVehicle('ΥΝΑ-4821');
+
+        $make = fn (string $problem, WorkOrderStatus $status, string $createdAt) => tap(
+            WorkOrder::create([
+                'customer_id' => $customer->id,
+                'vehicle_id' => $vehicle->id,
+                'problem_description' => $problem,
+                'status' => $status,
+            ]),
+            fn (WorkOrder $order) => $order->forceFill(['created_at' => $createdAt])->saveQuietly(),
+        );
+
+        $make('Νεότερη νέα', WorkOrderStatus::New, '2026-10-21 09:00:00');
+        $make('Παλαιότερη σε εξέλιξη', WorkOrderStatus::InProgress, '2026-10-18 09:00:00');
+        $make('Αναμονή', WorkOrderStatus::AwaitingParts, '2026-10-19 09:00:00');
+        $make('Έτοιμη', WorkOrderStatus::ReadyForPickup, '2026-10-20 09:00:00');
+        $make('Ολοκληρωμένη', WorkOrderStatus::Completed, '2026-10-01 09:00:00');
+        $make('Ακυρωμένη', WorkOrderStatus::Cancelled, '2026-10-02 09:00:00');
+
+        $this->get(route('workshop.dashboard'))->assertInertia(fn (Assert $page) => $page
+            ->component('Dashboard')
+            ->has('boardWorkOrders', 4)
+            ->where('boardWorkOrders.0.problem_description', 'Παλαιότερη σε εξέλιξη')
+            ->where('boardWorkOrders.3.problem_description', 'Νεότερη νέα')
+            ->where('boardCounts', [
+                'new' => 1,
+                'in_progress' => 1,
+                'awaiting_parts' => 1,
+                'ready' => 1,
+            ])
+            ->where('openWorkOrders', 4));
     }
 
     /**

@@ -1,17 +1,17 @@
 import React from "react";
 import { inputDate } from "../../Components/dates";
-import { Link, useForm } from "@inertiajs/react";
+import { useForm } from "@inertiajs/react";
 import {
-    PageHeading,
-    Form,
-    Field,
+    Button,
+    CardGrid,
     Feedback,
+    Field,
+    Form,
     FormFooter,
-    Panel,
-    DataTable,
-    StatusBadge,
+    PageHeading,
     date,
 } from "../../Components/ui";
+import { AppointmentCard, WorkOrderCard } from "../../Components/cards";
 import MakeModelFields from "../../Components/MakeModelFields";
 export default function VehicleForm({
     vehicle,
@@ -42,10 +42,21 @@ export default function VehicleForm({
                         : "Καταχωρίστε το όχημα και συνδέστε το με τον πελάτη."
                 }
             >
-                {vehicle && <ButtonLinks vehicle={vehicle} />}
+                {vehicle && (
+                    <>
+                        <Button href={`/workshop/customers/${vehicle.customer_id}`}>
+                            Καρτέλα πελάτη
+                        </Button>
+                        <Button
+                            href={`/workshop/work-orders/create?customer_id=${vehicle.customer_id}&vehicle_id=${vehicle.id}`}
+                        >
+                            Νέα εντολή οχήματος
+                        </Button>
+                    </>
+                )}
             </PageHeading>
             <Feedback errors={form.errors} />
-            <div className="ws-stack">
+            <div className={vehicle ? "ws-columns" : undefined}>
                 <Form
                     form={form}
                     onSubmit={() =>
@@ -133,116 +144,44 @@ export default function VehicleForm({
                     />
                 </Form>
                 {vehicle && (
-                    <>
-                        <Panel title="Ιστορικό εργασιών / service">
-                            <DataTable
+                    <div className="ws-stack ws-aside">
+                        <section>
+                            <div className="ws-section-head">
+                                <h2>Ιστορικό εργασιών / service</h2>
+                            </div>
+                            <CardGrid
                                 data={vehicleWorkOrders}
-                                columns={[
-                                    {
-                                        label: "Εντολή",
-                                        render: (o) => (
-                                            <Link
-                                                href={`/workshop/work-orders/${o.id}`}
-                                            >
-                                                #{o.id}
-                                            </Link>
-                                        ),
-                                    },
-                                    {
-                                        label: "Εργασία",
-                                        render: (o) => o.problem_description,
-                                    },
-                                    {
-                                        label: "Κατάσταση",
-                                        render: (o) => (
-                                            <StatusBadge status={o.status} />
-                                        ),
-                                    },
-                                    {
-                                        label: "Χιλιόμετρα",
-                                        render: (o) => o.current_mileage || "—",
-                                    },
-                                    {
-                                        label: "Επόμενο service",
-                                        render: (o) => (
-                                            <>
-                                                {date(o.next_service_date)}
-                                                <small>
-                                                    {o.next_service_mileage
-                                                        ? `${o.next_service_mileage} χλμ.`
-                                                        : ""}
-                                                </small>
-                                            </>
-                                        ),
-                                    },
-                                ]}
+                                caption="Ιστορικό εργασιών"
+                                render={(order) => (
+                                    <WorkOrderCard order={order} facts />
+                                )}
                                 empty={{
                                     title: "Δεν υπάρχουν εντολές για αυτό το όχημα.",
                                     description:
                                         "Δημιουργήστε την πρώτη εντολή εργασίας.",
                                 }}
                             />
-                        </Panel>
-                        <Panel title="Ιστορικό ραντεβού">
-                            <DataTable
+                        </section>
+                        <section>
+                            <div className="ws-section-head">
+                                <h2>Ιστορικό ραντεβού</h2>
+                            </div>
+                            <CardGrid
                                 data={vehicleAppointments}
-                                columns={[
-                                    {
-                                        label: "Ημερομηνία",
-                                        render: (a) => date(a.appointment_date),
-                                    },
-                                    {
-                                        label: "Περιγραφή",
-                                        render: (a) => a.description,
-                                    },
-                                    {
-                                        label: "Κατάσταση",
-                                        render: (a) => (
-                                            <StatusBadge
-                                                status={a.status}
-                                                appointment
-                                            />
-                                        ),
-                                    },
-                                    {
-                                        label: "Ενέργεια",
-                                        render: (a) => (
-                                            <Link
-                                                href={`/workshop/appointments/${a.id}/edit`}
-                                            >
-                                                Επεξεργασία
-                                            </Link>
-                                        ),
-                                    },
-                                ]}
+                                caption="Ιστορικό ραντεβού"
+                                render={(appointment) => (
+                                    <AppointmentCard appointment={appointment} />
+                                )}
                                 empty={{
                                     title: "Δεν υπάρχουν ραντεβού για αυτό το όχημα.",
                                     description:
                                         "Προσθέστε ένα ραντεβού για την επόμενη επίσκεψη.",
                                 }}
                             />
-                        </Panel>
-                    </>
+                        </section>
+                    </div>
                 )}
             </div>
-        </>
-    );
-}
-function ButtonLinks({ vehicle }) {
-    return (
-        <>
-            <Link
-                className="ws-btn"
-                href={`/workshop/customers/${vehicle.customer_id}`}
-            >
-                Καρτέλα πελάτη
-            </Link>
-            <Link
-                className="ws-btn ws-btn-primary"
-                href={`/workshop/work-orders/create?customer_id=${vehicle.customer_id}&vehicle_id=${vehicle.id}`}
-            >
-                Νέα εντολή οχήματος
-            </Link>
         </>
     );
 }

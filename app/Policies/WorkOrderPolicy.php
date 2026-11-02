@@ -23,4 +23,18 @@ class WorkOrderPolicy extends OwnerOnlyDestructivePolicy
 
         return $user->isOwner();
     }
+
+    /**
+     * The state machine's single permission-shaped exception: reopening a
+     * completed order is a correction — filed too early, wrongly closed —
+     * which is an owner's call, like every other amendment of a filed
+     * order. The target must be an open state; completed-to-cancelled is
+     * never a correction, and cancelled stays terminal for everyone.
+     */
+    public function reopenCompleted(User $user, WorkOrder $workOrder, WorkOrderStatus $target): bool
+    {
+        return $user->isOwner()
+            && $workOrder->status === WorkOrderStatus::Completed
+            && $target->isOpen();
+    }
 }

@@ -266,7 +266,7 @@ export function Plate({ vehicle, link = true }) {
     );
     return link ? (
         <Link
-            href={`/workshop/vehicles/${vehicle.id}/edit`}
+            href={`/workshop/vehicles/${vehicle.id}`}
             aria-label={`Όχημα ${vehicle.plate_number}`}
         >
             {badge}

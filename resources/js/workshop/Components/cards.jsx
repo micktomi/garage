@@ -105,7 +105,7 @@ export function VehicleCard({
     ]
         .filter(Boolean)
         .join(" · ");
-    const sheet = `/workshop/vehicles/${vehicle.id}/edit`;
+    const sheet = `/workshop/vehicles/${vehicle.id}`;
     return (
         <RecordCard
             href={sheet}

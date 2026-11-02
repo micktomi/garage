@@ -1,4 +1,4 @@
-import React, { useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useForm, usePage } from "@inertiajs/react";
 import {
     Button,
@@ -26,7 +26,11 @@ const blankReview = {
     confirm_near_vin: false,
     review_ready: "1",
 };
-export default function Index({ extracted, modelsByMake }) {
+export default function Index({
+    extracted,
+    modelsByMake,
+    uploadMaxBytes = 2 * 1024 * 1024,
+}) {
     return (
         <>
             <PageHeading
@@ -40,23 +44,32 @@ export default function Index({ extracted, modelsByMake }) {
                     modelsByMake={modelsByMake}
                 />
             ) : (
-                <Upload />
+                <Upload uploadMaxBytes={uploadMaxBytes} />
             )}
         </>
     );
 }
-function Upload() {
+function Upload({ uploadMaxBytes }) {
     const form = useForm({
         registration_image: null,
         browser_preprocess_ms: null,
     });
     const [preparing, setPreparing] = useState(false);
+    const [rotation, setRotation] = useState(0);
+    const original = useRef(null);
+    const [preview, setPreview] = useState(null);
+    useEffect(() => {
+        if (!form.data.registration_image) {
+            setPreview(null);
+            return;
+        }
+        const url = URL.createObjectURL(form.data.registration_image);
+        setPreview(url);
+        return () => URL.revokeObjectURL(url);
+    }, [form.data.registration_image]);
     const camera = useRef(null);
     const gallery = useRef(null);
-    const select = async (e) => {
-        const file = e.target.files?.[0];
-        e.target.value = "";
-        if (!file) return;
+    const prepare = async (file, quarterTurns) => {
         form.clearErrors();
         form.setData({ registration_image: null, browser_preprocess_ms: null });
         if (file.size > 10 * 1024 * 1024) {
@@ -68,17 +81,46 @@ function Upload() {
         }
         const start = performance.now();
         setPreparing(true);
-        let processed = file;
         try {
-            processed = await prepareImage(file);
-        } catch {
-            /* keep original for server validation */
+            const maxBytes = Math.floor(uploadMaxBytes * 0.9);
+            let processed;
+            try {
+                processed = await prepareImage(file, { maxBytes, quarterTurns });
+            } catch (error) {
+                if (error.message === "size") throw error;
+                if (quarterTurns) throw new Error("rotate");
+                // Some browsers cannot use canvas, but can still upload a small,
+                // supported original. Never send an oversize or undecodable HEIC.
+                if (!["image/jpeg", "image/png", "image/webp"].includes(file.type)) {
+                    throw new Error("format");
+                }
+                if (file.size > maxBytes) throw new Error("size");
+                processed = file;
+            }
+            form.setData({
+                registration_image: processed,
+                browser_preprocess_ms: Math.round(performance.now() - start),
+            });
+            setRotation(quarterTurns);
+        } catch (error) {
+            form.setError(
+                "registration_image",
+                error.message === "size"
+                    ? "Η εικόνα παραμένει πολύ μεγάλη για τον διακομιστή. Δοκιμάστε μικρότερη εικόνα ή ζητήστε αύξηση του ορίου μεταφόρτωσης."
+                    : error.message === "rotate"
+                      ? "Η περιστροφή δεν ολοκληρώθηκε. Επιλέξτε ξανά την εικόνα ή περιστρέψτε την στην εφαρμογή φωτογραφιών."
+                      : "Η εικόνα δεν μπορεί να διαβαστεί σε αυτόν τον browser. Επιλέξτε αρχείο JPEG, PNG ή WebP.",
+            );
+        } finally {
+            setPreparing(false);
         }
-        form.setData({
-            registration_image: processed,
-            browser_preprocess_ms: Math.round(performance.now() - start),
-        });
-        setPreparing(false);
+    };
+    const select = async (e) => {
+        const file = e.target.files?.[0];
+        e.target.value = "";
+        if (!file) return;
+        original.current = file;
+        await prepare(file, 0);
     };
     return (
         <>
@@ -100,7 +142,8 @@ function Upload() {
                         </strong>
                         <p id="registration-upload-hint">
                             Καθαρή εικόνα, χωρίς αντανακλάσεις, με όλα τα
-                            τμήματα στο κάδρο. JPEG, PNG ή WebP έως 10 MB.
+                            τμήματα στο κάδρο. JPEG, PNG ή WebP έως 10 MB. Η εικόνα
+                            προσαρμόζεται αυτόματα πριν από τη μεταφόρτωση.
                         </p>
                         <div
                             className="ws-actions"
@@ -155,6 +198,37 @@ function Upload() {
                         {form.data.registration_image && (
                             <p>{form.data.registration_image.name}</p>
                         )}
+                        {preview && (
+                            <figure className="ws-scan-preview">
+                                <a
+                                    href={preview}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    aria-label="Άνοιγμα φωτογραφίας σε πλήρες μέγεθος"
+                                >
+                                    <img
+                                        src={preview}
+                                        alt="Η φωτογραφία άδειας που θα σταλεί για αναγνώριση"
+                                    />
+                                </a>
+                                <figcaption>
+                                    Πατήστε τη φωτογραφία για πλήρες μέγεθος.
+                                    Γυρίστε τη ώστε τα γράμματα να διαβάζονται οριζόντια.
+                                    Ελέγξτε ότι φαίνονται η πινακίδα (A), το VIN (E) και τα μικρά
+                                    γράμματα σε όλα τα φύλλα της άδειας. Αν είναι θολά, τραβήξτε ξανά από πιο
+                                    κοντά, χωρίς ψηφιακό zoom ή αντανακλάσεις.
+                                </figcaption>
+                                <div className="ws-actions">
+                                    <Button
+                                        className="ws-btn-sm"
+                                        disabled={preparing || form.processing}
+                                        onClick={() => prepare(original.current, (rotation + 3) % 4)}
+                                    >
+                                        Περιστροφή 90° αριστερά
+                                    </Button>
+                                </div>
+                            </figure>
+                        )}
                         {preparing && (
                             <p role="status">Προετοιμασία εικόνας…</p>
                         )}
@@ -167,7 +241,8 @@ function Upload() {
                         )}
                     </div>
                     <p className="ws-muted ws-mt-4">
-                        Η φωτογραφία δεν αποθηκεύεται. Ελέγχετε κάθε
+                        Η εικόνα αποστέλλεται στο Gemini για αναγνώριση και δεν
+                        αποθηκεύεται στην εφαρμογή. Ελέγχετε κάθε
                         αναγνωρισμένο στοιχείο πριν την καταχώριση.
                     </p>
                 </section>
@@ -206,8 +281,9 @@ function Review({ extracted, modelsByMake }) {
                 <section className="ws-form-section">
                     <h2>Απαραίτητος ανθρώπινος έλεγχος</h2>
                     <p className="ws-muted ws-mb-6">
-                        Διορθώστε ό,τι δεν διαβάστηκε σωστά. Αν το VIN δεν είναι
-                        βέβαιο, ελέγξτε το πεδίο (E) της άδειας.
+                        Διορθώστε ό,τι δεν διαβάστηκε σωστά. Τα στοιχεία που δεν
+                        διαβάζονται με βεβαιότητα ή δεν υπάρχουν στην άδεια μένουν κενά.
+                        Ελέγξτε την πινακίδα στο (A), το VIN στο (E) και το μοντέλο στο (D.3).
                     </p>
                     <div className="ws-form-grid">
                         <Field

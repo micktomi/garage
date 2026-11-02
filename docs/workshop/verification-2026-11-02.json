@@ -1,0 +1,476 @@
+{
+  "checks": [
+    {
+      "name": "Fixture login works",
+      "passed": true
+    },
+    {
+      "name": "Scan responsive desktop",
+      "passed": true
+    },
+    {
+      "name": "Image prepared desktop",
+      "passed": true
+    },
+    {
+      "name": "Preview does not overflow desktop",
+      "passed": true
+    },
+    {
+      "name": "Full-size preview link exists desktop",
+      "passed": true
+    },
+    {
+      "name": "Live Gemini OCR reaches review desktop",
+      "passed": true
+    },
+    {
+      "name": "Recognized plate desktop",
+      "passed": true
+    },
+    {
+      "name": "Recognized VIN desktop",
+      "passed": true
+    },
+    {
+      "name": "Recognized model desktop",
+      "passed": true
+    },
+    {
+      "name": "Human confirmation required desktop",
+      "passed": true
+    },
+    {
+      "name": "Scan responsive tablet",
+      "passed": true
+    },
+    {
+      "name": "Scan responsive mobile",
+      "passed": true
+    },
+    {
+      "name": "Image prepared mobile",
+      "passed": true
+    },
+    {
+      "name": "Preview does not overflow mobile",
+      "passed": true
+    },
+    {
+      "name": "Full-size preview link exists mobile",
+      "passed": true
+    },
+    {
+      "name": "Live Gemini OCR reaches review mobile",
+      "passed": true
+    },
+    {
+      "name": "Recognized plate mobile",
+      "passed": true
+    },
+    {
+      "name": "Recognized VIN mobile",
+      "passed": true
+    },
+    {
+      "name": "Recognized model mobile",
+      "passed": true
+    },
+    {
+      "name": "Human confirmation required mobile",
+      "passed": true
+    },
+    {
+      "name": "Page smoke desktop /workshop",
+      "passed": true
+    },
+    {
+      "name": "Page smoke desktop /workshop/work-orders",
+      "passed": true
+    },
+    {
+      "name": "Page smoke desktop /workshop/work-orders/1",
+      "passed": true
+    },
+    {
+      "name": "Page smoke desktop /workshop/work-orders/create",
+      "passed": true
+    },
+    {
+      "name": "Page smoke desktop /workshop/work-orders/1/edit",
+      "passed": true
+    },
+    {
+      "name": "Page smoke desktop /workshop/customers",
+      "passed": true
+    },
+    {
+      "name": "Page smoke desktop /workshop/customers/1",
+      "passed": true
+    },
+    {
+      "name": "Page smoke desktop /workshop/customers/create",
+      "passed": true
+    },
+    {
+      "name": "Page smoke desktop /workshop/customers/1/edit",
+      "passed": true
+    },
+    {
+      "name": "Page smoke desktop /workshop/vehicles",
+      "passed": true
+    },
+    {
+      "name": "Page smoke desktop /workshop/vehicles/1",
+      "passed": true
+    },
+    {
+      "name": "Page smoke desktop /workshop/vehicles/create",
+      "passed": true
+    },
+    {
+      "name": "Page smoke desktop /workshop/vehicles/1/edit",
+      "passed": true
+    },
+    {
+      "name": "Page smoke desktop /workshop/appointments",
+      "passed": true
+    },
+    {
+      "name": "Page smoke desktop /workshop/appointments/create",
+      "passed": true
+    },
+    {
+      "name": "Page smoke desktop /workshop/appointments/1/edit",
+      "passed": true
+    },
+    {
+      "name": "Page smoke desktop /workshop/kteo",
+      "passed": true
+    },
+    {
+      "name": "Page smoke desktop /workshop/parts",
+      "passed": true
+    },
+    {
+      "name": "Page smoke desktop /workshop/search?q=TEST",
+      "passed": true
+    },
+    {
+      "name": "Page smoke desktop /workshop/assistant",
+      "passed": true
+    },
+    {
+      "name": "Page smoke desktop /workshop/registration-scan?new=1",
+      "passed": true
+    },
+    {
+      "name": "Page smoke desktop /workshop/work-orders/999999",
+      "passed": true
+    },
+    {
+      "name": "Page smoke tablet /workshop",
+      "passed": true
+    },
+    {
+      "name": "Page smoke tablet /workshop/work-orders",
+      "passed": true
+    },
+    {
+      "name": "Page smoke tablet /workshop/work-orders/1",
+      "passed": true
+    },
+    {
+      "name": "Page smoke tablet /workshop/work-orders/create",
+      "passed": true
+    },
+    {
+      "name": "Page smoke tablet /workshop/work-orders/1/edit",
+      "passed": true
+    },
+    {
+      "name": "Page smoke tablet /workshop/customers",
+      "passed": true
+    },
+    {
+      "name": "Page smoke tablet /workshop/customers/1",
+      "passed": true
+    },
+    {
+      "name": "Page smoke tablet /workshop/customers/create",
+      "passed": true
+    },
+    {
+      "name": "Page smoke tablet /workshop/customers/1/edit",
+      "passed": true
+    },
+    {
+      "name": "Page smoke tablet /workshop/vehicles",
+      "passed": true
+    },
+    {
+      "name": "Page smoke tablet /workshop/vehicles/1",
+      "passed": true
+    },
+    {
+      "name": "Page smoke tablet /workshop/vehicles/create",
+      "passed": true
+    },
+    {
+      "name": "Page smoke tablet /workshop/vehicles/1/edit",
+      "passed": true
+    },
+    {
+      "name": "Page smoke tablet /workshop/appointments",
+      "passed": true
+    },
+    {
+      "name": "Page smoke tablet /workshop/appointments/create",
+      "passed": true
+    },
+    {
+      "name": "Page smoke tablet /workshop/appointments/1/edit",
+      "passed": true
+    },
+    {
+      "name": "Page smoke tablet /workshop/kteo",
+      "passed": true
+    },
+    {
+      "name": "Page smoke tablet /workshop/parts",
+      "passed": true
+    },
+    {
+      "name": "Page smoke tablet /workshop/search?q=TEST",
+      "passed": true
+    },
+    {
+      "name": "Page smoke tablet /workshop/assistant",
+      "passed": true
+    },
+    {
+      "name": "Page smoke tablet /workshop/registration-scan?new=1",
+      "passed": true
+    },
+    {
+      "name": "Page smoke tablet /workshop/work-orders/999999",
+      "passed": true
+    },
+    {
+      "name": "Page smoke mobile /workshop",
+      "passed": true
+    },
+    {
+      "name": "Page smoke mobile /workshop/work-orders",
+      "passed": true
+    },
+    {
+      "name": "Page smoke mobile /workshop/work-orders/1",
+      "passed": true
+    },
+    {
+      "name": "Page smoke mobile /workshop/work-orders/create",
+      "passed": true
+    },
+    {
+      "name": "Page smoke mobile /workshop/work-orders/1/edit",
+      "passed": true
+    },
+    {
+      "name": "Page smoke mobile /workshop/customers",
+      "passed": true
+    },
+    {
+      "name": "Page smoke mobile /workshop/customers/1",
+      "passed": true
+    },
+    {
+      "name": "Page smoke mobile /workshop/customers/create",
+      "passed": true
+    },
+    {
+      "name": "Page smoke mobile /workshop/customers/1/edit",
+      "passed": true
+    },
+    {
+      "name": "Page smoke mobile /workshop/vehicles",
+      "passed": true
+    },
+    {
+      "name": "Page smoke mobile /workshop/vehicles/1",
+      "passed": true
+    },
+    {
+      "name": "Page smoke mobile /workshop/vehicles/create",
+      "passed": true
+    },
+    {
+      "name": "Page smoke mobile /workshop/vehicles/1/edit",
+      "passed": true
+    },
+    {
+      "name": "Page smoke mobile /workshop/appointments",
+      "passed": true
+    },
+    {
+      "name": "Page smoke mobile /workshop/appointments/create",
+      "passed": true
+    },
+    {
+      "name": "Page smoke mobile /workshop/appointments/1/edit",
+      "passed": true
+    },
+    {
+      "name": "Page smoke mobile /workshop/kteo",
+      "passed": true
+    },
+    {
+      "name": "Page smoke mobile /workshop/parts",
+      "passed": true
+    },
+    {
+      "name": "Page smoke mobile /workshop/search?q=TEST",
+      "passed": true
+    },
+    {
+      "name": "Page smoke mobile /workshop/assistant",
+      "passed": true
+    },
+    {
+      "name": "Page smoke mobile /workshop/registration-scan?new=1",
+      "passed": true
+    },
+    {
+      "name": "Page smoke mobile /workshop/work-orders/999999",
+      "passed": true
+    },
+    {
+      "name": "Oversize POST returns recoverable Inertia error",
+      "passed": true,
+      "details": {
+        "status": 413,
+        "component": "Error",
+        "error": 413
+      }
+    },
+    {
+      "name": "No browser exceptions",
+      "passed": true,
+      "details": []
+    }
+  ],
+  "errors": [],
+  "date": "2026-11-02",
+  "browser_environment": "Temporary Chrome profile and isolated SQLite fixture application; synthetic images only.",
+  "automated_checks": {
+    "php_tests": 195,
+    "php_assertions": 1619,
+    "php_failed": 0,
+    "js_individual_tests": 19,
+    "js_failed": 0,
+    "production_build": "passed",
+    "ui_static_audit": {
+      "errors": 0,
+      "warnings": 0
+    },
+    "diff_check": "passed"
+  },
+  "actual_document": {
+    "checks": [
+      {
+        "name": "Fixture login works",
+        "passed": true
+      },
+      {
+        "name": "Prepared preview has no overflow desktop-original",
+        "passed": true
+      },
+      {
+        "name": "Actual document reaches review desktop-original",
+        "passed": true
+      },
+      {
+        "name": "Plate read desktop-original",
+        "passed": true
+      },
+      {
+        "name": "VIN accepted desktop-original",
+        "passed": true
+      },
+      {
+        "name": "Rotation updates upload pixels",
+        "passed": true
+      },
+      {
+        "name": "Prepared preview has no overflow mobile-rotated",
+        "passed": true
+      },
+      {
+        "name": "Actual document reaches review mobile-rotated",
+        "passed": true
+      },
+      {
+        "name": "Plate read mobile-rotated",
+        "passed": true
+      },
+      {
+        "name": "VIN accepted mobile-rotated",
+        "passed": true
+      },
+      {
+        "name": "No browser exceptions",
+        "passed": true
+      }
+    ],
+    "errors": []
+  },
+  "rotation": {
+    "checks": [
+      {
+        "name": "Fixture login works",
+        "passed": true
+      },
+      {
+        "name": "Quarter-turn swaps dimensions desktop",
+        "passed": true
+      },
+      {
+        "name": "Four rotations preserve upload pixels exactly desktop",
+        "passed": true
+      },
+      {
+        "name": "No preview overflow desktop",
+        "passed": true
+      },
+      {
+        "name": "Quarter-turn swaps dimensions tablet",
+        "passed": true
+      },
+      {
+        "name": "Four rotations preserve upload pixels exactly tablet",
+        "passed": true
+      },
+      {
+        "name": "No preview overflow tablet",
+        "passed": true
+      },
+      {
+        "name": "Quarter-turn swaps dimensions mobile",
+        "passed": true
+      },
+      {
+        "name": "Four rotations preserve upload pixels exactly mobile",
+        "passed": true
+      },
+      {
+        "name": "No preview overflow mobile",
+        "passed": true
+      },
+      {
+        "name": "No browser exceptions",
+        "passed": true
+      }
+    ],
+    "errors": []
+  }
+}

@@ -11,6 +11,10 @@ export default function Error({ status }) {
             "Η σελίδα δεν βρέθηκε",
             "Η εγγραφή μπορεί να έχει διαγραφεί ή ο σύνδεσμος να έχει αλλάξει.",
         ],
+        413: [
+            "Η εικόνα είναι πολύ μεγάλη",
+            "Το αίτημα ξεπερνά το όριο του διακομιστή. Επιλέξτε μικρότερη εικόνα JPEG ή ζητήστε από τον διαχειριστή να ελέγξει τα όρια μεταφόρτωσης.",
+        ],
         500: [
             "Η ενέργεια δεν ολοκληρώθηκε",
             "Παρουσιάστηκε πρόβλημα στον server. Επιστρέψτε και δοκιμάστε ξανά.",
@@ -33,8 +37,11 @@ export default function Error({ status }) {
                 <p className="ws-error-code">Garage Manager · {status}</p>
                 <h1>{copy[0]}</h1>
                 <p className="ws-muted">{copy[1]}</p>
-                <a className="ws-btn ws-btn-primary" href="/workshop">
-                    Επιστροφή στο συνεργείο
+                <a
+                    className="ws-btn ws-btn-primary"
+                    href={status === 413 ? "/workshop/registration-scan" : "/workshop"}
+                >
+                    {status === 413 ? "Επιστροφή στη σάρωση" : "Επιστροφή στο συνεργείο"}
                 </a>
             </section>
         </main>

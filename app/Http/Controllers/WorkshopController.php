@@ -19,6 +19,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 
 class WorkshopController extends Controller
@@ -345,7 +346,33 @@ class WorkshopController extends Controller
     {
         $workOrder->load(['customer', 'vehicle', 'workOrderParts.part']);
 
-        return $this->page('WorkOrders/Show', compact('workOrder'));
+        return $this->page('WorkOrders/Show', [
+            'workOrder' => $workOrder,
+            'allowedTransitions' => $this->allowedStatusTargets($workOrder),
+        ]);
+    }
+
+    /**
+     * The status values the current user may move this order to, in enum
+     * order: the machine's own targets plus the owner's reopen exception.
+     * The select renders these next to the current status; the PATCH
+     * endpoint re-checks the same rule, so this list is display-only.
+     *
+     * @return list<string>
+     */
+    private function allowedStatusTargets(WorkOrder $workOrder): array
+    {
+        $targets = [];
+
+        foreach (WorkOrderStatus::cases() as $candidate) {
+            if ($candidate === $workOrder->status
+                || $workOrder->status->canTransitionTo($candidate)
+                || Gate::allows('reopenCompleted', [$workOrder, $candidate])) {
+                $targets[] = $candidate->value;
+            }
+        }
+
+        return $targets;
     }
 
     public function workOrdersUpdateStatus(Request $request, WorkOrder $workOrder)
@@ -365,6 +392,16 @@ class WorkshopController extends Controller
         Gate::authorize('amendCompleted', $workOrder);
 
         $status = WorkOrderStatus::from($validated['status']);
+
+        // The state machine runs before the version check: a transition the
+        // flow forbids is rejected even with a current token, and a stale
+        // but otherwise legal submission still reports the conflict.
+        if (! $workOrder->status->canTransitionTo($status)
+            && Gate::denies('reopenCompleted', [$workOrder, $status])) {
+            throw ValidationException::withMessages([
+                'status' => "Δεν επιτρέπεται η αλλαγή από «{$workOrder->status->label()}» σε «{$status->label()}».",
+            ]);
+        }
 
         // Atomic compare-and-swap — see WorkOrder::updateWithExpectedVersion().
         // Throws the same ValidationException(['lock_version' => ...]) the
@@ -556,6 +593,14 @@ class WorkshopController extends Controller
         return redirect()
             ->route('workshop.vehicles.edit', $vehicle)
             ->with('success', 'Το όχημα ενημερώθηκε.');
+    }
+
+    public function vehiclesShow(Vehicle $vehicle)
+    {
+        return Inertia::render('Vehicles/Show', [
+            'vehicle' => $vehicle->load('customer'),
+            'workOrders' => $vehicle->workOrders()->with('customer')->latest()->paginate(20)->withQueryString(),
+        ]);
     }
 
     public function kteoIndex()

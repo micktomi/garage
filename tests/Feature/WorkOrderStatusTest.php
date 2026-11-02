@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Enums\WorkOrderStatus;
+use App\Filament\Resources\WorkOrderResource\Pages\EditWorkOrder;
 use App\Models\Customer;
 use App\Models\User;
 use App\Models\Vehicle;
@@ -11,6 +12,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Schema;
 use Inertia\Testing\AssertableInertia;
+use Livewire\Livewire;
 use Tests\TestCase;
 
 class WorkOrderStatusTest extends TestCase
@@ -105,6 +107,66 @@ class WorkOrderStatusTest extends TestCase
             ->where('workOrders.data', fn ($items) => collect($items)->pluck('id')->sort()->values()->all() === collect($openOrders)->pluck('id')->sort()->values()->all())
             ->where('workOrderStatuses', fn ($items) => collect($items)->pluck('value')->all() === array_column(WorkOrderStatus::cases(), 'value'))
         );
+    }
+
+    public function test_status_endpoint_rejects_a_skipped_state(): void
+    {
+        $user = User::factory()->create();
+        $workOrder = $this->makeWorkOrder(WorkOrderStatus::New);
+
+        $this->actingAs($user)->patch(
+            route('workshop.work-orders.status', $workOrder),
+            ['lock_version' => $workOrder->lock_version, 'status' => WorkOrderStatus::Completed->value],
+        )->assertSessionHasErrors('status');
+
+        $this->assertSame(WorkOrderStatus::New, $workOrder->fresh()->status);
+    }
+
+    public function test_completed_and_cancelled_are_terminal_for_counter_work(): void
+    {
+        $owner = User::factory()->create();
+        $completed = $this->makeWorkOrder(WorkOrderStatus::Completed, 'ΤΕΡ-0001');
+        $cancelled = $this->makeWorkOrder(WorkOrderStatus::Cancelled, 'ΤΕΡ-0002');
+
+        // A completed order may only reopen to an open state, never sideways.
+        $this->actingAs($owner)->patch(
+            route('workshop.work-orders.status', $completed),
+            ['lock_version' => $completed->lock_version, 'status' => WorkOrderStatus::Cancelled->value],
+        )->assertSessionHasErrors('status');
+        $this->assertSame(WorkOrderStatus::Completed, $completed->fresh()->status);
+
+        // Cancelled is terminal even for the owner: a miscancelled order is
+        // replaced by a new one, never resurrected.
+        $this->actingAs($owner)->patch(
+            route('workshop.work-orders.status', $cancelled),
+            ['lock_version' => $cancelled->lock_version, 'status' => WorkOrderStatus::InProgress->value],
+        )->assertSessionHasErrors('status');
+        $this->assertSame(WorkOrderStatus::Cancelled, $cancelled->fresh()->status);
+    }
+
+    public function test_the_owner_may_reopen_a_completed_order_to_any_open_state(): void
+    {
+        $owner = User::factory()->create();
+        $workOrder = $this->makeWorkOrder(WorkOrderStatus::Completed, 'ΞΑΝ-0001');
+
+        $this->actingAs($owner)->patch(
+            route('workshop.work-orders.status', $workOrder),
+            ['lock_version' => $workOrder->lock_version, 'status' => WorkOrderStatus::ReadyForPickup->value],
+        )->assertRedirect(route('workshop.work-orders.show', $workOrder));
+
+        $this->assertSame(WorkOrderStatus::ReadyForPickup, $workOrder->fresh()->status);
+    }
+
+    public function test_filament_refuses_a_skipped_state(): void
+    {
+        $workOrder = $this->makeWorkOrder(WorkOrderStatus::New, 'ΦΙΛ-0001');
+
+        Livewire::actingAs(User::factory()->create())
+            ->test(EditWorkOrder::class, ['record' => $workOrder->id])
+            ->fillForm(['status' => WorkOrderStatus::Completed->value])
+            ->call('save');
+
+        $this->assertSame(WorkOrderStatus::New, $workOrder->fresh()->status);
     }
 
     public function test_blocking_reason_flag_and_route_are_removed(): void

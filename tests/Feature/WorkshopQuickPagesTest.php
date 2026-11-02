@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\Customer;
 use App\Models\User;
 use App\Models\Vehicle;
+use App\Models\WorkOrder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Inertia\Testing\AssertableInertia as Assert;
 use Tests\TestCase;
@@ -225,6 +226,37 @@ class WorkshopQuickPagesTest extends TestCase
 
         $response->assertOk();
         $response->assertInertia(fn (Assert $page) => $page->component('Kteo/Index')->where('vehicles.data.0.customer.phone', '6944445555'));
+    }
+
+    public function test_vehicle_show_page_displays_sheet_and_work_history(): void
+    {
+        $user = User::factory()->create();
+        $customer = Customer::create(['full_name' => 'Πέτρος Γεωργίου', 'phone' => '6900003333']);
+        $vehicle = Vehicle::create([
+            'customer_id' => $customer->id,
+            'plate_number' => 'ΚΑΡ-1234',
+            'make' => 'Toyota',
+            'model' => 'Yaris',
+        ]);
+        WorkOrder::create([
+            'customer_id' => $customer->id,
+            'vehicle_id' => $vehicle->id,
+            'problem_description' => 'Αλλαγή λαδιών',
+            'labor_cost' => 20,
+            'parts_cost' => 0,
+            'total_cost' => 20,
+            'status' => 'new',
+        ]);
+
+        $response = $this->actingAs($user)->get(route('workshop.vehicles.show', $vehicle));
+
+        $response->assertOk();
+        $response->assertInertia(fn (Assert $page) => $page
+            ->component('Vehicles/Show')
+            ->where('vehicle.plate_number', 'ΚΑΡ-1234')
+            ->where('vehicle.customer.full_name', 'Πέτρος Γεωργίου')
+            ->has('workOrders.data', 1));
+        $response->assertWorkshopDataContains('Αλλαγή λαδιών');
     }
 
     public function test_kteo_page_no_longer_shows_filament_edit_action(): void

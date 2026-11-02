@@ -55,6 +55,40 @@ enum WorkOrderStatus: string
     }
 
     /**
+     * The states the counter may move to from this one. Completed and
+     * Cancelled are terminal: a filed order is history, and a miscancelled
+     * one is replaced by a new order, never resurrected.
+     *
+     * The single exception — the owner reopening a completed order — is a
+     * permission, not a flow, so it lives in WorkOrderPolicy::reopenCompleted
+     * rather than here.
+     *
+     * @return list<self>
+     */
+    public function allowedTransitions(): array
+    {
+        return match ($this) {
+            self::New => [self::InProgress, self::Cancelled],
+            self::InProgress => [self::AwaitingParts, self::ReadyForPickup, self::Cancelled],
+            // Parts fitted straight away skip the workshop lane entirely.
+            self::AwaitingParts => [self::InProgress, self::ReadyForPickup, self::Cancelled],
+            // Ready goes back to the shop when the pickup reveals more work.
+            self::ReadyForPickup => [self::Completed, self::InProgress, self::Cancelled],
+            self::Completed, self::Cancelled => [],
+        };
+    }
+
+    public function canTransitionTo(self $target): bool
+    {
+        // Re-submitting the current status is a no-op, not a transition.
+        if ($target === $this) {
+            return true;
+        }
+
+        return in_array($target, $this->allowedTransitions(), true);
+    }
+
+    /**
      * @return array<string, string>
      */
     public static function options(): array

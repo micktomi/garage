@@ -57,9 +57,11 @@ class VehicleRegistrationExtractorTest extends TestCase
             return str_contains($request->url(), '/models/gemini-3.7-flash:generateContent')
                 && $request->hasHeader('x-goog-api-key', 'test-api-key')
                 && data_get($payload, 'generationConfig.thinkingConfig.thinkingLevel') === 'low'
-                && data_get($payload, 'generationConfig.maxOutputTokens') === 400
+                && data_get($payload, 'generationConfig.maxOutputTokens') === 4096
                 && data_get($payload, 'generationConfig.responseMimeType') === 'application/json'
                 && data_get($payload, 'generationConfig.responseSchema.type') === 'OBJECT'
+                && str_contains(data_get($payload, 'generationConfig.responseSchema.properties.plate_number.description'), '(A)')
+                && str_contains(data_get($payload, 'generationConfig.responseSchema.properties.model.description'), '(D.3)')
                 && ! array_key_exists('thinkingBudget', data_get($payload, 'generationConfig.thinkingConfig', []))
                 && ! array_key_exists('thinking_budget', data_get($payload, 'generationConfig.thinkingConfig', []))
                 && ! array_key_exists('temperature', data_get($payload, 'generationConfig', []))
@@ -75,6 +77,17 @@ class VehicleRegistrationExtractorTest extends TestCase
                 && filled(data_get($payload, 'contents.0.parts.1.inlineData.data'))
                 && ! array_key_exists('tools', $payload);
         });
+    }
+
+    public function test_it_parses_only_the_final_json_when_thought_parts_are_present(): void
+    {
+        $response = $this->geminiJsonResponse(['plate_number' => 'TEST1234']);
+        array_unshift($response['candidates'][0]['content']['parts'], ['thought' => true, 'text' => 'Internal reasoning, not JSON.']);
+        Http::fake(['*' => Http::response($response)]);
+
+        $result = app(VehicleRegistrationExtractor::class)->extract(UploadedFile::fake()->image('specimen.jpg'));
+
+        $this->assertSame('TEST1234', $result['plate_number']);
     }
 
     public function test_it_rejects_a_non_json_gemini_response(): void

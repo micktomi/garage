@@ -67,3 +67,19 @@ Feature suite includes Filament and domain regressions. Build with existing Vite
 Browser: dashboard, work orders list/detail/create/edit, make/model create/edit,
 OCR review, assistant, narrow viewport, validation, stale conflict and permissions.
 External Gemini is mocked in tests; no live requests during normal verification.
+
+## Registration scan upload and recovery
+`RegistrationScan/prepareImage.js` owns oriented decode and bounded JPEG compression
+(up to 4,096px, quality 0.94 initially). The exact prepared image has a local,
+full-size preview; its temporary object URL is revoked on replacement/unmount.
+Manual quarter-turns change the actual uploaded pixels, always starting from the
+original file. Rotation must not silently fall back to an unrotated original.
+The controller supplies `uploadMaxBytes`, bounded by the application's 10 MB cap and
+the effective PHP upload/POST limits (with multipart headroom). The upload form
+retains the selected image after provider errors so recognition can be retried.
+An unsupported decoder/format or an image that cannot fit is reported before upload.
+Oversize POST requests render the shared Error page with a return to scanning.
+The Gemini OCR budget includes thinking and final JSON (4,096 tokens); unfinished
+responses remain failures. Final JSON excludes thought parts. Key/model/quota and
+connection failures have distinct recovery messages. Neither OCR nor error recovery
+creates business records; only the explicit reviewed-data save action does.

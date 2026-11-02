@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\WorkOrderResource\Pages;
 
+use App\Enums\WorkOrderStatus;
 use App\Filament\Resources\WorkOrderResource;
 use App\Models\WorkOrder;
 use Filament\Actions;
@@ -25,6 +26,7 @@ class EditWorkOrder extends EditRecord
     protected function beforeSave(): void
     {
         $this->refuseStaffAmendmentOfFiledOrder();
+        $this->refuseIllegalStatusTransition();
     }
 
     /**
@@ -72,6 +74,37 @@ class EditWorkOrder extends EditRecord
             ->persistent()
             ->title('Η εντολή έχει ήδη ολοκληρωθεί')
             ->body('Οι ολοκληρωμένες εντολές τροποποιούνται μόνο από τον ιδιοκτήτη. Δεν αποθηκεύτηκε τίποτα.')
+            ->send();
+
+        $this->halt();
+    }
+
+    /**
+     * The Filament half of the status state machine: the select offers
+     * every state, so an illegal jump — new straight to completed,
+     * anything out of cancelled — is refused here, against the stored
+     * status, with the same owner-reopen exception the workshop
+     * endpoint honours.
+     */
+    private function refuseIllegalStatusTransition(): void
+    {
+        $stored = WorkOrder::query()->whereKey($this->getRecord()->getKey())->first();
+        $next = WorkOrderStatus::tryFrom((string) ($this->data['status'] ?? ''));
+
+        if ($stored === null || $next === null) {
+            return;
+        }
+
+        if ($stored->status->canTransitionTo($next)
+            || Gate::allows('reopenCompleted', [$stored, $next])) {
+            return;
+        }
+
+        Notification::make()
+            ->danger()
+            ->persistent()
+            ->title('Μη επιτρεπτή αλλαγή κατάστασης')
+            ->body("Δεν επιτρέπεται η αλλαγή από «{$stored->status->label()}» σε «{$next->label()}».")
             ->send();
 
         $this->halt();

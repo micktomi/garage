@@ -43,7 +43,9 @@ class GeminiClient
                 'thinkingConfig' => [
                     'thinkingLevel' => 'low',
                 ],
-                'maxOutputTokens' => 400,
+                // Thinking tokens share this budget with the JSON output. A 400-token
+                // cap can be exhausted before even the first document field is returned.
+                'maxOutputTokens' => 4096,
                 'responseMimeType' => 'application/json',
                 'responseSchema' => $schema,
             ],

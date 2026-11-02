@@ -37,7 +37,7 @@ class WorkshopInertiaTest extends TestCase
     {
         $this->actingAs(User::factory()->create());
         [$customer, $vehicle, $order] = $this->fixture();
-        $pages = ['/workshop' => 'Dashboard', '/workshop/work-orders' => 'WorkOrders/Index', '/workshop/work-orders/create' => 'WorkOrders/Form', "/workshop/work-orders/{$order->id}" => 'WorkOrders/Show', "/workshop/work-orders/{$order->id}/edit" => 'WorkOrders/Form', '/workshop/customers' => 'Customers/Index', "/workshop/customers/{$customer->id}" => 'Customers/Show', "/workshop/customers/{$customer->id}/edit" => 'Customers/Form', '/workshop/vehicles' => 'Vehicles/Index', '/workshop/vehicles/create' => 'Vehicles/Form', "/workshop/vehicles/{$vehicle->id}/edit" => 'Vehicles/Form', '/workshop/appointments' => 'Appointments/Index', '/workshop/appointments/create' => 'Appointments/Form', '/workshop/kteo' => 'Kteo/Index', '/workshop/parts' => 'Parts/Index', '/workshop/search' => 'Search', '/workshop/registration-scan' => 'RegistrationScan/Index', '/workshop/assistant' => 'Assistant/Index'];
+        $pages = ['/workshop' => 'Dashboard', '/workshop/work-orders' => 'WorkOrders/Index', '/workshop/work-orders/create' => 'WorkOrders/Form', "/workshop/work-orders/{$order->id}" => 'WorkOrders/Show', "/workshop/work-orders/{$order->id}/edit" => 'WorkOrders/Form', '/workshop/customers' => 'Customers/Index', "/workshop/customers/{$customer->id}" => 'Customers/Show', "/workshop/customers/{$customer->id}/edit" => 'Customers/Form', '/workshop/vehicles' => 'Vehicles/Index', '/workshop/vehicles/create' => 'Vehicles/Form', "/workshop/vehicles/{$vehicle->id}" => 'Vehicles/Show', "/workshop/vehicles/{$vehicle->id}/edit" => 'Vehicles/Form', '/workshop/appointments' => 'Appointments/Index', '/workshop/appointments/create' => 'Appointments/Form', '/workshop/kteo' => 'Kteo/Index', '/workshop/parts' => 'Parts/Index', '/workshop/search' => 'Search', '/workshop/registration-scan' => 'RegistrationScan/Index', '/workshop/assistant' => 'Assistant/Index'];
         foreach ($pages as $url => $component) {
             $this->get($url)->assertOk()->assertInertia(fn (Assert $page) => $page->component($component)->has('auth.user')->has('workOrderStatuses', 6)->where('workOrderStatuses.2.value', 'awaiting_parts')->where('workOrderStatuses.3.label', WorkOrderStatus::ReadyForPickup->label()));
         }
@@ -91,7 +91,9 @@ class WorkshopInertiaTest extends TestCase
         $this->actingAs(User::factory()->create());
         [, , $order] = $this->fixture();
         $order->update(['diagnosis' => 'Changed']);
-        $this->from("/workshop/work-orders/{$order->id}")->patch("/workshop/work-orders/{$order->id}/status", ['lock_version' => 0, 'status' => 'ready'])->assertSessionHasErrors('lock_version');
+        // A legal transition on a stale token: the machine must let it pass
+        // so the version check is the one that reports the conflict.
+        $this->from("/workshop/work-orders/{$order->id}")->patch("/workshop/work-orders/{$order->id}/status", ['lock_version' => 0, 'status' => 'in_progress'])->assertSessionHasErrors('lock_version');
         $this->get("/workshop/work-orders/{$order->id}")->assertInertia(fn (Assert $page) => $page->has('errors.lock_version'));
     }
 
@@ -188,7 +190,7 @@ class WorkshopInertiaTest extends TestCase
     {
         $this->actingAs(User::factory()->create());
         [, , $order] = $this->fixture();
-        $this->withHeader('X-Inertia', 'true')->patch('/workshop/work-orders/'.$order->id.'/status', ['lock_version' => $order->lock_version, 'status' => 'ready'])->assertStatus(303)->assertRedirect('/workshop/work-orders/'.$order->id);
+        $this->withHeader('X-Inertia', 'true')->patch('/workshop/work-orders/'.$order->id.'/status', ['lock_version' => $order->lock_version, 'status' => 'in_progress'])->assertStatus(303)->assertRedirect('/workshop/work-orders/'.$order->id);
     }
 
     public function test_dashboard_counts_one_physical_vehicle_with_two_open_orders(): void

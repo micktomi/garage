@@ -20,8 +20,10 @@ import {
     padId,
     vehicleName,
 } from "../../Components/ui";
-export default function Show({ workOrder: order, canEdit }) {
+export default function Show({ workOrder: order, canEdit, allowedTransitions = [] }) {
     const { workOrderStatuses } = usePage().props;
+    const targets = new Set([order.status, ...allowedTransitions]);
+    const options = (workOrderStatuses || []).filter((s) => targets.has(s.value));
     const [confirm, setConfirm] = useState(false);
     const form = useForm({
         status: order.status,
@@ -145,7 +147,7 @@ export default function Show({ workOrder: order, canEdit }) {
                             <h2>Πελάτης και όχημα</h2>
                         </div>
                         <RecordCard
-                            href={`/workshop/vehicles/${order.vehicle_id}/edit`}
+                            href={`/workshop/vehicles/${order.vehicle_id}`}
                             label={`Ιστορικό οχήματος ${order.vehicle?.plate_number || ""}`}
                             plate={
                                 order.vehicle && (
@@ -172,7 +174,7 @@ export default function Show({ workOrder: order, canEdit }) {
                                         </a>
                                     )}
                                     <Button
-                                        href={`/workshop/vehicles/${order.vehicle_id}/edit`}
+                                        href={`/workshop/vehicles/${order.vehicle_id}`}
                                         className="ws-btn-sm"
                                     >
                                         Ιστορικό οχήματος
@@ -192,7 +194,7 @@ export default function Show({ workOrder: order, canEdit }) {
                                     form={form}
                                     as="select"
                                 >
-                                    {workOrderStatuses.map((s) => (
+                                    {options.map((s) => (
                                         <option key={s.value} value={s.value}>
                                             {s.label}
                                         </option>

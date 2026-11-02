@@ -31,6 +31,7 @@ Route::middleware(['auth', HandleWorkshopInertiaRequests::class])->prefix('works
     Route::get('/vehicles/create', [WorkshopController::class, 'vehiclesCreate'])->name('vehicles.create');
     Route::post('/vehicles', [WorkshopController::class, 'vehiclesStore'])->name('vehicles.store');
     Route::get('/vehicles/{vehicle}/edit', [WorkshopController::class, 'vehiclesEdit'])->name('vehicles.edit');
+    Route::get('/vehicles/{vehicle}', [WorkshopController::class, 'vehiclesShow'])->name('vehicles.show');
     Route::put('/vehicles/{vehicle}', [WorkshopController::class, 'vehiclesUpdate'])->name('vehicles.update');
 
     Route::get('/registration-scan', [VehicleRegistrationScanController::class, 'show'])->name('registration-scan.show');

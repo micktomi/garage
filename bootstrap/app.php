@@ -34,7 +34,7 @@ return Application::configure(basePath: dirname(__DIR__))
             if ($request->is('workshop', 'workshop/*') && $status === 429) {
                 return back(303)->withErrors(['rate_limit' => 'Έγιναν πολλά αιτήματα. Περιμένετε ένα λεπτό και δοκιμάστε ξανά.']);
             }
-            if ($request->is('workshop', 'workshop/*') && in_array($status, [403, 404, 419, 500, 503])) {
+            if ($request->is('workshop', 'workshop/*') && in_array($status, [403, 404, 413, 419, 500, 503])) {
                 if ($status === 419) {
                     return back(303)->withErrors(['session' => 'Η συνεδρία έληξε. Ανανεώστε τη σελίδα και δοκιμάστε ξανά.']);
                 }

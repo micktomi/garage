@@ -6,10 +6,12 @@ use App\Models\Customer;
 use App\Models\User;
 use App\Models\Vehicle;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Testing\AssertableInertia as Assert;
+use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\TestCase;
 
 class VehicleRegistrationScanTest extends TestCase
@@ -88,6 +90,88 @@ class VehicleRegistrationScanTest extends TestCase
         $this->assertSame([], Storage::disk('local')->allFiles());
         $this->assertDatabaseCount('customers', 0);
         $this->assertDatabaseCount('vehicles', 0);
+    }
+
+    public function test_scan_exposes_the_effective_php_upload_limit(): void
+    {
+        $limit = 10 * 1024 * 1024;
+        foreach (['upload_max_filesize', 'post_max_size'] as $setting) {
+            $bytes = ini_parse_quantity((string) ini_get($setting));
+            if ($bytes > 0) {
+                $limit = min($limit, $setting === 'post_max_size' ? max(1024, $bytes - 65536) : $bytes);
+            }
+        }
+        $this->actingAs(User::factory()->create())->get(route('workshop.registration-scan.show'))
+            ->assertInertia(fn (Assert $page) => $page->where('uploadMaxBytes', $limit));
+    }
+
+    public function test_an_image_above_the_php_limit_is_rejected_before_gemini(): void
+    {
+        Http::preventStrayRequests();
+        $this->actingAs(User::factory()->create())
+            ->from(route('workshop.registration-scan.show'))
+            ->post(route('workshop.registration-scan.extract'), [
+                'registration_image' => UploadedFile::fake()->image('oversize.jpg')->size(11000),
+            ])->assertSessionHasErrors('registration_image');
+        Http::assertNothingSent();
+        $this->assertDatabaseCount('customers', 0);
+        $this->assertDatabaseCount('vehicles', 0);
+    }
+
+    #[DataProvider('providerErrors')]
+    public function test_provider_errors_give_actionable_feedback_without_creating_records(int $status, string $hint): void
+    {
+        config(['garage-assistant.enabled' => true, 'garage-assistant.gemini.api_key' => 'test-key']);
+        Http::fake(['*' => Http::response(['error' => ['status' => 'TEST', 'message' => 'Do not expose this provider payload']], $status)]);
+        $response = $this->actingAs(User::factory()->create())
+            ->from(route('workshop.registration-scan.show'))
+            ->post(route('workshop.registration-scan.extract'), [
+                'registration_image' => UploadedFile::fake()->image('specimen.jpg'),
+            ]);
+        $response->assertRedirect(route('workshop.registration-scan.show'))
+            ->assertSessionHasErrors('registration_image');
+        $error = session('errors')->first('registration_image');
+        $this->assertStringContainsString($hint, $error);
+        $this->assertStringNotContainsString('provider payload', $error);
+        $this->assertNull(session('workshop_registration_review'));
+        $this->assertDatabaseCount('customers', 0);
+        $this->assertDatabaseCount('vehicles', 0);
+    }
+
+    public static function providerErrors(): array
+    {
+        return [
+            'bad request' => [400, 'ρυθμίσεων'],
+            'invalid key' => [401, 'κλειδί'],
+            'forbidden' => [403, 'δικαιώματα'],
+            'missing model' => [404, 'μοντέλο'],
+            'quota' => [429, 'όριο χρήσης'],
+            'unavailable' => [503, 'προσωρινά'],
+        ];
+    }
+
+    public function test_a_timeout_returns_to_upload_without_saving_anything(): void
+    {
+        config(['garage-assistant.enabled' => true, 'garage-assistant.gemini.api_key' => 'test-key']);
+        Http::fake(fn () => throw new ConnectionException('timeout'));
+        $this->actingAs(User::factory()->create())
+            ->post(route('workshop.registration-scan.extract'), [
+                'registration_image' => UploadedFile::fake()->image('specimen.jpg'),
+            ])->assertRedirect(route('workshop.registration-scan.show'))
+            ->assertSessionHasErrors('registration_image');
+        $this->assertStringContainsString('σύνδεση', session('errors')->first('registration_image'));
+        $this->assertDatabaseCount('customers', 0);
+        $this->assertDatabaseCount('vehicles', 0);
+    }
+
+    public function test_oversize_post_has_a_workshop_error_page_instead_of_a_raw_exception(): void
+    {
+        // The global ValidatePostSize middleware runs before session/auth middleware.
+        $this->call('POST', route('workshop.registration-scan.extract'), [], [], [], [
+            'CONTENT_LENGTH' => (string) PHP_INT_MAX,
+            'HTTP_X_INERTIA' => 'true',
+        ])->assertStatus(413)->assertHeader('X-Inertia', 'true')
+            ->assertJsonPath('component', 'Error')->assertJsonPath('props.status', 413);
     }
 
     public function test_uncertain_extracted_vin_does_not_discard_the_other_review_fields(): void

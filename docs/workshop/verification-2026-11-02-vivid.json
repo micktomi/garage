@@ -1,0 +1,194 @@
+{
+  "date": "2026-11-02",
+  "scope": "Visual-only React Workshop refresh; CSS and DESIGN.md; no JavaScript, PHP, dependencies or production data changes",
+  "build": {
+    "command": "npm run build",
+    "passed": true
+  },
+  "javascript": {
+    "command": "node --test --experimental-test-isolation=none tests/Frontend/*.test.js",
+    "passed": 19,
+    "failed": 0
+  },
+  "php": {
+    "command": "APP_ENV=testing DB_CONNECTION=sqlite DB_DATABASE=:memory: php artisan test",
+    "tests": 195,
+    "assertions": 1619,
+    "failed": 0,
+    "existingNotice": "PHP 8.5 PDO::MYSQL_ATTR_SSL_CA deprecations in Laravel/config; unchanged"
+  },
+  "designLint": {
+    "errors": 0,
+    "warnings": 20,
+    "warningType": "orphaned-tokens metadata; canonical runtime ownership is CSS, separately checked"
+  },
+  "tokenMapping": {
+    "colorsChecked": 23,
+    "mismatches": []
+  },
+  "cssSyntax": {
+    "parsed": true,
+    "duplicateSelectorsWithinScope": 0
+  },
+  "verificationStage": "Local visual verification before the approved commit/push; historical test results.",
+  "staticAudit": {
+    "mode": "strict",
+    "summary": {
+      "errors": 0,
+      "total": 0,
+      "unresolved": 0,
+      "violations": 0,
+      "warnings": 0
+    }
+  },
+  "browser": {
+    "environment": "Actual Laravel/React/Inertia application and production frontend build, isolated synthetic fixtures",
+    "viewports": [
+      {
+        "name": "desktop",
+        "width": 1440,
+        "height": 1000
+      },
+      {
+        "name": "tablet",
+        "width": 820,
+        "height": 1100
+      },
+      {
+        "name": "mobile",
+        "width": 390,
+        "height": 844
+      }
+    ],
+    "routes": [
+      {
+        "screen": "dashboard",
+        "path": "/workshop"
+      },
+      {
+        "screen": "orders",
+        "path": "/workshop/work-orders"
+      },
+      {
+        "screen": "order-detail",
+        "path": "/workshop/work-orders/1"
+      },
+      {
+        "screen": "order-create",
+        "path": "/workshop/work-orders/create"
+      },
+      {
+        "screen": "order-edit",
+        "path": "/workshop/work-orders/1/edit"
+      },
+      {
+        "screen": "customers",
+        "path": "/workshop/customers"
+      },
+      {
+        "screen": "customer-detail",
+        "path": "/workshop/customers/1"
+      },
+      {
+        "screen": "customer-create",
+        "path": "/workshop/customers/create"
+      },
+      {
+        "screen": "customer-edit",
+        "path": "/workshop/customers/1/edit"
+      },
+      {
+        "screen": "vehicles",
+        "path": "/workshop/vehicles"
+      },
+      {
+        "screen": "vehicle-detail",
+        "path": "/workshop/vehicles/1"
+      },
+      {
+        "screen": "vehicle-create",
+        "path": "/workshop/vehicles/create"
+      },
+      {
+        "screen": "vehicle-edit",
+        "path": "/workshop/vehicles/1/edit"
+      },
+      {
+        "screen": "appointments",
+        "path": "/workshop/appointments"
+      },
+      {
+        "screen": "appointment-create",
+        "path": "/workshop/appointments/create"
+      },
+      {
+        "screen": "appointment-edit",
+        "path": "/workshop/appointments/1/edit"
+      },
+      {
+        "screen": "kteo",
+        "path": "/workshop/kteo"
+      },
+      {
+        "screen": "parts",
+        "path": "/workshop/parts"
+      },
+      {
+        "screen": "search",
+        "path": "/workshop/search?q=Opel"
+      },
+      {
+        "screen": "assistant",
+        "path": "/workshop/assistant"
+      },
+      {
+        "screen": "scan",
+        "path": "/workshop/registration-scan?new=1"
+      },
+      {
+        "screen": "not-found",
+        "path": "/workshop/work-orders/999999"
+      }
+    ],
+    "screensPerViewport": 22,
+    "pageViews": 66,
+    "checksPassed": 162,
+    "checksFailed": 0,
+    "runtimeExceptions": 0,
+    "unexpectedConsoleErrors": 0,
+    "unexpectedFailedResponses": 0,
+    "contrast": {
+      "textSamples": 1101,
+      "failedSamples": 0,
+      "minimumTextRatio": 4.57,
+      "inputBoundaryRatio": 3.39,
+      "searchBoundaryRatio": 3.24,
+      "navFocusRatio": 8.8
+    },
+    "additionalStates": [
+      "mobile status filter",
+      "menu and Escape focus restoration",
+      "no results",
+      "validation",
+      "offline feedback",
+      "slow Inertia request and stable control geometry",
+      "local OCR preview and rotation",
+      "reduced motion",
+      "forced colours",
+      "320px viewport",
+      "720x500 reflow and reachable form actions"
+    ],
+    "externalAIRequests": 0,
+    "screenshots": {
+      "count": 74,
+      "directory": "screenshots/2026-11-02-vivid/",
+      "repositoryIncluded": false
+    }
+  },
+  "repositoryHygiene": {
+    "screenshotsBuildsTemporaryFilesExcluded": true,
+    "rawDiagnosticReportsExcluded": true,
+    "credentialsAndPersonalDocumentsExcluded": true
+  },
+  "deploymentPerformed": false
+}

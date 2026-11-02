@@ -4,17 +4,25 @@ name: Garage Manager Workshop
 description: Greek workspace for the service counter, organised around the status board of vehicles in the workshop.
 colors:
   primary: '#2563eb'
-  primary-soft: '#dbeafe'
-  background: '#f4f8ff'
-  surface-muted: '#ebf2fd'
+  primary-soft: '#e5efff'
+  background: '#f4f7fc'
+  surface-muted: '#f1f5fb'
   surface: '#ffffff'
+  surface-subtle: '#f8faff'
+  navigation: '#122a50'
+  navigation-text: '#d8e5fa'
+  navigation-muted: '#a8bfdf'
+  navigation-focus: '#a9ceff'
+  border-strong: '#7b8da6'
+  warning-header: '#f3e4bb'
+  parts-header: '#ede0c2'
   text: '#0f172a'
   muted: '#475569'
   faint: '#5b6b82'
-  border: '#dbe5f3'
-  info: '#3556c8'
-  warning: '#8f5500'
-  parts: '#b03a07'
+  border: '#dce4ef'
+  info: '#1d4ed8'
+  warning: '#805b12'
+  parts: '#78602b'
   success: '#0f766e'
   success-accent: '#0d9488'
   danger: '#b3261e'
@@ -34,11 +42,42 @@ spacing:
   page: '32px'
 components:
   button:
-    height: '38px'
+    height: '40px'
+    backgroundColor: '{colors.primary}'
+    color: '{colors.surface}'
   input:
     height: '40px'
+    backgroundColor: '{colors.surface}'
+    color: '{colors.text}'
+    borderColor: '{colors.border-strong}'
+    placeholderColor: '{colors.faint}'
   table:
     height: '58px'
+    headerBackground: '{colors.surface-muted}'
+    color: '{colors.muted}'
+  navigation:
+    backgroundColor: '{colors.navigation}'
+    color: '{colors.navigation-text}'
+    mutedColor: '{colors.navigation-muted}'
+    focusColor: '{colors.navigation-focus}'
+  panel:
+    backgroundColor: '{colors.surface}'
+    headerBackground: '{colors.primary-soft}'
+    borderColor: '{colors.border}'
+  record-card:
+    backgroundColor: '{colors.surface}'
+    footerBackground: '{colors.surface-subtle}'
+  status-badge:
+    infoColor: '{colors.info}'
+    warningColor: '{colors.warning}'
+    partsColor: '{colors.parts}'
+    successColor: '{colors.success}'
+    dangerColor: '{colors.danger}'
+    successAccent: '{colors.success-accent}'
+  status-board:
+    warningHeader: '{colors.warning-header}'
+    partsHeader: '{colors.parts-header}'
+
 ---
 
 # Garage Manager Workshop
@@ -48,7 +87,7 @@ The service counter is the reference: answer a customer call, locate a vehicle,
 and progress its work without losing the queue. The home screen is a status
 board: every open work order is a ticket in the lane of its status (new, in
 progress, awaiting parts, ready for pickup), oldest first. The licence plate is
-the identifier and always comes first. Colour means status and nothing else.
+the identifier and always comes first. Navy and blue identify the workspace and actions; semantic colour identifies status.
 Product register, Greek copy, desktop and phone. Avoid marketing heroes and
 decorative cards. Filament is a separate surface and keeps its own appearance
 until it is migrated.
@@ -57,16 +96,43 @@ Runtime token owner: `resources/css/workshop.css`, scoped under `.workshop-app`.
 This document mirrors those canonical tokens; neither generates Filament tokens.
 
 ## Colors
-Bright blue identity on a cool blue-white workspace (`--page`), white surfaces,
-slate text. `--primary` (#2563eb) is the primary button, brand mark, active
-destination, links and focus; `--primary-soft` (#dbeafe) marks the active nav item
-and own chat messages. Five status tones (info, warning, parts, success, danger)
-each have a soft background and a foreground that meets AA on it. Success is
-teal: `--success` (#0f766e) for text, `--success-accent` (#0d9488) only for dots
-and row accents, because white-on-#0d9488 text is 3.7:1. Awaiting parts has its
-own tone; a completed order uses the quiet `calm` tone. Danger marks only
-actionable risk: expired KTEO and orders in the shop for five days or more.
-No dark theme.
+The approved November 2026 identity uses a deep navy navigation surface
+(`#122a50`), bright blue actions (`--primary`, `#2563eb`), white cards and a cool
+blue-white workspace (`--page`, `#f4f7fc`). This is a light content theme with navy
+navigation, not a second/dark theme. The existing Garage Manager name and car icon
+remain. `--nav-*` owns navigation text, icons, hover, active and focus colours across
+the desktop rail, phone menu and bottom tabs. Active destinations have a solid blue
+fill with white text; phone tabs retain their existing geometry and bold active label.
+
+`--primary-soft` (`#e5efff`) provides shared panel headings and own chat messages.
+Links use `--link` -> `--primary-strong` (`#1d4ed8`) for readable text on tinted
+surfaces. Inputs and secondary controls use `--border-strong` (`#7b8da6`), distinct
+from the lighter grouping border (`--border`, `#dce4ef`). White cards have a very
+subtle shadow and quieter `--surface-subtle` footers.
+
+Status meanings and labels are unchanged. New work is blue; in-progress work and
+awaiting parts use two restrained amber tones with dark text, never saturated
+orange. Their header fills are `--warning-header` (`#f3e4bb`) and `--parts-header`
+(`#ede0c2`). Ready work is teal green (`--success`, `#0f766e`). The soft badge
+backgrounds and readable foregrounds come from the same status tokens. Counts on
+solid headers/selected chips have white backgrounds and dark text to preserve AA.
+Completed orders use `calm`. Red remains actionable risk: expired KTEO, orders in
+the shop for five days or more, errors and destructive actions. Success accents
+(`#0d9488`) are graphical only, not small text on white.
+
+Runtime mapping (existing CSS is the canonical owner; this document mirrors it):
+
+| Role | Runtime tokens | Shared consumers |
+|---|---|---|
+| Navigation | `--nav-*`, `--primary`, `--on-primary` | WorkshopLayout rail, mobile menu/topbar/tabbar |
+| Surfaces/depth | `--page`, `--surface*`, `--border*`, `--panel-shadow`, `--ticket-shadow`, `--hover-shadow` | Panel, RecordCard, tickets, forms, tables, tools |
+| Action/focus | `--primary*`, `--link`, `--primary-shadow`, `--nav-focus` | Button, links, search, Field, keyboard focus |
+| Semantic status | `--info-*`, `--warning-*`, `--parts-*`, `--success-*`, `--danger-*`, `--accent-*` | Badge, StatusBoard lanes, card accents, feedback |
+
+Status accents are applied by shared card/ticket selectors to existing badges;
+entities do not supply a second visual implementation. Every titled Panel shares
+one blue-tinted header. Amber is used only for real warnings/waiting states,
+not as a decorative panel colour. Filament is not a consumer of these tokens.
 
 ## Typography
 Self-hosted WOFF2 (`public/fonts`, SIL OFL): Geologica for titles and numerals,
@@ -124,8 +190,11 @@ no per-row actions: the material lines of a work order and the parts catalogue.
 Every other list is a card list. `DataTable` is the single table component.
 
 ## Elevation & Depth
-Borders and spacing carry hierarchy; shadow only on dialogs and the mobile sheet.
-Lanes use a muted fill, tickets a white surface with a 1px border.
+Borders and spacing carry hierarchy. Panels and cards use the shared low-opacity
+navy shadow; hover deepens it without moving the content. Dialogs and the mobile
+sheet retain stronger elevation. Status lanes use semantic tinted fills and coloured
+headers; tickets retain white surfaces with a 1px border. No gradients or decorative
+widgets are introduced.
 
 ## Shapes
 6px controls, 10px tickets, 14px panels. Plates have a blue EU strip and a dark

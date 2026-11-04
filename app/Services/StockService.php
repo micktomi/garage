@@ -36,15 +36,47 @@ final class StockService
         }
     }
 
-    /** Manual correction to a counted quantity. */
+    /**
+     * Manual correction to a counted quantity. Compare-and-swap, not
+     * read-then-write: the UPDATE only applies if nobody moved this part's
+     * stock since it was read, otherwise it re-reads and tries again, so the
+     * result is always exactly the typed quantity.
+     */
     public function setQuantity(Part $part, float $target, ?string $note = null): void
     {
         self::assertNotNegative($target);
+        $target = round($target, 1);
 
-        DB::transaction(function () use ($part, $target, $note) {
-            $current = (float) Part::withTrashed()->whereKey($part->getKey())->value('quantity');
-            $this->move($part->getKey(), $target - $current, StockMovementType::Adjust, note: $note);
-        });
+        for ($attempt = 0; $attempt < 5; $attempt++) {
+            $applied = DB::transaction(function () use ($part, $target, $note): bool {
+                $current = round((float) Part::withTrashed()->whereKey($part->getKey())->value('quantity'), 1);
+
+                if ($current == $target) {
+                    return true;
+                }
+
+                $swapped = Part::withTrashed()
+                    ->whereKey($part->getKey())
+                    ->where('quantity', $current)
+                    ->update(['quantity' => $target]);
+
+                if ($swapped === 0) {
+                    return false;
+                }
+
+                $this->record($part->getKey(), $target - $current, StockMovementType::Adjust, note: $note);
+
+                return true;
+            });
+
+            if ($applied) {
+                return;
+            }
+        }
+
+        throw ValidationException::withMessages([
+            'quantity' => 'Το απόθεμα άλλαζε ταυτόχρονα από άλλη ενέργεια. Δοκίμασε ξανά.',
+        ]);
     }
 
     /**

@@ -15,6 +15,7 @@ use App\Models\User;
 use App\Models\Vehicle;
 use App\Models\WorkOrder;
 use App\Models\WorkOrderPart;
+use App\Services\StockService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
@@ -216,6 +217,30 @@ class StockMovementsTest extends TestCase
         $this->assertSame(7.0, (float) $part->fresh()->quantity);
         $this->assertSame([['in', 10.0, null], ['adjust', -3.0, null]], $this->movements($part));
         $this->assertSame($this->owner->id, StockMovement::latest('id')->first()->user_id);
+        $this->assertLedgerMatchesStock();
+    }
+
+    public function test_manual_correction_lands_on_the_typed_quantity_even_if_stock_moves_underneath(): void
+    {
+        $part = $this->part(10);
+        $injected = false;
+
+        // Right after the service reads the current quantity, another request consumes 1.
+        DB::listen(function ($query) use ($part, &$injected) {
+            if (! $injected && str_starts_with(strtolower($query->sql), 'select "quantity" from "parts"')) {
+                $injected = true;
+                app(StockService::class)->syncLine(
+                    WorkOrderPart::make(['work_order_id' => $this->order()->id]),
+                    null,
+                    ['source' => 'from_stock', 'part_id' => $part->id, 'quantity' => 1],
+                );
+            }
+        });
+
+        app(StockService::class)->setQuantity($part, 4);
+
+        $this->assertTrue($injected, 'the concurrent consumption was not injected');
+        $this->assertSame(4.0, (float) $part->fresh()->quantity, 'a correction must land on the typed quantity');
         $this->assertLedgerMatchesStock();
     }
 

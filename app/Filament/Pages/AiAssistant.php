@@ -38,7 +38,18 @@ class AiAssistant extends Page
     {
         $user = auth()->user();
 
-        return $user instanceof User && $user->canAccessPanel(Filament::getPanel('admin'));
+        return config('garage-assistant.enabled')
+            && $user instanceof User
+            && $user->canAccessPanel(Filament::getPanel('admin'));
+    }
+
+    /**
+     * Runs on every Livewire request (not only on mount), so actions are
+     * rejected as soon as the assistant is switched off.
+     */
+    public function boot(): void
+    {
+        abort_unless(static::canAccess(), 403);
     }
 
     public function mount(): void

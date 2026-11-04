@@ -1,4 +1,5 @@
 import React from "react";
+import { usePage } from "@inertiajs/react";
 import {
     Button,
     CardGrid,
@@ -7,15 +8,18 @@ import {
 } from "../../Components/ui";
 import { VehicleCard } from "../../Components/cards";
 export default function Index({ vehicles, q }) {
+    const { features } = usePage().props;
     return (
         <>
             <PageHeading
                 title="Οχήματα"
                 description="Στοιχεία πελατών, συντήρηση και ιστορικό οχημάτων."
             >
-                <Button href="/workshop/registration-scan">
-                    Σάρωση άδειας
-                </Button>
+                {features?.ai && (
+                    <Button href="/workshop/registration-scan">
+                        Σάρωση άδειας
+                    </Button>
+                )}
                 <Button href="/workshop/vehicles/create" primary>
                     Νέο όχημα
                 </Button>

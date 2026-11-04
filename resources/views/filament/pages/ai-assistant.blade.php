@@ -34,7 +34,7 @@
     >
         @if (! config('garage-assistant.enabled'))
             <div class="rounded-xl border border-warning-300 bg-warning-50 p-4 text-sm text-warning-800 dark:border-warning-700 dark:bg-warning-950 dark:text-warning-200">
-                Ο AI Βοηθός είναι απενεργοποιημένος. Όρισε <code>GARAGE_ASSISTANT_ENABLED=true</code> στο τοπικό <code>.env</code>.
+                Ο AI Βοηθός είναι απενεργοποιημένος. Όρισε <code>AI_ASSISTANT_ENABLED=true</code> στο τοπικό <code>.env</code>.
             </div>
         @elseif (blank(config('garage-assistant.gemini.api_key')))
             <div class="rounded-xl border border-warning-300 bg-warning-50 p-4 text-sm text-warning-800 dark:border-warning-700 dark:bg-warning-950 dark:text-warning-200">

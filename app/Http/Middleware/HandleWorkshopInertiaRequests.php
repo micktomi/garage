@@ -18,6 +18,7 @@ class HandleWorkshopInertiaRequests extends Middleware
                 'user' => $request->user()?->only('id', 'name', 'role'),
                 'canPrice' => $request->user()?->can('administer-pricing') ?? false,
             ],
+            'features' => ['ai' => (bool) config('garage-assistant.enabled')],
             'flash' => ['success' => fn () => $request->session()->get('success')],
             'workOrderStatuses' => collect(WorkOrderStatus::cases())->map(fn ($status) => [
                 'value' => $status->value, 'label' => $status->label(), 'tone' => $status->filamentColor(), 'open' => $status->isOpen(),

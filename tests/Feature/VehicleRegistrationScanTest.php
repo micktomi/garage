@@ -18,6 +18,13 @@ class VehicleRegistrationScanTest extends TestCase
 {
     use RefreshDatabase;
 
+    protected function setUp(): void
+    {
+        parent::setUp();
+        // The scan flow only exists while the AI features are enabled (see AiAssistantToggleTest).
+        config(['garage-assistant.enabled' => true]);
+    }
+
     public function test_guests_cannot_access_extract_or_save_the_scan_flow(): void
     {
         $this->get(route('workshop.registration-scan.show'))->assertRedirect('/admin/login');

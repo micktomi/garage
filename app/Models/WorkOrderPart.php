@@ -2,10 +2,10 @@
 
 namespace App\Models;
 
-use App\Enums\WorkOrderStatus;
+use App\Services\StockService;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Validation\ValidationException;
+use Illuminate\Support\Facades\DB;
 
 class WorkOrderPart extends Model
 {
@@ -42,66 +42,43 @@ class WorkOrderPart extends Model
     }
 
     /**
-     * Stock consumption as a single conditional UPDATE: the "is there enough"
-     * check and the decrement are one statement, so two rows of the same part
-     * — whether in one order, in two browser tabs, or in two requests — can
-     * never both pass. Neither UI's own per-row form rule can see the other
-     * consumption, which is why this lives here rather than in a controller.
+     * Writing a line and moving its stock is one unit: if the stock move is
+     * refused (not enough stock) the line write is rolled back with it.
      */
-    public static function consumeStock(Part $part, float $quantity): void
+    public function save(array $options = [])
     {
-        if ($quantity <= 0) {
-            // Returning stock, not consuming it — no availability to check.
-            $part->decrement('quantity', $quantity);
+        return DB::transaction(fn () => parent::save($options));
+    }
 
-            return;
-        }
+    public function delete()
+    {
+        return DB::transaction(fn () => parent::delete());
+    }
 
-        $consumed = Part::query()
-            ->whereKey($part->getKey())
-            ->where('quantity', '>=', $quantity)
-            ->decrement('quantity', $quantity);
+    /** @return array{source: ?string, part_id: ?int, quantity: mixed} */
+    private function stockState(bool $original): array
+    {
+        $read = fn (string $key) => $original ? $this->getOriginal($key) : $this->getAttribute($key);
 
-        if ($consumed === 0) {
-            throw ValidationException::withMessages([
-                'quantity' => 'Ανεπαρκές απόθεμα. Διαθέσιμο: '.$part->fresh()?->quantity,
-            ]);
-        }
+        return ['source' => $read('source'), 'part_id' => $read('part_id'), 'quantity' => $read('quantity')];
     }
 
     protected static function booted()
     {
-        static::created(function ($workOrderPart) {
-            if ($workOrderPart->source === 'from_stock' && $workOrderPart->part_id && $workOrderPart->workOrder->status !== WorkOrderStatus::Cancelled) {
-                self::consumeStock($workOrderPart->part, $workOrderPart->quantity);
-            }
-            $workOrderPart->workOrder->calculatePartsCost();
+        // Stock arithmetic lives in StockService; these hooks only report what changed.
+        static::created(function (WorkOrderPart $line) {
+            app(StockService::class)->syncLine($line, null, $line->stockState(false));
+            $line->workOrder->calculatePartsCost();
         });
 
-        static::updated(function ($workOrderPart) {
-            if ($workOrderPart->source === 'from_stock' && $workOrderPart->part_id && $workOrderPart->workOrder->status !== WorkOrderStatus::Cancelled) {
-                if ($workOrderPart->isDirty('part_id')) {
-                    $oldPartId = $workOrderPart->getOriginal('part_id');
-                    $oldQuantity = $workOrderPart->getOriginal('quantity');
-                    $oldPart = Part::find($oldPartId);
-                    if ($oldPart) {
-                        $oldPart->increment('quantity', $oldQuantity);
-                    }
-                    self::consumeStock($workOrderPart->part, $workOrderPart->quantity);
-                } else {
-                    $oldQuantity = $workOrderPart->getOriginal('quantity');
-                    $diff = $workOrderPart->quantity - $oldQuantity;
-                    self::consumeStock($workOrderPart->part, $diff);
-                }
-            }
-            $workOrderPart->workOrder->calculatePartsCost();
+        static::updated(function (WorkOrderPart $line) {
+            app(StockService::class)->syncLine($line, $line->stockState(true), $line->stockState(false));
+            $line->workOrder->calculatePartsCost();
         });
 
-        static::deleted(function ($workOrderPart) {
-            if ($workOrderPart->source === 'from_stock' && $workOrderPart->part_id && $workOrderPart->workOrder->status !== WorkOrderStatus::Cancelled) {
-                $workOrderPart->part->increment('quantity', $workOrderPart->quantity);
-            }
-            $workOrderPart->workOrder->calculatePartsCost();
+        static::deleted(function (WorkOrderPart $line) {
+            app(StockService::class)->syncLine($line, $line->stockState(false), null);
+            $line->workOrder->calculatePartsCost();
         });
     }
 }

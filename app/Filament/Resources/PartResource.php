@@ -45,6 +45,8 @@ class PartResource extends Resource
                 Forms\Components\TextInput::make('quantity')
                     ->label('Ποσότητα')
                     ->numeric()
+                    // Changes are recorded as stock movements (StockService); never negative.
+                    ->minValue(0)
                     ->default(0)
                     ->required(),
                 // Visible to everyone, writable by the owner: the counter

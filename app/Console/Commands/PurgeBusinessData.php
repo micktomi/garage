@@ -9,10 +9,11 @@ class PurgeBusinessData extends Command
 {
     protected $signature = 'garage:purge-business-data {--force : Skip confirmation prompt}';
 
-    protected $description = 'Διαγράφει όλα τα επιχειρησιακά δεδομένα (customers, vehicles, work orders κ.λπ.). ΔΕΝ πειράζει users/migrations/sessions.';
+    protected $description = 'Διαγράφει όλα τα επιχειρησιακά δεδομένα (customers, vehicles, work orders, κινήσεις αποθήκης κ.λπ.). ΔΕΝ πειράζει users/migrations/sessions.';
 
     // Σειρά διαγραφής: πρώτα τα child tables, μετά τα parent.
     private array $tables = [
+        'stock_movements',
         'work_order_parts',
         'work_orders',
         'appointments',

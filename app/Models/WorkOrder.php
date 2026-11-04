@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Enums\WorkOrderStatus;
 use App\Models\Concerns\ArchivesInsteadOfDeleting;
+use App\Services\StockService;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
@@ -187,26 +188,13 @@ class WorkOrder extends Model
         }
 
         return DB::transaction(function () use ($options) {
-            $previous = static::query()->whereKey($this->getKey())->lockForUpdate()->firstOrFail()->getRawOriginal('status');
+            $previous = static::withTrashed()->whereKey($this->getKey())->lockForUpdate()->firstOrFail()->getRawOriginal('status');
             $saved = parent::save($options);
             if (! $saved || $previous === $this->status->value) {
                 return $saved;
             }
 
-            $wasCancelled = $previous === WorkOrderStatus::Cancelled->value;
-            $isCancelled = $this->status === WorkOrderStatus::Cancelled;
-            if ($wasCancelled !== $isCancelled) {
-                foreach ($this->workOrderParts()->with('part')->get() as $line) {
-                    if ($line->source !== 'from_stock' || ! $line->part) {
-                        continue;
-                    }
-                    if ($isCancelled) {
-                        $line->part->increment('quantity', $line->quantity);
-                    } else {
-                        WorkOrderPart::consumeStock($line->part, (float) $line->quantity);
-                    }
-                }
-            }
+            app(StockService::class)->orderStatusChanged($this, $previous);
 
             return $saved;
         });

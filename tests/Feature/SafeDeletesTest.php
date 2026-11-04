@@ -196,7 +196,8 @@ class SafeDeletesTest extends TestCase
         $customer = Customer::create(['full_name' => 'Χωρίς ιστορικό']);
         $vehicleOwner = Customer::create(['full_name' => 'Ιδιοκτήτης']);
         $vehicle = Vehicle::create(['customer_id' => $vehicleOwner->id, 'plate_number' => 'ΝΕΟ-0001']);
-        $part = Part::create(['name' => 'Αχρησιμοποίητο', 'quantity' => 1]);
+        $part = Part::create(['name' => 'Αχρησιμοποίητο', 'quantity' => 0]);
+        $this->assertTrue(Part::create(['name' => 'Με κίνηση αποθήκης', 'quantity' => 1])->hasHistory(), 'stock movements are history');
 
         foreach ([$customer, $vehicle, $part] as $model) {
             $this->assertFalse($model->hasHistory(), $model::class.' should have no history');
@@ -231,7 +232,7 @@ class SafeDeletesTest extends TestCase
         $this->actingAs($this->owner());
         [$customer, $vehicle, $order, $part] = $this->history();
         $lonelyCustomer = Customer::create(['full_name' => 'Χωρίς ιστορικό']);
-        $lonelyPart = Part::create(['name' => 'Αχρησιμοποίητο', 'quantity' => 1]);
+        $lonelyPart = Part::create(['name' => 'Αχρησιμοποίητο', 'quantity' => 0]);
         foreach ([$customer, $vehicle, $order, $part, $lonelyCustomer, $lonelyPart] as $model) {
             $model->delete();
         }

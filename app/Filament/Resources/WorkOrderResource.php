@@ -7,10 +7,12 @@ use App\Filament\Resources\WorkOrderResource\Pages;
 use App\Filament\Support\ArchiveActions;
 use App\Models\Part;
 use App\Models\WorkOrder;
+use App\Services\StockService;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Infolists;
 use Filament\Infolists\Infolist;
+use Filament\Resources\Pages\EditRecord;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
@@ -143,23 +145,22 @@ class WorkOrderResource extends Resource
                                         $unitPrice = (float) $get('unit_price');
                                         $set('line_total', (float) $state * $unitPrice);
                                     })
-                                    ->rule(function (Forms\Get $get) {
-                                        return function (string $attribute, $value, $fail) use ($get) {
-                                            if ($get('source') !== 'from_stock') {
-                                                return;
-                                            }
-                                            $partId = $get('part_id');
-                                            if (! $partId) {
-                                                return;
-                                            }
-                                            $part = Part::find($partId);
-                                            if (! $part) {
-                                                return;
-                                            }
-                                            if ($value > $part->quantity) {
-                                                $fail("Ανεπαρκές απόθεμα. Διαθέσιμο: {$part->quantity}");
-                                            }
-                                        };
+                                    // Backend check against StockService: all rows of the same part
+                                    // together, counting what this order already holds of it.
+                                    ->rule(fn (Forms\Get $get, $livewire) => function (string $attribute, $value, $fail) use ($get, $livewire) {
+                                        if ($get('source') !== 'from_stock' || blank($get('part_id'))
+                                            || $get('../../status') === WorkOrderStatus::Cancelled->value) {
+                                            return;
+                                        }
+                                        $partId = (int) $get('part_id');
+                                        $demand = collect($get('../../workOrderParts') ?? [])
+                                            ->filter(fn ($row) => ($row['source'] ?? null) === 'from_stock' && (int) ($row['part_id'] ?? 0) === $partId)
+                                            ->sum(fn ($row) => (float) ($row['quantity'] ?? 0));
+                                        $order = $livewire instanceof EditRecord ? $livewire->getRecord() : null;
+                                        $available = app(StockService::class)->availableFor($partId, $order);
+                                        if ($demand > $available) {
+                                            $fail("Ανεπαρκές απόθεμα. Διαθέσιμο: {$available} (σύνολο γραμμών αυτού του ανταλλακτικού: {$demand}).");
+                                        }
                                     }),
                                 Forms\Components\TextInput::make('unit_cost')
                                     ->label('Κόστος αγοράς')

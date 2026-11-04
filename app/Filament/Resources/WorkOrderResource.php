@@ -4,6 +4,7 @@ namespace App\Filament\Resources;
 
 use App\Enums\WorkOrderStatus;
 use App\Filament\Resources\WorkOrderResource\Pages;
+use App\Filament\Resources\WorkOrderResource\RelationManagers;
 use App\Filament\Support\ArchiveActions;
 use App\Models\Part;
 use App\Models\WorkOrder;
@@ -326,6 +327,23 @@ class WorkOrderResource extends Resource
                     ->badge()
                     ->formatStateUsing(fn (WorkOrderStatus|string $state): string => WorkOrderStatus::resolve($state)->label())
                     ->color(fn (WorkOrderStatus|string $state): string => WorkOrderStatus::resolve($state)->filamentColor()),
+                Tables\Columns\TextColumn::make('payments_sum_amount')
+                    ->label('Πληρωμένο')
+                    ->money('EUR')
+                    ->default(0),
+                Tables\Columns\TextColumn::make('balance')
+                    ->label('Υπόλοιπο')
+                    ->state(fn (WorkOrder $record): float => $record->balance())
+                    ->money('EUR'),
+                Tables\Columns\TextColumn::make('payment_status')
+                    ->label('Πληρωμή')
+                    ->badge()
+                    ->state(fn (WorkOrder $record): string => $record->paymentStatusLabel())
+                    ->color(fn (WorkOrder $record): string => $record->paymentStatus()->filamentColor()),
+                Tables\Columns\TextColumn::make('days_since_completion')
+                    ->label('Ημέρες από ολοκλήρωση')
+                    ->state(fn (WorkOrder $record): ?int => $record->daysSinceCompletion())
+                    ->toggleable(),
                 Tables\Columns\TextColumn::make('created_at')
                     ->label('Ημερομηνία')
                     ->dateTime()
@@ -333,8 +351,12 @@ class WorkOrderResource extends Resource
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->defaultSort('created_at', 'desc')
+            ->modifyQueryUsing(fn (Builder $query) => $query->withSum('payments', 'amount'))
             ->filters([
                 ArchiveActions::filter(),
+                Tables\Filters\Filter::make('debts')
+                    ->label('Οφειλές')
+                    ->query(fn (Builder $query): Builder => $query->withDebt()),
             ])
             ->actions([
                 Tables\Actions\Action::make('sms_ready')
@@ -368,7 +390,7 @@ class WorkOrderResource extends Resource
     public static function getRelations(): array
     {
         return [
-            //
+            RelationManagers\PaymentsRelationManager::class,
         ];
     }
 

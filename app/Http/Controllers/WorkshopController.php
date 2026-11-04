@@ -349,6 +349,13 @@ class WorkshopController extends Controller
         return $this->page('WorkOrders/Show', [
             'workOrder' => $workOrder,
             'allowedTransitions' => $this->allowedStatusTargets($workOrder),
+            // Display only: payments are recorded in Filament.
+            'payment' => [
+                'paid' => $workOrder->paidAmount(),
+                'balance' => $workOrder->balance(),
+                'status' => $workOrder->paymentStatus()->value,
+                'label' => $workOrder->paymentStatusLabel(),
+            ],
         ]);
     }
 

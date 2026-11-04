@@ -20,7 +20,7 @@ import {
     padId,
     vehicleName,
 } from "../../Components/ui";
-export default function Show({ workOrder: order, canEdit, allowedTransitions = [] }) {
+export default function Show({ workOrder: order, canEdit, allowedTransitions = [], payment }) {
     const { workOrderStatuses } = usePage().props;
     const targets = new Set([order.status, ...allowedTransitions]);
     const options = (workOrderStatuses || []).filter((s) => targets.has(s.value));
@@ -139,6 +139,22 @@ export default function Show({ workOrder: order, canEdit, allowedTransitions = [
                                 <strong>{money(order.total_cost)}</strong>
                             </div>
                         </div>
+                        {payment && (
+                            <div className="ws-totals">
+                                <div>
+                                    <small>Πληρωμένο</small>
+                                    <strong>{money(payment.paid)}</strong>
+                                </div>
+                                <div>
+                                    <small>Υπόλοιπο</small>
+                                    <strong>{money(payment.balance)}</strong>
+                                </div>
+                                <div>
+                                    <small>Πληρωμή</small>
+                                    <strong>{payment.label}</strong>
+                                </div>
+                            </div>
+                        )}
                     </Panel>
                 </div>
                 <div className="ws-stack">

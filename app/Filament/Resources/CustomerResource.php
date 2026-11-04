@@ -63,6 +63,11 @@ class CustomerResource extends Resource
                 Tables\Columns\TextColumn::make('phone')
                     ->label('Τηλέφωνο')
                     ->searchable(),
+                Tables\Columns\TextColumn::make('balance')
+                    ->label('Υπόλοιπο')
+                    ->money('EUR')
+                    ->default(0)
+                    ->sortable(),
                 Tables\Columns\TextColumn::make('email')
                     ->label('Email')
                     ->searchable()
@@ -74,6 +79,7 @@ class CustomerResource extends Resource
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->defaultSort('created_at', 'desc')
+            ->modifyQueryUsing(fn (Builder $query) => $query->withBalance())
             ->filters([
                 ArchiveActions::filter(),
             ])

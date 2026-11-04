@@ -15,6 +15,7 @@ class PurgeBusinessData extends Command
     private array $tables = [
         'activity_logs',
         'stock_movements',
+        'payments',
         'work_order_parts',
         'work_orders',
         'appointments',

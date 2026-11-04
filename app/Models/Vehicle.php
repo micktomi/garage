@@ -2,11 +2,14 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\ArchivesInsteadOfDeleting;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 
 class Vehicle extends Model
 {
+    use ArchivesInsteadOfDeleting;
+
     protected $fillable = [
         'customer_id',
         'plate_number',
@@ -29,7 +32,14 @@ class Vehicle extends Model
 
     public function customer()
     {
-        return $this->belongsTo(Customer::class);
+        // Archived owners still name their vehicles.
+        return $this->belongsTo(Customer::class)->withTrashed();
+    }
+
+    public function hasHistory(): bool
+    {
+        return $this->workOrders()->withTrashed()->exists()
+            || $this->appointments()->exists();
     }
 
     public function appointments()

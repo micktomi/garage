@@ -3,13 +3,15 @@
 use App\Http\Controllers\VehicleRegistrationScanController;
 use App\Http\Controllers\WorkshopAssistantController;
 use App\Http\Controllers\WorkshopController;
+use App\Http\Middleware\EnsureAiFeaturesEnabled;
+use App\Http\Middleware\EnsureUserHasValidRole;
 use App\Http\Middleware\HandleWorkshopInertiaRequests;
 use App\Models\WorkOrder;
 use Illuminate\Support\Facades\Route;
 
 Route::redirect('/', '/admin');
 
-Route::middleware(['auth', HandleWorkshopInertiaRequests::class])->prefix('workshop')->name('workshop.')->group(function () {
+Route::middleware(['auth', EnsureUserHasValidRole::class, HandleWorkshopInertiaRequests::class])->prefix('workshop')->name('workshop.')->group(function () {
     Route::get('/', [WorkshopController::class, 'dashboard'])->name('dashboard');
     Route::get('/work-orders', [WorkshopController::class, 'workOrdersIndex'])->name('work-orders.index');
     Route::get('/work-orders/create', [WorkshopController::class, 'workOrdersCreate'])->name('work-orders.create');
@@ -34,14 +36,16 @@ Route::middleware(['auth', HandleWorkshopInertiaRequests::class])->prefix('works
     Route::get('/vehicles/{vehicle}', [WorkshopController::class, 'vehiclesShow'])->name('vehicles.show');
     Route::put('/vehicles/{vehicle}', [WorkshopController::class, 'vehiclesUpdate'])->name('vehicles.update');
 
-    Route::get('/registration-scan', [VehicleRegistrationScanController::class, 'show'])->name('registration-scan.show');
-    Route::post('/registration-scan/extract', [VehicleRegistrationScanController::class, 'extract'])
-        ->middleware('throttle:6,1')
-        ->name('registration-scan.extract');
-    Route::post('/registration-scan', [VehicleRegistrationScanController::class, 'store'])->name('registration-scan.store');
+    Route::middleware(EnsureAiFeaturesEnabled::class)->group(function () {
+        Route::get('/registration-scan', [VehicleRegistrationScanController::class, 'show'])->name('registration-scan.show');
+        Route::post('/registration-scan/extract', [VehicleRegistrationScanController::class, 'extract'])
+            ->middleware('throttle:6,1')
+            ->name('registration-scan.extract');
+        Route::post('/registration-scan', [VehicleRegistrationScanController::class, 'store'])->name('registration-scan.store');
 
-    Route::get('/assistant', [WorkshopAssistantController::class, 'show'])->name('assistant');
-    Route::post('/assistant', [WorkshopAssistantController::class, 'update'])->name('assistant.update');
+        Route::get('/assistant', [WorkshopAssistantController::class, 'show'])->name('assistant');
+        Route::post('/assistant', [WorkshopAssistantController::class, 'update'])->name('assistant.update');
+    });
     Route::get('/parts', [WorkshopController::class, 'partsIndex'])->name('parts.index');
     Route::get('/kteo', [WorkshopController::class, 'kteoIndex'])->name('kteo');
 
@@ -58,4 +62,4 @@ Route::get('/work-orders/{workOrder}/print', function (WorkOrder $workOrder) {
     $workOrder->load('customer', 'vehicle', 'workOrderParts.part');
 
     return view('work-orders.print', compact('workOrder'));
-})->name('work-orders.print')->middleware('auth');
+})->name('work-orders.print')->middleware(['auth', EnsureUserHasValidRole::class]);

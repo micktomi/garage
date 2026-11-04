@@ -4,12 +4,16 @@ namespace App\Filament\Resources;
 
 use App\Enums\WorkOrderStatus;
 use App\Filament\Resources\WorkOrderResource\Pages;
+use App\Filament\Resources\WorkOrderResource\RelationManagers;
+use App\Filament\Support\ArchiveActions;
 use App\Models\Part;
 use App\Models\WorkOrder;
+use App\Services\StockService;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Infolists;
 use Filament\Infolists\Infolist;
+use Filament\Resources\Pages\EditRecord;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
@@ -42,7 +46,7 @@ class WorkOrderResource extends Resource
                     ->schema([
                         Forms\Components\Select::make('customer_id')
                             ->label('Πελάτης')
-                            ->relationship('customer', 'full_name')
+                            ->relationship('customer', 'full_name', fn (Builder $query) => $query->withoutTrashed())
                             ->searchable()
                             ->preload()
                             ->required()
@@ -50,7 +54,7 @@ class WorkOrderResource extends Resource
                             ->afterStateUpdated(fn (Forms\Set $set) => $set('vehicle_id', null)),
                         Forms\Components\Select::make('vehicle_id')
                             ->label('Όχημα')
-                            ->relationship('vehicle', 'plate_number', fn (Builder $query, Forms\Get $get) => $query->when($get('customer_id'), fn ($q) => $q->where('customer_id', $get('customer_id')))
+                            ->relationship('vehicle', 'plate_number', fn (Builder $query, Forms\Get $get) => $query->withoutTrashed()->when($get('customer_id'), fn ($q) => $q->where('customer_id', $get('customer_id')))
                             )
                             ->searchable()
                             ->preload()
@@ -112,6 +116,8 @@ class WorkOrderResource extends Resource
                                 Forms\Components\Select::make('part_id')
                                     ->label('Ανταλλακτικό αποθέματος')
                                     ->options(Part::query()->pluck('name', 'id'))
+                                    // Existing lines may point at an archived part; keep its name visible.
+                                    ->getOptionLabelUsing(fn ($value): ?string => Part::withTrashed()->find($value)?->name)
                                     ->searchable()
                                     ->reactive()
                                     ->visible(fn (Forms\Get $get) => $get('source') === 'from_stock')
@@ -140,23 +146,22 @@ class WorkOrderResource extends Resource
                                         $unitPrice = (float) $get('unit_price');
                                         $set('line_total', (float) $state * $unitPrice);
                                     })
-                                    ->rule(function (Forms\Get $get) {
-                                        return function (string $attribute, $value, $fail) use ($get) {
-                                            if ($get('source') !== 'from_stock') {
-                                                return;
-                                            }
-                                            $partId = $get('part_id');
-                                            if (! $partId) {
-                                                return;
-                                            }
-                                            $part = Part::find($partId);
-                                            if (! $part) {
-                                                return;
-                                            }
-                                            if ($value > $part->quantity) {
-                                                $fail("Ανεπαρκές απόθεμα. Διαθέσιμο: {$part->quantity}");
-                                            }
-                                        };
+                                    // Backend check against StockService: all rows of the same part
+                                    // together, counting what this order already holds of it.
+                                    ->rule(fn (Forms\Get $get, $livewire) => function (string $attribute, $value, $fail) use ($get, $livewire) {
+                                        if ($get('source') !== 'from_stock' || blank($get('part_id'))
+                                            || $get('../../status') === WorkOrderStatus::Cancelled->value) {
+                                            return;
+                                        }
+                                        $partId = (int) $get('part_id');
+                                        $demand = collect($get('../../workOrderParts') ?? [])
+                                            ->filter(fn ($row) => ($row['source'] ?? null) === 'from_stock' && (int) ($row['part_id'] ?? 0) === $partId)
+                                            ->sum(fn ($row) => (float) ($row['quantity'] ?? 0));
+                                        $order = $livewire instanceof EditRecord ? $livewire->getRecord() : null;
+                                        $available = app(StockService::class)->availableFor($partId, $order);
+                                        if ($demand > $available) {
+                                            $fail("Ανεπαρκές απόθεμα. Διαθέσιμο: {$available} (σύνολο γραμμών αυτού του ανταλλακτικού: {$demand}).");
+                                        }
                                     }),
                                 Forms\Components\TextInput::make('unit_cost')
                                     ->label('Κόστος αγοράς')
@@ -322,6 +327,23 @@ class WorkOrderResource extends Resource
                     ->badge()
                     ->formatStateUsing(fn (WorkOrderStatus|string $state): string => WorkOrderStatus::resolve($state)->label())
                     ->color(fn (WorkOrderStatus|string $state): string => WorkOrderStatus::resolve($state)->filamentColor()),
+                Tables\Columns\TextColumn::make('payments_sum_amount')
+                    ->label('Πληρωμένο')
+                    ->money('EUR')
+                    ->default(0),
+                Tables\Columns\TextColumn::make('balance')
+                    ->label('Υπόλοιπο')
+                    ->state(fn (WorkOrder $record): float => $record->balance())
+                    ->money('EUR'),
+                Tables\Columns\TextColumn::make('payment_status')
+                    ->label('Πληρωμή')
+                    ->badge()
+                    ->state(fn (WorkOrder $record): string => $record->paymentStatusLabel())
+                    ->color(fn (WorkOrder $record): string => $record->paymentStatus()->filamentColor()),
+                Tables\Columns\TextColumn::make('days_since_completion')
+                    ->label('Ημέρες από ολοκλήρωση')
+                    ->state(fn (WorkOrder $record): ?int => $record->daysSinceCompletion())
+                    ->toggleable(),
                 Tables\Columns\TextColumn::make('created_at')
                     ->label('Ημερομηνία')
                     ->dateTime()
@@ -329,8 +351,12 @@ class WorkOrderResource extends Resource
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->defaultSort('created_at', 'desc')
+            ->modifyQueryUsing(fn (Builder $query) => $query->withSum('payments', 'amount'))
             ->filters([
-                //
+                ArchiveActions::filter(),
+                Tables\Filters\Filter::make('debts')
+                    ->label('Οφειλές')
+                    ->query(fn (Builder $query): Builder => $query->withDebt()),
             ])
             ->actions([
                 Tables\Actions\Action::make('sms_ready')
@@ -350,12 +376,13 @@ class WorkOrderResource extends Resource
                     ->icon('heroicon-o-printer')
                     ->url(fn (WorkOrder $record): string => route('work-orders.print', $record))
                     ->openUrlInNewTab(),
-                Tables\Actions\ViewAction::make(),
-                Tables\Actions\EditAction::make(),
+                Tables\Actions\ViewAction::make()->hidden(fn ($record) => $record->trashed()),
+                Tables\Actions\EditAction::make()->hidden(fn ($record) => $record->trashed()),
+                ...ArchiveActions::rowRestoreAndForceDelete(),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
+                    ArchiveActions::bulkArchive(),
                 ]),
             ]);
     }
@@ -363,7 +390,7 @@ class WorkOrderResource extends Resource
     public static function getRelations(): array
     {
         return [
-            //
+            RelationManagers\PaymentsRelationManager::class,
         ];
     }
 

@@ -349,6 +349,13 @@ class WorkshopController extends Controller
         return $this->page('WorkOrders/Show', [
             'workOrder' => $workOrder,
             'allowedTransitions' => $this->allowedStatusTargets($workOrder),
+            // Display only: payments are recorded in Filament.
+            'payment' => [
+                'paid' => $workOrder->paidAmount(),
+                'balance' => $workOrder->balance(),
+                'status' => $workOrder->paymentStatus()->value,
+                'label' => $workOrder->paymentStatusLabel(),
+            ],
         ]);
     }
 
@@ -725,7 +732,12 @@ class WorkshopController extends Controller
             'workOrder' => $workOrder,
             'customers' => Customer::orderBy('full_name')->get(['id', 'full_name']),
             'vehiclesByCustomer' => $this->vehiclesGroupedByCustomer(),
-            'parts' => Part::orderBy('name')->get(),
+            // Active catalogue plus any archived part this order already uses.
+            'parts' => Part::withTrashed()
+                ->where(fn ($query) => $query->whereNull('deleted_at')
+                    ->orWhereIn('id', $workOrder->workOrderParts->pluck('part_id')->filter()))
+                ->orderBy('name')
+                ->get(),
         ]);
     }
 

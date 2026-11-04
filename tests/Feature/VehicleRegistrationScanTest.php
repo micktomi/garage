@@ -18,6 +18,13 @@ class VehicleRegistrationScanTest extends TestCase
 {
     use RefreshDatabase;
 
+    protected function setUp(): void
+    {
+        parent::setUp();
+        // The scan flow only exists while the AI features are enabled (see AiAssistantToggleTest).
+        config(['garage-assistant.enabled' => true]);
+    }
+
     public function test_guests_cannot_access_extract_or_save_the_scan_flow(): void
     {
         $this->get(route('workshop.registration-scan.show'))->assertRedirect('/admin/login');
@@ -309,8 +316,9 @@ class VehicleRegistrationScanTest extends TestCase
             $response->assertRedirect(route('workshop.vehicles.edit', $vehicle));
             $this->assertSame('IYZ5020', $vehicle->plate_number);
 
-            $vehicle->delete();
-            $customer->delete();
+            // Hard removal: archived records keep their plate/AFM reserved.
+            $vehicle->forceDelete();
+            $customer->forceDelete();
         }
     }
 
@@ -469,6 +477,32 @@ class VehicleRegistrationScanTest extends TestCase
 
         $this->assertDatabaseCount('customers', 1);
         $this->assertDatabaseCount('vehicles', 1);
+    }
+
+    public function test_an_archived_vehicle_still_reserves_its_plate(): void
+    {
+        $owner = Customer::create(['full_name' => 'Παλιός ιδιοκτήτης']);
+        Vehicle::create(['customer_id' => $owner->id, 'plate_number' => 'IYZ5020'])->delete();
+
+        $this->actingAs(User::factory()->create())
+            ->post(route('workshop.registration-scan.store'), [...$this->reviewPayload(), 'afm' => null])
+            ->assertRedirect(route('workshop.registration-scan.show'))
+            ->assertSessionHasErrors(['plate_number' => 'Η κανονικοποιημένη πινακίδα υπάρχει ήδη καταχωρημένη σε αρχειοθετημένο όχημα. Επανέφερέ το από το «Αρχειοθετημένα» αντί να το καταχωρίσεις ξανά.']);
+
+        $this->assertSame(1, Vehicle::withTrashed()->count());
+    }
+
+    public function test_an_archived_customer_with_the_same_afm_is_not_silently_duplicated(): void
+    {
+        Customer::create(['full_name' => 'Μαρία Ιωάννου', 'afm' => '123456789'])->delete();
+
+        $this->actingAs(User::factory()->create())
+            ->post(route('workshop.registration-scan.store'), $this->reviewPayload())
+            ->assertRedirect(route('workshop.registration-scan.show'))
+            ->assertSessionHasErrors(['afm' => 'Υπάρχει αρχειοθετημένος πελάτης με αυτό το ΑΦΜ. Επανέφερέ τον από το «Αρχειοθετημένα» και σάρωσε ξανά.']);
+
+        $this->assertSame(1, Customer::withTrashed()->count());
+        $this->assertSame(0, Vehicle::withTrashed()->count());
     }
 
     private function reviewPayload(): array

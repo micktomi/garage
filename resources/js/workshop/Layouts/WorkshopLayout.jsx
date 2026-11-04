@@ -27,10 +27,20 @@ const groups = [
         ],
     ],
 ];
+// Gemini-backed pages; hidden when AI_ASSISTANT_ENABLED is false (the routes return 404 too).
+const aiOnlyHrefs = ["/workshop/registration-scan", "/workshop/assistant"];
+const navGroups = (aiEnabled) =>
+    groups
+        .map(([label, items]) => [
+            label,
+            items.filter(([href]) => aiEnabled || !aiOnlyHrefs.includes(href)),
+        ])
+        .filter(([, items]) => items.length > 0);
 const isCurrent = (currentPath, href) =>
     href === "/workshop" ? currentPath === href : currentPath.startsWith(href);
 export default function WorkshopLayout({ children }) {
-    const { auth } = usePage().props;
+    const { auth, features } = usePage().props;
+    const aiEnabled = Boolean(features?.ai);
     const { url } = usePage();
     const [open, setOpen] = useState(false);
     const [query, setQuery] = useState("");
@@ -126,7 +136,7 @@ export default function WorkshopLayout({ children }) {
                     </button>
                 </div>
                 <div className="ws-sidebar-content">
-                    {groups.map(([label, items]) => (
+                    {navGroups(aiEnabled).map(([label, items]) => (
                         <React.Fragment key={label}>
                             <div className="ws-nav-label">{label}</div>
                             <nav className="ws-nav" aria-label={label}>
@@ -201,10 +211,12 @@ export default function WorkshopLayout({ children }) {
                         )}
                     </form>
                     <div className="ws-topbar-actions">
-                        <Button href="/workshop/registration-scan">
-                            <Icon name="scan" size={17} />
-                            Σάρωση άδειας
-                        </Button>
+                        {aiEnabled && (
+                            <Button href="/workshop/registration-scan">
+                                <Icon name="scan" size={17} />
+                                Σάρωση άδειας
+                            </Button>
+                        )}
                         <Button href="/workshop/work-orders/create" primary>
                             <Icon name="plus" size={17} />
                             Νέα εντολή

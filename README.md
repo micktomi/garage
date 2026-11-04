@@ -56,10 +56,33 @@ Sign in at `http://localhost:8000/admin/login`, then open `/workshop` or `/admin
 
 ## AI assistant and registration scanning
 
+`AI_ASSISTANT_ENABLED` (default `false`) is the only switch. When it is `false` the assistant and the registration scan disappear from both UIs, `/admin/ai-assistant` returns 403, `/workshop/assistant*` and `/workshop/registration-scan*` return 404, and `GeminiClient` refuses to send anything. The legacy `GARAGE_ASSISTANT_ENABLED` is still read as a fallback so existing deployments keep their behaviour.
+
+### What is sent to Google
+
+All calls go through `app/Services/Assistant/GeminiClient.php`: `POST {GEMINI_BASE_URL}/models/{GEMINI_MODEL}:generateContent` (default base URL `https://generativelanguage.googleapis.com/v1beta`), with the key in the `x-goog-api-key` header.
+
+**Assistant** (Filament page and `/workshop/assistant`; at most two requests per message):
+
+- The user's message, the last 12 chat messages (user and assistant text, which can repeat earlier personal data), a fixed system prompt with the current date/time, and the tool definitions.
+- If Gemini calls a read tool, its result is sent back in a second request:
+  - `find_customer`: customer full name, phone, email, plus the vehicle fields below for each of their vehicles.
+  - `find_vehicle`: plate, make, model, year, mileage, VIN, owner full name, owner phone.
+  - `get_vehicle_history`: the vehicle fields above, plus up to 25 work orders (date, status, problem description, diagnosis, work performed, mileage, total cost) and up to 25 appointments (date/time, status, description).
+  - `list_appointments` (max 31 days, 50 rows): date/time, status, description, customer full name, phone, plate, make and model.
+  - `list_open_work_orders` (50 rows): date, status, problem description, customer full name, plate.
+- Ambiguous or empty matches and `prepare_*` proposals are answered locally and are **not** sent back.
+- Never sent: customer address, notes, AFM, part lines and prices (other than the work order total above), users.
+
+**Registration scan** (`/workshop/registration-scan`; one request per scan):
+
+- The full photo of the registration certificate (base64 JPEG/PNG/WebP, up to 4,096 px on the long edge), so everything printed on it, plus a fixed prompt and the JSON schema.
+- Gemini returns: owner name, AFM, phone, address, plate, VIN, make, model, fuel, engine cc and first registration date. The application does not store the image.
+
 Set these in your **local, untracked** `.env`:
 
 ```dotenv
-GARAGE_ASSISTANT_ENABLED=true
+AI_ASSISTANT_ENABLED=true
 GEMINI_API_KEY=your-key
 GEMINI_MODEL=gemini-3.7-flash
 ```

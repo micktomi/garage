@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\CustomerResource\RelationManagers;
 
 use App\Enums\WorkOrderStatus;
+use App\Filament\Support\ArchiveActions;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\RelationManagers\RelationManager;
@@ -22,7 +23,7 @@ class WorkOrdersRelationManager extends RelationManager
             ->schema([
                 Forms\Components\Select::make('vehicle_id')
                     ->label('Όχημα')
-                    ->relationship('vehicle', 'plate_number', fn (Builder $query, RelationManager $livewire) => $query->where('customer_id', $livewire->getOwnerRecord()->id)
+                    ->relationship('vehicle', 'plate_number', fn (Builder $query, RelationManager $livewire) => $query->withoutTrashed()->where('customer_id', $livewire->getOwnerRecord()->id)
                     )
                     ->required(),
                 Forms\Components\Textarea::make('problem_description')
@@ -69,11 +70,11 @@ class WorkOrdersRelationManager extends RelationManager
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),
-                Tables\Actions\DeleteAction::make(),
+                ArchiveActions::rowArchive(),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
+                    ArchiveActions::bulkArchive(),
                 ]),
             ]);
     }

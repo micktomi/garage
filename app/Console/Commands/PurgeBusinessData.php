@@ -9,10 +9,13 @@ class PurgeBusinessData extends Command
 {
     protected $signature = 'garage:purge-business-data {--force : Skip confirmation prompt}';
 
-    protected $description = 'Διαγράφει όλα τα επιχειρησιακά δεδομένα (customers, vehicles, work orders κ.λπ.). ΔΕΝ πειράζει users/migrations/sessions.';
+    protected $description = 'Διαγράφει όλα τα επιχειρησιακά δεδομένα (customers, vehicles, work orders, κινήσεις αποθήκης κ.λπ.). ΔΕΝ πειράζει users/migrations/sessions.';
 
     // Σειρά διαγραφής: πρώτα τα child tables, μετά τα parent.
     private array $tables = [
+        'activity_logs',
+        'stock_movements',
+        'payments',
         'work_order_parts',
         'work_orders',
         'appointments',
@@ -23,6 +26,13 @@ class PurgeBusinessData extends Command
 
     public function handle(): int
     {
+        // Demo/test tool only. --force does not override this.
+        if ($this->laravel->environment('production')) {
+            $this->error('Άρνηση: το garage:purge-business-data δεν εκτελείται σε production (APP_ENV=production).');
+
+            return self::FAILURE;
+        }
+
         $this->newLine();
         $this->line('<fg=yellow>===== COUNTS ΠΡΙΝ ΤΗ ΔΙΑΓΡΑΦΗ =====</>');
         $this->showCounts();

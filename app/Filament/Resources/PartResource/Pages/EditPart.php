@@ -3,7 +3,7 @@
 namespace App\Filament\Resources\PartResource\Pages;
 
 use App\Filament\Resources\PartResource;
-use Filament\Actions;
+use App\Filament\Support\ArchiveActions;
 use Filament\Resources\Pages\EditRecord;
 
 class EditPart extends EditRecord
@@ -13,7 +13,7 @@ class EditPart extends EditRecord
     protected function getHeaderActions(): array
     {
         return [
-            Actions\DeleteAction::make(),
+            ArchiveActions::headerArchive(),
         ];
     }
 }

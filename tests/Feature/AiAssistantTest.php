@@ -52,8 +52,7 @@ class AiAssistantTest extends TestCase
 
         $this->assertSame('error', $response->type);
         $this->actingAs($user)->get(route('filament.admin.pages.ai-assistant'))
-            ->assertOk()
-            ->assertSee('Ο AI Βοηθός είναι απενεργοποιημένος');
+            ->assertForbidden();
         $this->assertStringContainsString('απενεργοποιημένος', $response->message);
         Http::assertNothingSent();
     }

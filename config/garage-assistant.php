@@ -1,7 +1,9 @@
 <?php
 
 return [
-    'enabled' => env('GARAGE_ASSISTANT_ENABLED', false),
+    // AI_ASSISTANT_ENABLED is the canonical switch; GARAGE_ASSISTANT_ENABLED is read as a legacy fallback
+    // so existing deployments keep their current behaviour after upgrading.
+    'enabled' => (bool) env('AI_ASSISTANT_ENABLED', env('GARAGE_ASSISTANT_ENABLED', false)),
 
     'gemini' => [
         'api_key' => env('GEMINI_API_KEY'),

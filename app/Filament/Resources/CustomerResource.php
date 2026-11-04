@@ -4,6 +4,7 @@ namespace App\Filament\Resources;
 
 use App\Filament\Resources\CustomerResource\Pages;
 use App\Filament\Resources\CustomerResource\RelationManagers;
+use App\Filament\Support\ArchiveActions;
 use App\Models\Customer;
 use Filament\Forms;
 use Filament\Forms\Form;
@@ -62,6 +63,11 @@ class CustomerResource extends Resource
                 Tables\Columns\TextColumn::make('phone')
                     ->label('Τηλέφωνο')
                     ->searchable(),
+                Tables\Columns\TextColumn::make('balance')
+                    ->label('Υπόλοιπο')
+                    ->money('EUR')
+                    ->default(0)
+                    ->sortable(),
                 Tables\Columns\TextColumn::make('email')
                     ->label('Email')
                     ->searchable()
@@ -73,16 +79,18 @@ class CustomerResource extends Resource
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->defaultSort('created_at', 'desc')
+            ->modifyQueryUsing(fn (Builder $query) => $query->withBalance())
             ->filters([
-                //
+                ArchiveActions::filter(),
             ])
             ->actions([
-                Tables\Actions\ViewAction::make(),
-                Tables\Actions\EditAction::make(),
+                Tables\Actions\ViewAction::make()->hidden(fn ($record) => $record->trashed()),
+                Tables\Actions\EditAction::make()->hidden(fn ($record) => $record->trashed()),
+                ...ArchiveActions::rowRestoreAndForceDelete(),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
+                    ArchiveActions::bulkArchive(),
                 ]),
             ]);
     }

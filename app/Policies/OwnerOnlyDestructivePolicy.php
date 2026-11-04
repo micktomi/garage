@@ -58,8 +58,14 @@ abstract class OwnerOnlyDestructivePolicy
         return $user->isOwner();
     }
 
+    /**
+     * Permanent removal only for records nothing else references; anything
+     * with history stays archived (the database enforces the same rule).
+     */
     public function forceDelete(User $user, Model $model): bool
     {
-        return $user->isOwner();
+        return $user->isOwner()
+            && method_exists($model, 'hasHistory')
+            && ! $model->hasHistory();
     }
 }

@@ -2,7 +2,12 @@
 
 namespace App\Models;
 
+use App\Enums\PaymentStatus;
 use App\Enums\WorkOrderStatus;
+use App\Models\Concerns\ArchivesInsteadOfDeleting;
+use App\Services\ActivityLogger;
+use App\Services\PaymentService;
+use App\Services\StockService;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
@@ -10,6 +15,8 @@ use Illuminate\Validation\ValidationException;
 
 class WorkOrder extends Model
 {
+    use ArchivesInsteadOfDeleting;
+
     private const STALE_LOCK_MESSAGE = 'Η εντολή άλλαξε από άλλον χρήστη ενώ ήταν ανοιχτή αυτή η σελίδα. Ανανεώστε τη σελίδα και δείτε την τρέχουσα κατάσταση πριν αποθηκεύσετε ξανά.';
 
     /**
@@ -55,6 +62,7 @@ class WorkOrder extends Model
     {
         return [
             'next_service_date' => 'date',
+            'completed_at' => 'datetime',
             'status' => WorkOrderStatus::class,
             'in_shop' => 'boolean',
             'lock_version' => 'integer',
@@ -78,12 +86,78 @@ class WorkOrder extends Model
 
     public function customer()
     {
-        return $this->belongsTo(Customer::class);
+        return $this->belongsTo(Customer::class)->withTrashed();
     }
 
     public function vehicle()
     {
-        return $this->belongsTo(Vehicle::class);
+        return $this->belongsTo(Vehicle::class)->withTrashed();
+    }
+
+    public function payments()
+    {
+        return $this->hasMany(Payment::class);
+    }
+
+    public function paidCents(): int
+    {
+        // Uses withSum('payments', 'amount') when the list query loaded it.
+        $sum = array_key_exists('payments_sum_amount', $this->getAttributes())
+            ? $this->getAttributes()['payments_sum_amount']
+            : $this->payments()->sum('amount');
+
+        return (int) round((float) $sum * 100);
+    }
+
+    public function balanceCents(): int
+    {
+        return (int) round((float) $this->total_cost * 100) - $this->paidCents();
+    }
+
+    public function paidAmount(): float
+    {
+        return $this->paidCents() / 100;
+    }
+
+    /** Negative when the customer paid more than the order now costs. */
+    public function balance(): float
+    {
+        return $this->balanceCents() / 100;
+    }
+
+    public function paymentStatus(): PaymentStatus
+    {
+        return PaymentStatus::fromCents((int) round((float) $this->total_cost * 100), $this->paidCents());
+    }
+
+    public function paymentStatusLabel(): string
+    {
+        $status = $this->paymentStatus();
+
+        return $status === PaymentStatus::Overpaid
+            ? $status->label().' '.PaymentService::money(-$this->balanceCents())
+            : $status->label();
+    }
+
+    public function daysSinceCompletion(): ?int
+    {
+        return $this->completed_at
+            ? (int) $this->completed_at->copy()->startOfDay()->diffInDays(now()->startOfDay())
+            : null;
+    }
+
+    /** Completed orders with something still to pay: the «Οφειλές». */
+    public function scopeWithDebt(Builder $query): Builder
+    {
+        return $query
+            ->where('status', WorkOrderStatus::Completed->value)
+            ->whereRaw('ROUND(total_cost - COALESCE((SELECT SUM(amount) FROM payments WHERE payments.work_order_id = work_orders.id), 0), 2) > 0');
+    }
+
+    /** A work order is history in itself: it can be archived, never force-deleted. */
+    public function hasHistory(): bool
+    {
+        return true;
     }
 
     public function workOrderParts()
@@ -178,26 +252,13 @@ class WorkOrder extends Model
         }
 
         return DB::transaction(function () use ($options) {
-            $previous = static::query()->whereKey($this->getKey())->lockForUpdate()->firstOrFail()->getRawOriginal('status');
+            $previous = static::withTrashed()->whereKey($this->getKey())->lockForUpdate()->firstOrFail()->getRawOriginal('status');
             $saved = parent::save($options);
             if (! $saved || $previous === $this->status->value) {
                 return $saved;
             }
 
-            $wasCancelled = $previous === WorkOrderStatus::Cancelled->value;
-            $isCancelled = $this->status === WorkOrderStatus::Cancelled;
-            if ($wasCancelled !== $isCancelled) {
-                foreach ($this->workOrderParts()->with('part')->get() as $line) {
-                    if ($line->source !== 'from_stock' || ! $line->part) {
-                        continue;
-                    }
-                    if ($isCancelled) {
-                        $line->part->increment('quantity', $line->quantity);
-                    } else {
-                        WorkOrderPart::consumeStock($line->part, (float) $line->quantity);
-                    }
-                }
-            }
+            app(StockService::class)->orderStatusChanged($this, $previous);
 
             return $saved;
         });
@@ -213,11 +274,24 @@ class WorkOrder extends Model
             $workOrder->lock_version = (int) $workOrder->getRawOriginal('lock_version') + 1;
         });
 
+        // The balance becomes a debt from this moment; reopening withdraws it.
+        static::updating(function (WorkOrder $workOrder) {
+            if ($workOrder->isDirty('status')) {
+                $workOrder->completed_at = $workOrder->status === WorkOrderStatus::Completed ? now() : null;
+            }
+        });
+
+        static::updated(fn (WorkOrder $workOrder) => app(ActivityLogger::class)->updated($workOrder, ['status'], $workOrder->getKey()));
+
         // A new order means the vehicle was just handed over at the counter.
         // Records seeded or imported as already closed are the exception, so
         // presence follows the status unless the caller states otherwise.
         static::creating(function (WorkOrder $workOrder) {
             $workOrder->checked_in_at ??= now();
+
+            if ($workOrder->status === WorkOrderStatus::Completed) {
+                $workOrder->completed_at ??= now();
+            }
 
             // A missing status falls back to the column default, which is open.
             if (! $workOrder->isDirty('in_shop')) {

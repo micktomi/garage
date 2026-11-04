@@ -35,6 +35,7 @@ class WorkshopInertiaTest extends TestCase
 
     public function test_operational_pages_are_accessible_and_share_canonical_statuses(): void
     {
+        config(['garage-assistant.enabled' => true]); // AI pages exist only while enabled
         $this->actingAs(User::factory()->create());
         [$customer, $vehicle, $order] = $this->fixture();
         $pages = ['/workshop' => 'Dashboard', '/workshop/work-orders' => 'WorkOrders/Index', '/workshop/work-orders/create' => 'WorkOrders/Form', "/workshop/work-orders/{$order->id}" => 'WorkOrders/Show', "/workshop/work-orders/{$order->id}/edit" => 'WorkOrders/Form', '/workshop/customers' => 'Customers/Index', "/workshop/customers/{$customer->id}" => 'Customers/Show', "/workshop/customers/{$customer->id}/edit" => 'Customers/Form', '/workshop/vehicles' => 'Vehicles/Index', '/workshop/vehicles/create' => 'Vehicles/Form', "/workshop/vehicles/{$vehicle->id}" => 'Vehicles/Show', "/workshop/vehicles/{$vehicle->id}/edit" => 'Vehicles/Form', '/workshop/appointments' => 'Appointments/Index', '/workshop/appointments/create' => 'Appointments/Form', '/workshop/kteo' => 'Kteo/Index', '/workshop/parts' => 'Parts/Index', '/workshop/search' => 'Search', '/workshop/registration-scan' => 'RegistrationScan/Index', '/workshop/assistant' => 'Assistant/Index'];
@@ -112,6 +113,7 @@ class WorkshopInertiaTest extends TestCase
 
     public function test_assistant_uses_shared_engine_and_executor_with_confirmation_only(): void
     {
+        config(['garage-assistant.enabled' => true]); // AI pages exist only while enabled
         $user = User::factory()->create();
         $this->actingAs($user);
         [$customer, $vehicle] = $this->fixture();
@@ -129,6 +131,7 @@ class WorkshopInertiaTest extends TestCase
 
     public function test_assistant_cancellation_discards_shared_proposal(): void
     {
+        config(['garage-assistant.enabled' => true]); // AI pages exist only while enabled
         $user = User::factory()->create();
         $this->actingAs($user);
         $store = app(ProposalStore::class);
@@ -203,6 +206,7 @@ class WorkshopInertiaTest extends TestCase
 
     public function test_ocr_throttling_is_a_visible_retryable_workshop_error(): void
     {
+        config(['garage-assistant.enabled' => true]); // AI pages exist only while enabled
         Http::preventStrayRequests();
         $this->actingAs(User::factory()->create())->from('/workshop/registration-scan');
         for ($i = 0; $i < 6; $i++) {

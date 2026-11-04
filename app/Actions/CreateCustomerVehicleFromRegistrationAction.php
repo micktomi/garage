@@ -60,7 +60,16 @@ final class CreateCustomerVehicleFromRegistrationAction
             $customerReused = false;
 
             if (filled($validated['afm'] ?? null)) {
-                $customer = Customer::where('afm', $validated['afm'])->first();
+                $customer = Customer::withTrashed()->where('afm', $validated['afm'])->first();
+
+                // The AFM stays reserved by an archived customer: never reuse or
+                // duplicate it silently.
+                if ($customer?->trashed()) {
+                    throw ValidationException::withMessages([
+                        'afm' => 'Υπάρχει αρχειοθετημένος πελάτης με αυτό το ΑΦΜ. Επανέφερέ τον από το «Αρχειοθετημένα» και σάρωσε ξανά.',
+                    ]);
+                }
+
                 $customerReused = $customer !== null;
             }
 
@@ -105,7 +114,8 @@ final class CreateCustomerVehicleFromRegistrationAction
         $duplicateVin = null;
         $nearVin = null;
 
-        foreach (Vehicle::query()->select(['id', 'plate_number', 'vin'])->get() as $vehicle) {
+        // Archived vehicles included: their plate and VIN stay reserved.
+        foreach (Vehicle::withTrashed()->select(['id', 'plate_number', 'vin', 'deleted_at'])->get() as $vehicle) {
             $existingPlate = $this->normalizePlate($vehicle->plate_number);
             $existingVin = $this->normalizeVin($vehicle->vin);
 
@@ -135,7 +145,9 @@ final class CreateCustomerVehicleFromRegistrationAction
         $errors = [];
 
         if ($duplicatePlate !== null) {
-            $errors['plate_number'] = 'Η κανονικοποιημένη πινακίδα υπάρχει ήδη καταχωρημένη. Δεν δημιουργήθηκε δεύτερο όχημα.';
+            $errors['plate_number'] = $duplicatePlate->trashed()
+                ? 'Η κανονικοποιημένη πινακίδα υπάρχει ήδη καταχωρημένη σε αρχειοθετημένο όχημα. Επανέφερέ το από το «Αρχειοθετημένα» αντί να το καταχωρίσεις ξανά.'
+                : 'Η κανονικοποιημένη πινακίδα υπάρχει ήδη καταχωρημένη. Δεν δημιουργήθηκε δεύτερο όχημα.';
 
             if ($vin !== null && $duplicatePlate->vin !== null) {
                 $existingVin = $this->normalizeVin($duplicatePlate->vin);

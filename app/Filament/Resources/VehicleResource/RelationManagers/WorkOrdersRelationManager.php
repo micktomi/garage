@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\VehicleResource\RelationManagers;
 
 use App\Enums\WorkOrderStatus;
+use App\Filament\Support\ArchiveActions;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\RelationManagers\RelationManager;
@@ -68,11 +69,11 @@ class WorkOrdersRelationManager extends RelationManager
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),
-                Tables\Actions\DeleteAction::make(),
+                ArchiveActions::rowArchive(),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
+                    ArchiveActions::bulkArchive(),
                 ]),
             ]);
     }

@@ -26,7 +26,7 @@ class AssistantEngine
         $this->authorize($user);
 
         if (! config('garage-assistant.enabled')) {
-            return AssistantResponse::error('Ο AI Βοηθός είναι απενεργοποιημένος. Ενεργοποίησέ τον από τη ρύθμιση GARAGE_ASSISTANT_ENABLED.');
+            return AssistantResponse::error('Ο AI Βοηθός είναι απενεργοποιημένος. Ενεργοποίησέ τον από τη ρύθμιση AI_ASSISTANT_ENABLED.');
         }
 
         if (blank(config('garage-assistant.gemini.api_key')) || blank(config('garage-assistant.gemini.model'))) {

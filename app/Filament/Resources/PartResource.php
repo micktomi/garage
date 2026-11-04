@@ -4,6 +4,7 @@ namespace App\Filament\Resources;
 
 use App\Filament\Resources\PartResource\Pages;
 use App\Filament\Resources\PartResource\RelationManagers;
+use App\Filament\Support\ArchiveActions;
 use App\Models\Part;
 use Filament\Forms;
 use Filament\Forms\Form;
@@ -44,6 +45,8 @@ class PartResource extends Resource
                 Forms\Components\TextInput::make('quantity')
                     ->label('Ποσότητα')
                     ->numeric()
+                    // Changes are recorded as stock movements (StockService); never negative.
+                    ->minValue(0)
                     ->default(0)
                     ->required(),
                 // Visible to everyone, writable by the owner: the counter
@@ -97,14 +100,15 @@ class PartResource extends Resource
             ])
             ->defaultSort('created_at', 'desc')
             ->filters([
-                //
+                ArchiveActions::filter(),
             ])
             ->actions([
-                Tables\Actions\EditAction::make(),
+                Tables\Actions\EditAction::make()->hidden(fn ($record) => $record->trashed()),
+                ...ArchiveActions::rowRestoreAndForceDelete(),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
+                    ArchiveActions::bulkArchive(),
                 ]),
             ]);
     }

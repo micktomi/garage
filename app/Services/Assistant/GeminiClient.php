@@ -6,6 +6,7 @@ use Illuminate\Http\Client\PendingRequest;
 use Illuminate\Http\Client\RequestException;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use RuntimeException;
 
 class GeminiClient
 {
@@ -58,6 +59,12 @@ class GeminiClient
         ?string $toolName = null,
         ?int $timeoutSeconds = null,
     ): array {
+        // Single choke point for every Gemini call (assistant and registration scan):
+        // nothing leaves the server while the AI features are switched off.
+        if (! config('garage-assistant.enabled')) {
+            throw new RuntimeException('AI assistant is disabled.');
+        }
+
         $model = trim((string) config('garage-assistant.gemini.model'));
         $baseUrl = rtrim((string) config('garage-assistant.gemini.base_url'), '/');
 

@@ -4,8 +4,8 @@ namespace App\Filament\Resources\WorkOrderResource\Pages;
 
 use App\Enums\WorkOrderStatus;
 use App\Filament\Resources\WorkOrderResource;
+use App\Filament\Support\ArchiveActions;
 use App\Models\WorkOrder;
-use Filament\Actions;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\EditRecord;
 use Illuminate\Database\Eloquent\Model;
@@ -19,7 +19,7 @@ class EditWorkOrder extends EditRecord
     protected function getHeaderActions(): array
     {
         return [
-            Actions\DeleteAction::make(),
+            ArchiveActions::headerArchive(),
         ];
     }
 

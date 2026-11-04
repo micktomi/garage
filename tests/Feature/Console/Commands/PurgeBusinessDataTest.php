@@ -65,7 +65,7 @@ class PurgeBusinessDataTest extends TestCase
 
         $this->artisan('garage:purge-business-data', ['--force' => true])->assertSuccessful();
 
-        foreach (['stock_movements', 'work_order_parts', 'work_orders', 'appointments', 'vehicles', 'customers', 'parts'] as $table) {
+        foreach (['activity_logs', 'stock_movements', 'work_order_parts', 'work_orders', 'appointments', 'vehicles', 'customers', 'parts'] as $table) {
             $this->assertSame(0, DB::table($table)->count(), "{$table} still has rows (archived rows must be purged too)");
         }
         $this->assertNotNull($user->fresh(), 'users must survive the purge');

@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Models\Concerns\ArchivesInsteadOfDeleting;
+use App\Services\ActivityLogger;
 use App\Services\StockService;
 use Illuminate\Database\Eloquent\Model;
 
@@ -41,6 +42,8 @@ class Part extends Model
         static::creating(fn (Part $part) => StockService::assertNotNegative((float) $part->quantity));
 
         static::created(fn (Part $part) => app(StockService::class)->recordOpening($part));
+
+        static::updated(fn (Part $part) => app(ActivityLogger::class)->updated($part, ['purchase_price', 'sale_price']));
 
         // Editing the quantity directly (Filament form, tinker) is an
         // adjustment through StockService, never a silent overwrite.

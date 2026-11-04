@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Services\ActivityLogger;
 use App\Services\StockService;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -68,16 +69,19 @@ class WorkOrderPart extends Model
         // Stock arithmetic lives in StockService; these hooks only report what changed.
         static::created(function (WorkOrderPart $line) {
             app(StockService::class)->syncLine($line, null, $line->stockState(false));
+            app(ActivityLogger::class)->created($line, ['quantity'], $line->work_order_id);
             $line->workOrder->calculatePartsCost();
         });
 
         static::updated(function (WorkOrderPart $line) {
             app(StockService::class)->syncLine($line, $line->stockState(true), $line->stockState(false));
+            app(ActivityLogger::class)->updated($line, ['quantity'], $line->work_order_id);
             $line->workOrder->calculatePartsCost();
         });
 
         static::deleted(function (WorkOrderPart $line) {
             app(StockService::class)->syncLine($line, $line->stockState(false), null);
+            app(ActivityLogger::class)->deleted($line, ['quantity'], $line->work_order_id);
             $line->workOrder->calculatePartsCost();
         });
     }

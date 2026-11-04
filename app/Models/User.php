@@ -4,6 +4,7 @@ namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use App\Enums\UserRole;
+use Database\Factories\UserFactory;
 use Filament\Models\Contracts\FilamentUser;
 use Filament\Panel;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -12,7 +13,7 @@ use Illuminate\Notifications\Notifiable;
 
 class User extends Authenticatable implements FilamentUser
 {
-    /** @use HasFactory<\Database\Factories\UserFactory> */
+    /** @use HasFactory<UserFactory> */
     use HasFactory, Notifiable;
 
     /**
@@ -64,16 +65,34 @@ class User extends Authenticatable implements FilamentUser
 
     public function isOwner(): bool
     {
-        return $this->role === UserRole::Owner;
+        return $this->validRole() === UserRole::Owner;
+    }
+
+    /**
+     * The stored role as a known UserRole, or null for anything else (typo,
+     * legacy value, manual SQL). Read from the raw column so an unknown value
+     * never throws from the enum cast.
+     */
+    public function validRole(): ?UserRole
+    {
+        $raw = $this->getAttributes()['role'] ?? null;
+
+        return $raw instanceof UserRole ? $raw : UserRole::tryFrom((string) $raw);
+    }
+
+    public function hasValidRole(): bool
+    {
+        return $this->validRole() !== null;
     }
 
     /**
      * Both roles use the panel — the counter staff live in it all day. What
      * changes per role is which actions inside it are authorized, which is
-     * the policies' job, not this method's.
+     * the policies' job. An account without a known role gets nothing
+     * (the same check guards /workshop: EnsureUserHasValidRole).
      */
     public function canAccessPanel(Panel $panel): bool
     {
-        return true;
+        return $this->hasValidRole();
     }
 }

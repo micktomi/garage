@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Enums\WorkOrderStatus;
 use App\Models\Concerns\ArchivesInsteadOfDeleting;
+use App\Services\ActivityLogger;
 use App\Services\StockService;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
@@ -209,6 +210,8 @@ class WorkOrder extends Model
         static::updating(function (WorkOrder $workOrder) {
             $workOrder->lock_version = (int) $workOrder->getRawOriginal('lock_version') + 1;
         });
+
+        static::updated(fn (WorkOrder $workOrder) => app(ActivityLogger::class)->updated($workOrder, ['status'], $workOrder->getKey()));
 
         // A new order means the vehicle was just handed over at the counter.
         // Records seeded or imported as already closed are the exception, so

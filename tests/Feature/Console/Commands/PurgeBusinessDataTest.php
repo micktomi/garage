@@ -3,10 +3,15 @@
 namespace Tests\Feature\Console\Commands;
 
 use App\Enums\WorkOrderStatus;
+use App\Models\Appointment;
 use App\Models\Customer;
+use App\Models\Part;
+use App\Models\User;
 use App\Models\Vehicle;
 use App\Models\WorkOrder;
+use App\Models\WorkOrderPart;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
 /**
@@ -37,6 +42,34 @@ class PurgeBusinessDataTest extends TestCase
         $this->assertSame(0, WorkOrder::count());
         $this->assertSame(0, Vehicle::count());
         $this->assertSame(0, Customer::count());
+    }
+
+    /**
+     * Runs with foreign keys effectively ON (the test transaction makes the
+     * command's PRAGMA a no-op), i.e. the strict case for the RESTRICT keys:
+     * the command must still empty every table, archived rows included.
+     */
+    public function test_purge_removes_archived_rows_and_part_lines_under_restrict_foreign_keys(): void
+    {
+        $user = User::factory()->create();
+        $order = $this->createWorkOrder('ΑΡΧ-1000');
+        $part = Part::create(['name' => 'Φίλτρο', 'quantity' => 5]);
+        WorkOrderPart::create(['work_order_id' => $order->id, 'part_id' => $part->id, 'source' => 'from_stock', 'quantity' => 1, 'unit_price' => 9, 'line_total' => 9]);
+        Appointment::create(['customer_id' => $order->customer_id, 'vehicle_id' => $order->vehicle_id, 'appointment_date' => now()->addDay(), 'status' => 'scheduled']);
+        $active = $this->createWorkOrder('ΕΝΕ-1000');
+        $order->delete();
+        $order->vehicle->delete();
+        $order->customer->delete();
+        $part->delete();
+        $this->assertSame('RESTRICT', strtoupper(collect(DB::select("PRAGMA foreign_key_list('work_order_parts')"))->firstWhere('from', 'part_id')->on_delete));
+
+        $this->artisan('garage:purge-business-data', ['--force' => true])->assertSuccessful();
+
+        foreach (['work_order_parts', 'work_orders', 'appointments', 'vehicles', 'customers', 'parts'] as $table) {
+            $this->assertSame(0, DB::table($table)->count(), "{$table} still has rows (archived rows must be purged too)");
+        }
+        $this->assertNotNull($user->fresh(), 'users must survive the purge');
+        $this->assertNull(WorkOrder::withTrashed()->find($active->id));
     }
 
     private function createWorkOrder(string $plate): WorkOrder

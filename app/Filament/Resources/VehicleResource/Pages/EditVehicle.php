@@ -3,7 +3,7 @@
 namespace App\Filament\Resources\VehicleResource\Pages;
 
 use App\Filament\Resources\VehicleResource;
-use Filament\Actions;
+use App\Filament\Support\ArchiveActions;
 use Filament\Resources\Pages\EditRecord;
 
 class EditVehicle extends EditRecord
@@ -13,7 +13,7 @@ class EditVehicle extends EditRecord
     protected function getHeaderActions(): array
     {
         return [
-            Actions\DeleteAction::make(),
+            ArchiveActions::headerArchive(),
         ];
     }
 }

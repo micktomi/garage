@@ -31,7 +31,7 @@ class AppointmentResource extends Resource
             ->schema([
                 Forms\Components\Select::make('customer_id')
                     ->label('Πελάτης')
-                    ->relationship('customer', 'full_name')
+                    ->relationship('customer', 'full_name', fn (Builder $query) => $query->withoutTrashed())
                     ->searchable()
                     ->preload()
                     ->required()
@@ -39,7 +39,7 @@ class AppointmentResource extends Resource
                 Forms\Components\Select::make('vehicle_id')
                     ->label('Όχημα')
                     ->relationship('vehicle', 'plate_number', fn (Builder $query, Forms\Get $get) => 
-                        $query->when($get('customer_id'), fn ($q) => $q->where('customer_id', $get('customer_id')))
+                        $query->withoutTrashed()->when($get('customer_id'), fn ($q) => $q->where('customer_id', $get('customer_id')))
                     )
                     ->searchable()
                     ->preload()

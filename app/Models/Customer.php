@@ -2,10 +2,13 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\ArchivesInsteadOfDeleting;
 use Illuminate\Database\Eloquent\Model;
 
 class Customer extends Model
 {
+    use ArchivesInsteadOfDeleting;
+
     protected $fillable = [
         'full_name',
         'afm',
@@ -14,6 +17,13 @@ class Customer extends Model
         'address',
         'notes',
     ];
+
+    public function hasHistory(): bool
+    {
+        return $this->vehicles()->withTrashed()->exists()
+            || $this->workOrders()->withTrashed()->exists()
+            || $this->appointments()->exists();
+    }
 
     public function vehicles()
     {

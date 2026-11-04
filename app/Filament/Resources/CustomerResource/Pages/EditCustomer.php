@@ -3,7 +3,7 @@
 namespace App\Filament\Resources\CustomerResource\Pages;
 
 use App\Filament\Resources\CustomerResource;
-use Filament\Actions;
+use App\Filament\Support\ArchiveActions;
 use Filament\Resources\Pages\EditRecord;
 
 class EditCustomer extends EditRecord
@@ -13,7 +13,7 @@ class EditCustomer extends EditRecord
     protected function getHeaderActions(): array
     {
         return [
-            Actions\DeleteAction::make(),
+            ArchiveActions::headerArchive(),
         ];
     }
 }

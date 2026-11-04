@@ -23,12 +23,13 @@ class WorkOrderPart extends Model
 
     public function workOrder(): BelongsTo
     {
-        return $this->belongsTo(WorkOrder::class);
+        return $this->belongsTo(WorkOrder::class)->withTrashed();
     }
 
     public function part(): BelongsTo
     {
-        return $this->belongsTo(Part::class);
+        // Lines of closed orders keep naming a part after it is archived.
+        return $this->belongsTo(Part::class)->withTrashed();
     }
 
     public function displayName(): string

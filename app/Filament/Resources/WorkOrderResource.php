@@ -4,6 +4,7 @@ namespace App\Filament\Resources;
 
 use App\Enums\WorkOrderStatus;
 use App\Filament\Resources\WorkOrderResource\Pages;
+use App\Filament\Support\ArchiveActions;
 use App\Models\Part;
 use App\Models\WorkOrder;
 use Filament\Forms;
@@ -42,7 +43,7 @@ class WorkOrderResource extends Resource
                     ->schema([
                         Forms\Components\Select::make('customer_id')
                             ->label('Πελάτης')
-                            ->relationship('customer', 'full_name')
+                            ->relationship('customer', 'full_name', fn (Builder $query) => $query->withoutTrashed())
                             ->searchable()
                             ->preload()
                             ->required()
@@ -50,7 +51,7 @@ class WorkOrderResource extends Resource
                             ->afterStateUpdated(fn (Forms\Set $set) => $set('vehicle_id', null)),
                         Forms\Components\Select::make('vehicle_id')
                             ->label('Όχημα')
-                            ->relationship('vehicle', 'plate_number', fn (Builder $query, Forms\Get $get) => $query->when($get('customer_id'), fn ($q) => $q->where('customer_id', $get('customer_id')))
+                            ->relationship('vehicle', 'plate_number', fn (Builder $query, Forms\Get $get) => $query->withoutTrashed()->when($get('customer_id'), fn ($q) => $q->where('customer_id', $get('customer_id')))
                             )
                             ->searchable()
                             ->preload()
@@ -112,6 +113,8 @@ class WorkOrderResource extends Resource
                                 Forms\Components\Select::make('part_id')
                                     ->label('Ανταλλακτικό αποθέματος')
                                     ->options(Part::query()->pluck('name', 'id'))
+                                    // Existing lines may point at an archived part; keep its name visible.
+                                    ->getOptionLabelUsing(fn ($value): ?string => Part::withTrashed()->find($value)?->name)
                                     ->searchable()
                                     ->reactive()
                                     ->visible(fn (Forms\Get $get) => $get('source') === 'from_stock')
@@ -330,7 +333,7 @@ class WorkOrderResource extends Resource
             ])
             ->defaultSort('created_at', 'desc')
             ->filters([
-                //
+                ArchiveActions::filter(),
             ])
             ->actions([
                 Tables\Actions\Action::make('sms_ready')
@@ -350,12 +353,13 @@ class WorkOrderResource extends Resource
                     ->icon('heroicon-o-printer')
                     ->url(fn (WorkOrder $record): string => route('work-orders.print', $record))
                     ->openUrlInNewTab(),
-                Tables\Actions\ViewAction::make(),
-                Tables\Actions\EditAction::make(),
+                Tables\Actions\ViewAction::make()->hidden(fn ($record) => $record->trashed()),
+                Tables\Actions\EditAction::make()->hidden(fn ($record) => $record->trashed()),
+                ...ArchiveActions::rowRestoreAndForceDelete(),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
+                    ArchiveActions::bulkArchive(),
                 ]),
             ]);
     }

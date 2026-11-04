@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\WorkOrderStatus;
+use App\Models\Concerns\ArchivesInsteadOfDeleting;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
@@ -10,6 +11,8 @@ use Illuminate\Validation\ValidationException;
 
 class WorkOrder extends Model
 {
+    use ArchivesInsteadOfDeleting;
+
     private const STALE_LOCK_MESSAGE = 'Η εντολή άλλαξε από άλλον χρήστη ενώ ήταν ανοιχτή αυτή η σελίδα. Ανανεώστε τη σελίδα και δείτε την τρέχουσα κατάσταση πριν αποθηκεύσετε ξανά.';
 
     /**
@@ -78,12 +81,18 @@ class WorkOrder extends Model
 
     public function customer()
     {
-        return $this->belongsTo(Customer::class);
+        return $this->belongsTo(Customer::class)->withTrashed();
     }
 
     public function vehicle()
     {
-        return $this->belongsTo(Vehicle::class);
+        return $this->belongsTo(Vehicle::class)->withTrashed();
+    }
+
+    /** A work order is history in itself: it can be archived, never force-deleted. */
+    public function hasHistory(): bool
+    {
+        return true;
     }
 
     public function workOrderParts()

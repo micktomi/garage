@@ -5,6 +5,7 @@ namespace App\Filament\Resources;
 use App\Filament\Resources\CustomerResource;
 use App\Filament\Resources\VehicleResource\Pages;
 use App\Filament\Resources\VehicleResource\RelationManagers;
+use App\Filament\Support\ArchiveActions;
 use App\Models\Vehicle;
 use App\Models\VehicleModel;
 use Filament\Forms;
@@ -40,7 +41,7 @@ class VehicleResource extends Resource
             ->schema([
                 Forms\Components\Select::make('customer_id')
                     ->label('Πελάτης')
-                    ->relationship('customer', 'full_name')
+                    ->relationship('customer', 'full_name', fn (Builder $query) => $query->withoutTrashed())
                     ->searchable()
                     ->preload()
                     ->required(),
@@ -187,15 +188,16 @@ class VehicleResource extends Resource
             ])
             ->defaultSort('created_at', 'desc')
             ->filters([
-                //
+                ArchiveActions::filter(),
             ])
             ->actions([
-                Tables\Actions\ViewAction::make(),
-                Tables\Actions\EditAction::make(),
+                Tables\Actions\ViewAction::make()->hidden(fn ($record) => $record->trashed()),
+                Tables\Actions\EditAction::make()->hidden(fn ($record) => $record->trashed()),
+                ...ArchiveActions::rowRestoreAndForceDelete(),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
+                    ArchiveActions::bulkArchive(),
                 ]),
             ]);
     }
